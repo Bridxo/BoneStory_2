@@ -1,0 +1,18 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint-config-standard",
+    "tslint-config-prettier"
+  ],
+  "jsRules": {
+    "object-literal-sort-keys": false,
+    "quotemark": false
+  },
+  "rules": {
+    "semicolon": [true, "always"],
+    "indent": [true, "spaces", 4],
+    "class-name": true
+  },
+
+  "rulesDirectory": []
+}

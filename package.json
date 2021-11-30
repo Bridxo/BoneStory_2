@@ -1,0 +1,21 @@
+{
+  "license": "UNLICENSED",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "provenance-core",
+      "provenance-tree-visualization",
+      "slide-deck-visualization",
+      "bonestory"
+    ],
+    "nohoist": [
+      "**/@angular*",
+      "**/@angular*/**",
+      "**/@ngtools*",
+      "**/@ngtools*/**"
+    ]
+  },
+  "dependencies": {
+    "three-stdlib": "^2.4.0"
+  }
+}
