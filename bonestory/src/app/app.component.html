@@ -1,0 +1,27 @@
+<mat-sidenav-container hasBackdrop="false">
+  <mat-sidenav position="end" #sidenav mode="over" [opened]="false" hasBackdrop="false">
+    <button id="sidenav-trigger" color="primary" style="color: white" mat-icon-button (click)="sidenav.toggle()">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <!-- Sidenav content -->
+    <app-provenance-visualization></app-provenance-visualization>
+    <!-- <app-provenance-slides #slides></app-provenance-slides> -->
+  </mat-sidenav>
+
+
+  <mat-sidenav-content>
+    <app-brainvis-canvas #canvas></app-brainvis-canvas>
+    <div id="instructions">L-click (cam mode): Rotate camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R-click (cam mode): Pan camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double-click: Select Object &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <br />C: Camera mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R (object mode) : Rotate Object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T (object mode): Translate Object</div>
+    <div id="bottom-container">
+      <app-provenance-slides #slides></app-provenance-slides>
+      <!-- <app-brainvis-canvas-controls [canvas]="canvas"></app-brainvis-canvas-controls> -->
+    </div>
+    <!-- <app-slide-annotations id="annotation-overlay" [slides]="slides">
+      bladiebla
+    </app-slide-annotations> -->
+    <!--<p><mat-slide-toggle>sidenav.opened</mat-slide-toggle></p>-->
+    <!--<p></p>-->
+  </mat-sidenav-content>
+</mat-sidenav-container>

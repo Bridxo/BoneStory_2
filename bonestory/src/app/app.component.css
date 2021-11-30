@@ -1,0 +1,52 @@
+app-brainvis-canvas {
+  flex:1;
+  flex-grow: 1;
+  display: flex;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+#bottom-container {
+  position: absolute;
+  bottom: 0;
+  height: 20%;
+  width: 85%;
+  background-color: #fafafa;
+}
+#instructions {
+  color: white;
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  margin-left: -120px;
+  font-family: monospace;
+}
+mat-sidenav, mat-bottom {
+  overflow: visible;
+  visibility: visible !important;
+  background-color: rgba(0, 0, 0, .8)
+}
+mat-sidenav-container, mat-sidenav-content {
+  display: flex;
+  flex: 1;
+}
+
+
+#sidenav-trigger {
+  position: absolute;
+  left: -50px;
+}
+
+#provnav-trigger {
+  position: absolute;
+  bottom: 300px;
+}
+#instructions {
+  color: white;
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  margin-left: -420px;
+  font-family: monospace;
+}
