@@ -3,6 +3,7 @@ import { HierarchyPointNode } from 'd3';
 import { ProvenanceGraphTraverser, ProvenanceNode } from '@visualstorytelling/provenance-core';
 
 import gratzl from './gratzl';
+import { provGraphControls } from './controls';
 import { IHierarchyPointNodeWithMaxDepth } from './gratzl';
 import { IGroupedTreeNode } from './utils';
 import { NodeAggregator } from './aggregation/aggregation-implementations';
@@ -76,7 +77,7 @@ export class ProvenanceTreeVisualization {
       .attr('class', 'visualizationContainer')
       .attr('style', 'height:' + `${window.innerHeight - 178}` + 'px');
 
-    // provGraphControls(this);
+    provGraphControls(this);
 
     // Append svg element
     this.svg = this.container
@@ -122,8 +123,8 @@ export class ProvenanceTreeVisualization {
     const sizeX = this.svg.node()!.clientWidth;
     const sizeY = this.svg.node()!.clientHeight;
     const maxScale = 3;
-    const magicNum = 0.75; // todo: get relevant number based on dimensions
-    const relY = sizeY * 4 - (yScale * maxScale * this.currentHierarchyNodelength);
+    const magicNum = 0.55; // todo: get relevant number based on dimensions
+    const relY = sizeY * 4.1 - (yScale * maxScale * this.currentHierarchyNodelength);
     // console.log(sizeY/2);
     // const scaleFactor = Math.min(
     //   maxScale,
@@ -374,8 +375,10 @@ export class ProvenanceTreeVisualization {
       .attr('visibility', (d: any) => (d.x === 0 ? 'visible' : 'hidden'));
 
     updateNodes.on('click', d => {
+      
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
         this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
+        (window as any).slideDeck.onChange(this.traverser.graph.current.metadata.branchnumber);
         this.update();
       }
     });

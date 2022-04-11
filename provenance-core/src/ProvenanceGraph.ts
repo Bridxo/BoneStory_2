@@ -39,7 +39,8 @@ export class ProvenanceGraph implements IProvenanceGraph {
         label: 'Root',
         metadata: {
           createdBy: userid,
-          createdOn: generateTimestamp()
+          createdOn: generateTimestamp(),
+          branchnumber: 0
         },
         children: [],
         artifacts: {}

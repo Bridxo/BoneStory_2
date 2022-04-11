@@ -96,7 +96,8 @@ export class BrainvisCanvasComponent {
   private elem: Element;
   private scene = new THREE.Scene();
   private objects: THREE.Object3D; // all the loaded objects go in here
-  private camera: THREE.PerspectiveCamera;
+  // private camera: THREE.PerspectiveCamera;
+  private camera: THREE.OrthographicCamera;
   private renderer = new THREE.WebGLRenderer();
 
   // private transform: TransformControls;
@@ -144,7 +145,15 @@ export class BrainvisCanvasComponent {
   onWindowResize() {
     const width = this.renderer.domElement.clientWidth;
     const height = this.renderer.domElement.clientHeight;
-    this.camera.aspect = width / height;
+    //orthographic camera
+    this.camera.left = width / -2;
+    this.camera.right = width / 2;
+    this.camera.top = height / 2;
+    this.camera.bottom = height / -2;
+    this.camera.near = 1;
+    this.camera.far = 1000;
+    //perspective camera 
+    // this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
   }
@@ -165,14 +174,14 @@ export class BrainvisCanvasComponent {
     this.height = this.elem.clientHeight;
 
     this.scene.background = new THREE.Color('black');
-    this.camera = new THREE.PerspectiveCamera(85, this.width / this.height, 0.1, 20000);
+    // this.camera = new THREE.PerspectiveCamera(85, this.width / this.height, 0.1, 20000);
+    this.camera = new THREE.OrthographicCamera(this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 1, 2000);
 
     this.renderer.setSize(this.width, this.height);
 
     const canvasElm = this.renderer.domElement;
     this.elem.appendChild(canvasElm);
     canvasElm.style.display = 'block';
-
     this.controls = new Trackball(this.camera, this.renderer.domElement);
 
     this.scene.add(this.objects);
@@ -185,8 +194,8 @@ export class BrainvisCanvasComponent {
     this.camera.position.set(1187.0,181.0, -471.0);
 
     //change starting position of the camera
-    let cc_1 = new THREE.Vector3(-75.36416017915319, -349.129104606016, 110.28342180657849);
-    let cc_2 = new THREE.Vector3(16.291059604107463, 15.6391028339395, -45.41411818461695);
+    let cc_1 = new THREE.Vector3(-3.0910644329944716, -360.60060594128834, 136.36674723121544);
+    let cc_2 = new THREE.Vector3(88.56415535026616, 4.1676014986671985, -19.330792759980017);
     let cc_3 = new THREE.Vector3(-0.007806819749730532, 0.21960363780433093, 0.9755579407849119);
     this.controls.changeCamera(cc_1,cc_2,cc_3,0);
 
@@ -445,9 +454,11 @@ export class BrainvisCanvasComponent {
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
       const orientation = { position, target, up };
+      const state = event.state;
       this.eventdispatcher.dispatchEvent({
         type: 'cameraEnd',
-        orientation
+        orientation,
+        state
       });
     });
 
@@ -544,7 +555,9 @@ export class BrainvisCanvasComponent {
   }
 
   setSize(width: number, height: number) {
-    this.camera.aspect = width / height;
+    //perspective camera
+    // this.camera.aspect = width / height;
+    //orthographic camera
     this.camera.updateProjectionMatrix();
 
     this.renderer.setSize(width, height);
@@ -563,6 +576,7 @@ export class BrainvisCanvasComponent {
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
       within > 0 ? within : 1000);
+    // this.controls.zoomCamera()
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
@@ -787,6 +801,20 @@ export class BrainvisCanvasComponent {
     this.selectedobj.geometry.boundingBox.getCenter(objpose);
     // console.log(objpose);
     this.mm.position.set(objpose.x,objpose.y,objpose.z);
+  }
+
+  center_button_Canvas(){
+    let cc_1 = new THREE.Vector3(-3.0910644329944716, -360.60060594128834, 136.36674723121544);
+    let cc_2 = new THREE.Vector3(88.56415535026616, 4.1676014986671985, -19.330792759980017);
+    let cc_3 = new THREE.Vector3(-0.007806819749730532, 0.21960363780433093, 0.9755579407849119);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,0);
+  }
+
+  top_button_Canvas(){
+    let cc_1 = new THREE.Vector3(-3.0910644329944716, -360.60060594128834, 136.36674723121544);
+    let cc_2 = new THREE.Vector3(88.56415535026616, 4.1676014986671985, -19.330792759980017);
+    let cc_3 = new THREE.Vector3(-0.007806819749730532, 0.21960363780433093, 0.9755579407849119);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,0);
   }
   
 }

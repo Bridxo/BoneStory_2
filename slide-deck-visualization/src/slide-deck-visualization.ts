@@ -22,7 +22,7 @@ function firstArgThis(f: (...args: any[]) => any) {
 type IndexedSlide = { slide: IProvenanceSlide; startTime: number };
 
 export class SlideDeckVisualization {
-    private _slideDeck: IProvenanceSlidedeck;
+    private _slideDeck: IProvenanceSlidedeck; // possible to extend HLEE
     private _root: d3.Selection<HTMLDivElement, undefined, null, undefined>;
     private _slideTable: d3.Selection<SVGElement, undefined, null, undefined>;
     private _tableHeight = 125;
@@ -57,6 +57,7 @@ export class SlideDeckVisualization {
     private onDelete = (slide: IProvenanceSlide) => {
         const node = this._slideDeck.graph.current;
         node.metadata.isSlideAdded = false;
+        node.metadata.bookmarked = false;
         if(slide){
             this._slideDeck.removeSlide(slide);
         } else if (node) {
@@ -126,6 +127,13 @@ export class SlideDeckVisualization {
     // (slideDeck.graph.current as StateNode).metadata.bookmarked = true;
     // this.selectSlide(slide);
     // this._slidesInDeck += 1;
+
+    private onChange = (bnumber: number) => {
+        let slideDeck = this._slideDeck;
+        bnumber = slideDeck.graph.current.metadata.branchnumber;
+        this._slideDeck.slides = this._slideDeck.changeSlide(bnumber);
+
+    }
     private onAdd = () => {
         let slideDeck = this._slideDeck;
         const node = slideDeck.graph.current;
@@ -678,7 +686,7 @@ export class SlideDeckVisualization {
                     );
                     slide.addAnnotation(newAnnotation);
                     that._annotationContainer.add(newAnnotation, true);
-                });
+                } );
         }
         // annotation button
         addAnnotationButton(toolbar, this._toolbarY, 50);
@@ -1121,6 +1129,7 @@ export class SlideDeckVisualization {
         slideDeck.on("slideRemoved", () => this.update());
         slideDeck.on("slidesMoved", () => this.update());
         slideDeck.on("slideSelected", () => this.update());
+        slideDeck.on("changeslide", () => this.update());
 
         this.update();
     }

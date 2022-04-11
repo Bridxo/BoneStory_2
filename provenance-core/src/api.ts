@@ -47,6 +47,9 @@ export interface NodeMetadata {
    * Enable custom properties
    */
   [key: string]: any;
+
+
+  branchnumber: number;
 }
 
 /**
@@ -289,6 +292,7 @@ export interface IProvenanceTracker {
    */
   registry: IActionFunctionRegistry;
 
+
   screenShotProvider: IScreenShotProvider | null;
 
   /**
@@ -409,6 +413,7 @@ export interface IProvenanceSlidedeck {
   autoScreenShot: boolean;
 
   addSlide(slide?: IProvenanceSlide, index?: number): IProvenanceSlide;
+  changeSlide(index?: number): IProvenanceSlide[];
   removeSlide(slide: IProvenanceSlide): void;
   removeSlideAtIndex(index: number): void;
   moveSlide(indexFrom: number, indexTo: number, count?: number): void;

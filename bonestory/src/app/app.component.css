@@ -50,3 +50,77 @@ mat-sidenav-container, mat-sidenav-content {
   margin-left: -420px;
   font-family: monospace;
 }
+.arrow {
+  border: solid tan;
+  border-width: 0 7px 7px 0;
+  line-height: 2.5;
+  position: absolute;
+  padding: 7px;
+
+}
+.dot {
+  height: 15px;
+  width: 15px;
+  background-color: tan;
+  border-radius: 50%;
+  position: absolute;
+  display: inline-block;
+  left: 82px;
+  top: 69px;
+}
+
+.arrow:hover {
+  border: solid rgb(189, 255, 9);
+  border-width: 0 7px 7px 0;
+  line-height: 2.5;
+}
+
+.arrow:active {
+  border: solid rgb(255, 94, 0);
+  border-width: 0 7px 7px 0;
+  line-height: 2.5;
+}
+
+.dot:hover {
+  height: 15px;
+  width: 15px;
+  border: solid rgb(189, 255, 9);
+  border-radius: 50%;
+  line-height: 2.5;
+}
+
+.dot:active {
+  height: 15px;
+  width: 15px;
+  border: solid rgb(255, 94, 0);
+  border-radius: 50%;
+  line-height: 2.5;
+}
+
+.right {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  left: 110px;
+  top: 65px;
+}
+
+.left {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+  left: 50px;
+  top: 65px;
+}
+
+.up {
+  transform: rotate(-135deg);
+  -webkit-transform: rotate(-135deg);
+  left: 80px;
+  top: 40px;
+}
+
+.down {
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+  left: 80px;
+  top: 90px;
+}

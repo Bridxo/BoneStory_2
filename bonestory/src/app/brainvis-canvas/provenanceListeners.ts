@@ -28,6 +28,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
       let s_1 = new Vector3((startEvent as any).orientation.position[0],(startEvent as any).orientation.position[1],(startEvent as any).orientation.position[2]);
       let s_2 = new Vector3((event as any).orientation.position[0],(event as any).orientation.position[1],(event as any).orientation.position[2]);
       // console.log('sumup--->'+  s_1.distanceTo(s_2));
+      // console.log((event as any).orientation);
       if(s_1.distanceTo(s_2)>1.0){
         tracker.applyAction({
           metadata: {userIntent: 'exploration'},

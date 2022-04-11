@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProvenanceTreeVisualization = void 0;
 var d3 = require("d3");
 var gratzl_1 = require("./gratzl");
+var controls_1 = require("./controls");
 var aggregation_objects_1 = require("./aggregation/aggregation-objects");
 var components_1 = require("./components");
 var aggregation_1 = require("./aggregation/aggregation");
@@ -40,7 +41,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             .append('div')
             .attr('class', 'visualizationContainer')
             .attr('style', 'height:' + ("" + (window.innerHeight - 178)) + 'px');
-        // provGraphControls(this);
+        controls_1.provGraphControls(this);
         // Append svg element
         this.svg = this.container
             .append('div')
@@ -76,8 +77,8 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         var sizeX = this.svg.node().clientWidth;
         var sizeY = this.svg.node().clientHeight;
         var maxScale = 3;
-        var magicNum = 0.75; // todo: get relevant number based on dimensions
-        var relY = sizeY * 4 - (yScale * maxScale * this.currentHierarchyNodelength);
+        var magicNum = 0.55; // todo: get relevant number based on dimensions
+        var relY = sizeY * 4.1 - (yScale * maxScale * this.currentHierarchyNodelength);
         // console.log(sizeY/2);
         // const scaleFactor = Math.min(
         //   maxScale,
@@ -140,8 +141,14 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         var maxScale = 3;
         var magicNum_W = 0.25;
         var magicNum_H = 0.7; // todo: get relevant number based on dimensions
+        if (this.TreeLength <= 14)
+            magicNum_H = 1.4;
+        else if (this.TreeLength <= 24)
+            magicNum_H = 1.3;
+        else
+            magicNum_H = 1.0;
         if (this.TreeWidth >= 4)
-            sizeX = sizeX - 10;
+            sizeX = sizeX + 100;
         //Need to Modify
         var scaleFactor = Math.min(maxScale, maxScale - (magicNum_H * (this.TreeLength) / 15), maxScale - (magicNum_W * this.TreeWidth)); // find the smallest scale(Length, Width, )
         this.svg
@@ -285,6 +292,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         updateNodes.on('click', function (d) {
             if (d.data.wrappedNodes[0].id !== _this.traverser.graph.current.id) {
                 _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
+                window.slideDeck.onChange(_this.traverser.graph.current.metadata.branchnumber);
                 _this.update();
             }
         });

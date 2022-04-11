@@ -1,5 +1,6 @@
 import {restoreProvenanceGraph, ActionFunctionRegistry, ProvenanceTracker, ProvenanceGraphTraverser} from '@visualstorytelling/provenance-core';
 import {ProvenanceTreeVisualization} from '@visualstorytelling/provenance-tree-visualization';
+import { kebabCase } from 'lodash';
 import {ProvenanceService} from '../provenance.service';
 
 /** These are the listeners I used for the importing and exporting of the graph. They mostly come down to two `click` listeners I created for

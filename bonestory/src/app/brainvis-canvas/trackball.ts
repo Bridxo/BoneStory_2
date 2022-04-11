@@ -28,13 +28,13 @@ export enum STATE {
 export default class Trackball{
   private state: STATE = STATE.NONE;
   private previousState: STATE = STATE.NONE;
-  public camera: THREE.Camera;
+  public camera: THREE.OrthographicCamera;
   private domElement;
   private eventdispatcher: THREE.EventDispatcher;
   private screen = { left: 0, top: 0, width: 0, height: 0 };
 
   public enabled = true;
-  public rotateSpeed = 1.0;
+  public rotateSpeed = 5.0;
   public zoomSpeed = 1.2;
   public panSpeed = 0.3;
 
@@ -165,7 +165,7 @@ export default class Trackball{
     };
   }());
 
-  constructor(object: THREE.Camera, domElement) {
+  constructor(object: THREE.OrthographicCamera, domElement) {
     this.camera = object;
     this.domElement = (domElement !== undefined) ? domElement : document;
     this.eventdispatcher = new THREE.EventDispatcher();
@@ -252,10 +252,8 @@ export default class Trackball{
       this.eye.multiplyScalar(factor);
     } else {
       factor = 1.0 + (this.zoomEnd.y - this.zoomStart.y) * this.zoomSpeed;
-
       if (factor !== 1.0 && factor > 0.0) {
         this.eye.multiplyScalar(factor);
-
         if (this.staticMoving) {
           this.zoomStart.copy(this.zoomEnd);
         } else {
@@ -263,6 +261,7 @@ export default class Trackball{
         }
       }
     }
+    this.camera.zoom = this.camera.zoom / factor;
   }
 
   checkDistances() {
@@ -312,6 +311,8 @@ export default class Trackball{
 
       this.lastPosition.copy(this.camera.position);
     }
+    this.camera.updateProjectionMatrix();
+
   }
 
   finishCurrentTransition() {
@@ -321,6 +322,12 @@ export default class Trackball{
       this.changeCamera(this.toPosition, this.toTarget, this.toUp, 0);
     }
   }
+  // changeZoom(newZoom: THREE.Vector2, milliseconds: number, done?: ()=> void){
+  //   if(this.zoomEnd.equals(newZoom)){
+  //     return;
+  //   }
+  //   this.zoom
+  // }
 
   changeCamera(newPosition: THREE.Vector3, newTarget: THREE.Vector3, newUp: THREE.Vector3, milliseconds: number, done?: () => void) {
     if (this.target.equals(newTarget) && this.camera.position.equals(newPosition) && this.camera.up.equals(newUp)) {

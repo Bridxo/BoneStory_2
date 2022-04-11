@@ -15,6 +15,7 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
   private _graph: IProvenanceGraph;
   private _mitt: any;
   private _slides: IProvenanceSlide[] = [];
+  private _slides_arr: IProvenanceSlide[][] = [];
   private _traverser: IProvenanceGraphTraverser;
   private _selectedSlide: IProvenanceSlide | null;
 
@@ -32,6 +33,19 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
 
   public get application() {
     return this._application;
+  }
+
+  public changeSlide(index?: number): IProvenanceSlide[] {
+  //   return slide;
+    this._mitt.emit('changeslide', index);
+    if(index){
+      this._slides = this._slides_arr[index];
+      return this._slides;
+    }
+  
+    else
+      return this._slides
+
   }
 
   public addSlide(slide?: IProvenanceSlide, index?: number): IProvenanceSlide {

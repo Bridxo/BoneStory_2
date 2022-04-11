@@ -10,7 +10,6 @@ import {
   IScreenShotProvider
 } from './api';
 import { generateUUID, generateTimestamp } from './utils';
-
 /**
  * Provenance Graph Tracker implementation
  *
@@ -18,6 +17,7 @@ import { generateUUID, generateTimestamp } from './utils';
  * @param current Optional parameter to set current node for importing a provenance graph that is non-empty
  *
  */
+let bnum = 0;
 export class ProvenanceTracker implements IProvenanceTracker {
   registry: IActionFunctionRegistry;
 
@@ -35,7 +35,7 @@ export class ProvenanceTracker implements IProvenanceTracker {
   constructor(
     registry: IActionFunctionRegistry,
     graph: IProvenanceGraph,
-    username: string = 'Unknown'
+    username: string = 'Unknown',
   ) {
     this.registry = registry;
     this.graph = graph;
@@ -71,7 +71,8 @@ export class ProvenanceTracker implements IProvenanceTracker {
         mainbranch: false,
         bookmarked: false,
         createdBy: this.username,
-        createdOn: generateTimestamp()
+        createdOn: generateTimestamp(),
+        branchnumber: 0
       },
       action,
       actionResult,
@@ -108,8 +109,14 @@ export class ProvenanceTracker implements IProvenanceTracker {
 
     // When the node is created, we need to update the graph.
     currentNode.children.push(newNode);
-
     this.graph.addNode(newNode);
+    if(currentNode.children.length>1)//multiple story
+    {
+      bnum = bnum + 1;
+      newNode.metadata.branchnumber = bnum;
+    }
+    else 
+      newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
     this.graph.current = newNode;
 
     return newNode;
