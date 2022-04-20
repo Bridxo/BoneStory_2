@@ -12,11 +12,25 @@
 
   <mat-sidenav-content>
     <app-brainvis-canvas #canvas></app-brainvis-canvas>
-    <i class="arrow up"></i>
+    <i class="arrow up" (click)="top_button_Canvas()"></i>
     <i class="arrow down"></i>
     <i class="arrow left"></i>
     <i class="arrow right"></i>
     <i class="dot"></i>
+    <form>
+        <input
+          #multipleInput
+          id="filesel"
+          type="file"
+          name="images"
+          multiple
+          (change)="selectMultipleImage($event)"
+        />
+      <br />
+        <button type="submit" id="fileup" (click)="onMultipleSubmit()">
+          Upload
+        </button>
+    </form>
     <div id="instructions">L-click (cam mode): Rotate camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R-click (cam mode): Pan camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double-click: Select Object &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <br />C: Camera mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R (object mode) : Rotate Object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T (object mode): Translate Object</div>
     <div id="bottom-container">

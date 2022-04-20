@@ -1,0 +1,67 @@
+<h1 style="text-align: center;">Angular 13 File Upload in Node.js and Express</h1>
+ 
+<div style="text-align: center;">
+  <form>
+    <div>
+      <input #singleInput type="file" name="image" (change)="selectImage($event)">
+    </div>
+    <br>
+    <div>
+      <button type="submit" (click)="onSubmit()">Upload</button>
+    </div>
+ 
+     <ng-template [ngIf]="displaySingleImage" [ngIfElse]="elseSingleImageTemplate">
+    <div>Images Uploaded</div>
+    <ul>
+      <li *ngFor='let image of displaySingleImageArray'>
+        <img src="http://localhost:3000/{{image}}"/>
+      </li>
+    </ul>
+  </ng-template>
+ 
+  <ng-template #elseSingleImageTemplate>
+    <br /><br />
+    <div>Please Upload Some Images</div>
+  </ng-template>
+ 
+  </form>
+</div>
+ 
+ 
+<hr />
+<h2 style="text-align: center">Multiple</h2>
+<div style="text-align: center">
+  <form>
+    <div>
+      <input
+        #multipleInput
+        type="file"
+        name="images"
+        multiple
+        (change)="selectMultipleImage($event)"
+      />
+    </div>
+    <br />
+    <div>
+      <button type="submit" (click)="onMultipleSubmit()">
+        Multiple Upload
+      </button>
+    </div>
+  </form>
+  <ng-template
+    [ngIf]="displayMultipleImages"
+    [ngIfElse]="elseMultipleImagesTemplate"
+  >
+    <div>Images Uploaded</div>
+    <ul>
+      <li *ngFor='let image of displayMultipleImageArray'>
+        <img src="http://localhost:3000/{{image}}"/>
+      </li>
+    </ul>
+  </ng-template>
+ 
+  <ng-template #elseMultipleImagesTemplate>
+    <br /><br />
+    <div>Please Upload Some Images</div>
+  </ng-template>
+</div>

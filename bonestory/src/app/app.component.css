@@ -50,6 +50,20 @@ mat-sidenav-container, mat-sidenav-content {
   margin-left: -420px;
   font-family: monospace;
 }
+
+#filesel {
+  right: 0px;
+  top: 20px;
+  position: absolute;
+  color: white;
+}
+
+#fileup {
+  right: 210px;
+  top: 60px;
+  position: absolute;
+}
+
 .arrow {
   border: solid tan;
   border-width: 0 7px 7px 0;

@@ -1,5 +1,8 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, HostListener } from '@angular/core';
 
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
 import * as THREE from 'three';
 // import * as AMI from 'ami.js';
 
@@ -20,6 +23,7 @@ import { TransformControls } from 'three-stdlib/controls/TransformControls';
 import { ProvenanceService } from '../provenance.service';
 import { registerActions } from './provenanceActions';
 import { addListeners } from './provenanceListeners';
+
 
 @Component({
   selector: 'app-brainvis-canvas',
@@ -308,6 +312,8 @@ export class BrainvisCanvasComponent {
 
     // Load STL models
     const loaderSTL = new STLLoader();
+    // const path = require('path');
+    // const __dirname = dirname(__filename);
     loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/fracture_4.stl', function(geometry) {
       const material = new THREE.MeshPhongMaterial({ color: 0x9FE350, specular: 0x111111, shininess: 200 });
       const mesh = new THREE.Mesh(geometry, material);

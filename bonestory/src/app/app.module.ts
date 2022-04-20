@@ -10,14 +10,15 @@ import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.compo
 import { BrainvisCanvasControlsComponent } from './brainvis-canvas-controls/brainvis-canvas-controls.component';
 
 import {MatIconModule} from '@angular/material/icon';
-import {MatSidenavModule} from '@angular/material/sidenav'
-import {MatSlideToggleModule} from '@angular/material/slide-toggle'
-import {MatButtonModule} from '@angular/material/button'
-import {MatFormFieldModule} from '@angular/material/form-field'
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatButtonModule} from '@angular/material/button';
+import {MatFormFieldModule} from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { ProvenanceVisualizationComponent } from './provenance-visualization/provenance-visualization.component';
 import { ProvenanceSlidesComponent } from './provenance-slides/provenance-slides.component';
 import { SlideAnnotationsComponent } from './slide-annotations/slide-annotations.component';
+import { HttpClientModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -38,6 +39,7 @@ import { SlideAnnotationsComponent } from './slide-annotations/slide-annotations
     MatSidenavModule,
     MatFormFieldModule,
     MatIconModule,
+    HttpClientModule
   ],
   providers: [ProvenanceService],
   bootstrap: [AppComponent]
