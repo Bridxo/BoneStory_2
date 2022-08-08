@@ -1,7 +1,8 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, HostListener } from '@angular/core';
 
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import * as fs from 'fs';
+import { readFile, writeFile } from 'fs/promises';
 
 import * as THREE from 'three';
 // import * as AMI from 'ami.js';
@@ -23,6 +24,9 @@ import { TransformControls } from 'three-stdlib/controls/TransformControls';
 import { ProvenanceService } from '../provenance.service';
 import { registerActions } from './provenanceActions';
 import { addListeners } from './provenanceListeners';
+
+import { AppComponent } from '../app.component';
+import { read } from 'fs';
 
 
 @Component({
@@ -179,7 +183,7 @@ export class BrainvisCanvasComponent {
 
     this.scene.background = new THREE.Color('black');
     // this.camera = new THREE.PerspectiveCamera(85, this.width / this.height, 0.1, 20000);
-    this.camera = new THREE.OrthographicCamera(this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 1, 2000);
+    this.camera = new THREE.OrthographicCamera(this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 1, 4000);
 
     this.renderer.setSize(this.width, this.height);
 
@@ -311,18 +315,22 @@ export class BrainvisCanvasComponent {
     //   });
 
     // Load STL models
+    const dir = '/Users/HeejunLee/Desktop/example1.stl'
+    // const conts = fs.readFile(dir, (err,data)=>{
+    //   console.log(data)});
     const loaderSTL = new STLLoader();
     // const path = require('path');
+    // const fs = require('fs');
     // const __dirname = dirname(__filename);
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/fracture_4.stl', function(geometry) {
+    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/lego_cape_1.stl', function(geometry) {
       const material = new THREE.MeshPhongMaterial({ color: 0x9FE350, specular: 0x111111, shininess: 200 });
       const mesh = new THREE.Mesh(geometry, material);
       let centroid = new THREE.Vector3();
       mesh.geometry.computeBoundingBox();
       mesh.geometry.boundingBox.getCenter(centroid);
-      centroid.x = centroid.x - 700.0;
-      centroid.y = centroid.y - 100.0;
-      centroid.z = centroid.z - 200.0;
+      // centroid.x = centroid.x - 700.0;
+      // centroid.y = centroid.y - 100.0;
+      // centroid.z = centroid.z - 200.0;
       mesh.name = 'f4';
       geometry.center();
       mesh.position.copy(centroid);
@@ -330,16 +338,16 @@ export class BrainvisCanvasComponent {
       this.objects.add(mesh);
     }.bind(this));
 
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/fracture_5.stl', function(geometry) {
+    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/lego_cape_2.stl', function(geometry) {
       const material = new THREE.MeshPhongMaterial({ color: 0xE36250, specular: 0x111111, shininess: 200 });
       const mesh = new THREE.Mesh(geometry, material);
       let centroid = new THREE.Vector3();
       mesh.geometry.computeBoundingBox();
       mesh.geometry.boundingBox.getCenter(centroid);
       // console.log(centroid);
-      centroid.x = centroid.x - 700.0;
-      centroid.y = centroid.y - 100.0;
-      centroid.z = centroid.z - 200.0;
+      // centroid.x = centroid.x - 700.0;
+      // centroid.y = centroid.y - 100.0;
+      // centroid.z = centroid.z - 200.0;
       mesh.name = 'f5';
       geometry.center();
       mesh.position.copy(centroid);

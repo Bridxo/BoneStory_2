@@ -64,6 +64,7 @@ mat-sidenav-container, mat-sidenav-content {
   position: absolute;
 }
 
+
 .arrow {
   border: solid tan;
   border-width: 0 7px 7px 0;

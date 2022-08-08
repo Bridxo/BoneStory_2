@@ -115,7 +115,7 @@ export default class AnnotationAnchor extends THREE.Object3D implements IInterse
     updateWidget() {
         // TODO
         // update sphere
-        // this.sphere.position.copy(endPosition);
+        // this.sphere.position.copy(endposition);
     }
 
     // highlight a object and returns previous highlighted object to original color

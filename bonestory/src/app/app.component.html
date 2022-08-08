@@ -11,13 +11,23 @@
 
 
   <mat-sidenav-content>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+      .upload_btn {
+        margin: 60px 0px;
+        text-align: center;
+        font-size: 140px;
+        color:aqua;
+      }
+      </style>
     <app-brainvis-canvas #canvas></app-brainvis-canvas>
     <i class="arrow up" (click)="top_button_Canvas()"></i>
     <i class="arrow down"></i>
     <i class="arrow left"></i>
     <i class="arrow right"></i>
     <i class="dot"></i>
-    <form>
+    <p class="upload_btn"><i class="fa fa-bullhorn" (click)="toggle_upload()"></i></p>
+    <form *ngIf = "upload_show">
         <input
           #multipleInput
           id="filesel"

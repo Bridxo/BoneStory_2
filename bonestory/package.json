@@ -1,6 +1,12 @@
 {
   "name": "bonestory",
   "version": "0.0.0",
+  "eslintConfig": {
+    "env": {
+        "browser": true,
+        "node": true
+    }
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

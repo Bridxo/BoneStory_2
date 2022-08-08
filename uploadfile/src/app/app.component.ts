@@ -9,6 +9,8 @@ import { HttpClient } from '@angular/common/http';
 })
 export class AppComponent {
   title = 'uploadfile';
+  public show: Boolean = false;
+
  
   displaySingleImage!: Boolean;
   displayMultipleImages!: Boolean;
@@ -83,5 +85,9 @@ export class AppComponent {
         this.displayMultipleImageArray = res.path
         
     })
+  }
+
+  toggle() {
+    this.show = !this.show;
   }
 }

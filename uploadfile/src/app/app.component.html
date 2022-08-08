@@ -1,6 +1,28 @@
-<h1 style="text-align: center;">Angular 13 File Upload in Node.js and Express</h1>
+<html>
+  <head>
+    <!-- Add icon library -->
+    <link rel="stylesheet"
+          href=
+"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+      h1 {
+          color: green;
+      }
+      .btn {
+          background-color: light-green;
+          padding: 12px 16px;
+          font-size: 16px;
+      }
+      .btn:hover {
+          background-color: green;
+      }
+    </style>
+</head>
+
+  <!-- <button class="btn_toggle" (click)="toggle()">
+    <i class="fa fa-bolt"></i>
  
-<div style="text-align: center;">
+  <div style="text-align: center;">
   <form>
     <div>
       <input #singleInput type="file" name="image" (change)="selectImage($event)">
@@ -26,12 +48,14 @@
  
   </form>
 </div>
+  -->
  
- 
+<button class="btn_toggle" (click)="toggle()">
+<i class="fa fa-bolt"></i>  
 <hr />
 <h2 style="text-align: center">Multiple</h2>
 <div style="text-align: center">
-  <form>
+  <form *ngIf="show">
     <div>
       <input
         #multipleInput
