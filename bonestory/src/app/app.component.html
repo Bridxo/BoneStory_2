@@ -9,18 +9,27 @@
     <!-- <app-provenance-slides #slides></app-provenance-slides> -->
   </mat-sidenav>
 
-
   <mat-sidenav-content>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-      .upload_btn {
-        margin: 60px 0px;
-        text-align: center;
-        font-size: 140px;
-        color:aqua;
-      }
-      </style>
-    <app-brainvis-canvas #canvas></app-brainvis-canvas>
+
+    <app-brainvis-canvas #canvas>
+
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+      <style>
+        .upload_btn {
+          text-align: center;
+          font-size: 30px;
+          display: flex;
+          border-radius: 50%;
+          color:aqua;
+          justify-content: center;
+          text-decoration: none;
+          position: fixed;
+          left: 1150px;
+          top: -20px;
+        }
+        </style>
+
+    </app-brainvis-canvas>
     <i class="arrow up" (click)="top_button_Canvas()"></i>
     <i class="arrow down"></i>
     <i class="arrow left"></i>
