@@ -52,6 +52,13 @@ export class AppComponent implements OnInit {
     this.upload_show = !this.upload_show;
   }
 
+  onselect_submit(event: any) {
+    if (event.target.files.length > 0) {
+      this.multipleImages = event.target.files;
+      this.onMultipleSubmit();
+    }
+  }
+
   
   ngOnInit() {
     console.log('init?');

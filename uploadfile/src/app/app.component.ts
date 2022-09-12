@@ -87,6 +87,13 @@ export class AppComponent {
     })
   }
 
+  onselect_submit(event: any) {
+    if (event.target.files.length > 0) {
+      this.multipleImages = event.target.files;
+      this.onMultipleSubmit();
+    }
+  }
+
   toggle() {
     this.show = !this.show;
   }

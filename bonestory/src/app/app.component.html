@@ -17,15 +17,15 @@
       <style>
         .upload_btn {
           text-align: center;
-          font-size: 30px;
+          font-size: 19px;
           display: flex;
           border-radius: 50%;
-          color:aqua;
+          color:rgb(255, 255, 255);
           justify-content: center;
           text-decoration: none;
           position: fixed;
-          left: 1150px;
-          top: -20px;
+          left: 1200px;
+          top: -7px;
         }
         </style>
 
@@ -35,21 +35,17 @@
     <i class="arrow left"></i>
     <i class="arrow right"></i>
     <i class="dot"></i>
-    <p class="upload_btn"><i class="fa fa-bullhorn" (click)="toggle_upload()"></i></p>
-    <form *ngIf = "upload_show">
-        <input
+    <div style="height:0px;overflow:hidden">
+      <input
           #multipleInput
           id="filesel"
+          style="display:none;"
           type="file"
           name="images"
           multiple
-          (change)="selectMultipleImage($event)"
-        />
-      <br />
-        <button type="submit" id="fileup" (click)="onMultipleSubmit()">
-          Upload
-        </button>
-    </form>
+          (change)="onselect_submit($event)" />
+    </div>
+    <p class="upload_btn"><i class="fa fa-upload" onclick="filesel.click();"></i>
     <div id="instructions">L-click (cam mode): Rotate camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R-click (cam mode): Pan camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double-click: Select Object &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <br />C: Camera mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R (object mode) : Rotate Object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T (object mode): Translate Object</div>
     <div id="bottom-container">
