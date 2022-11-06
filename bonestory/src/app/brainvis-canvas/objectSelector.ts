@@ -1,6 +1,6 @@
 // import { elementStart } from '@angular/core/src/render3/instructions';
 import * as THREE from 'three';
-// const { Object3D } = THREE;
+const { Object3D } = THREE;
 import { IIntersectionListener } from './intersectionManager';
 
 enum modes {
@@ -26,6 +26,8 @@ export default class ObjectSelector implements IIntersectionListener {
     private raycaster = new THREE.Raycaster();
     private eventdispatcher: THREE.EventDispatcher;
     private original_objcolor = {};
+
+    private intersection_point: THREE.Vector3;
 
     private toPosition: THREE.Vector3;
     private toRotation: THREE.Vector3;
@@ -101,6 +103,7 @@ export default class ObjectSelector implements IIntersectionListener {
         else if(this.previousSelectedObject.name != undefined && this.state == modes.Rotation){
             this.interactive = false;
             this.isobjrotating = true;
+
             const temp_rot = this.previousSelectedObject.rotation.clone();
             this.srotation = temp_rot.toVector3();
             this.eventdispatcher.dispatchEvent({type:'r_start', rotation: temp_rot});
@@ -201,7 +204,7 @@ export default class ObjectSelector implements IIntersectionListener {
         }
 
     }
-
+    
     onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         //
         if(this.isdragging){
@@ -228,14 +231,13 @@ export default class ObjectSelector implements IIntersectionListener {
             // newObject: this.previousSelectedObject
         });
     }
-    setkey(pointer) {
-    
-        if (pointer.key == 't') {
+    setkey(event: any) {
+        if (event.key == 't') {
           this.state = modes.Translation; //Translation
 
-        } else if (pointer.key == 'r') {
-          this.state = modes.Rotation; //Rotation
-        } else if (pointer.key == 'c'){
+        } else if (event.key == 'r') {
+            this.state = modes.Rotation; //Rotation
+        } else if (event.key == 'c'){
           this.state = modes.Cammode; // camera
         }
         else{
@@ -363,6 +365,10 @@ export default class ObjectSelector implements IIntersectionListener {
 
     getmode(){
         return this.state;
+    }
+
+    getintersection_point(){
+        return this.intersection_point;
     }
 
     getcurrobject(){

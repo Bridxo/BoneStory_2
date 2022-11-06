@@ -1,8 +1,9 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, EventEmitter, Output } from '@angular/core';
 import { ProvenanceService } from './provenance.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpRequest, HttpEvent } from '@angular/common/http';
 import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.component';
 import * as THREE from 'three';
+import { Observable } from 'rxjs';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -10,9 +11,15 @@ import * as THREE from 'three';
 })
 export class AppComponent implements OnInit {
   title = 'app';
+  public formdata: any;
   public upload_show: boolean = false;
   multipleImages = [];
+  private BCC: BrainvisCanvasComponent;
+  fileinfos: Observable<any> | null = null;
   private eventdispatcher: THREE.EventDispatcher;
+
+  @Output() Keyup = new EventEmitter<string>();
+  
   @ViewChild('multipleInput', { static: false })
   multipleInput!: ElementRef;
 
@@ -21,11 +28,12 @@ export class AppComponent implements OnInit {
     this.eventdispatcher = new THREE.EventDispatcher();
     console.log('constructor');
   }
-  top_button_Canvas() {
-    // BrainvisCanvasComponent
-    console.log('top_button');
-    window.event
+  addEventListener(type, listener){
+    this.eventdispatcher.addEventListener(type,listener);
+  }
 
+  top_button_Canvas() {
+    this.BCC.top_button_press;
   }
  
   selectMultipleImage(event: any) {
@@ -35,18 +43,19 @@ export class AppComponent implements OnInit {
   }
  
   onMultipleSubmit() {
-    const formdata = new FormData()
+    this.formdata = new FormData();
  
     for (let img of this.multipleImages) {
-      formdata.append('files',img)
+      //store form name as files with file data
+      this.formdata.append('files',img)
     }
  
-    this.http.post<any>('http://localhost:3000/multipleFiles', formdata)
+    this.http.post<any>('http://localhost:3000/multipleFiles', this.formdata)
       .subscribe((res) => {
         console.log(res)
         this.multipleInput.nativeElement.value = ""
-        console.log(res.path)        
     })
+    console.log(this.formdata)
   }
   toggle_upload(){
     this.upload_show = !this.upload_show;
@@ -58,7 +67,9 @@ export class AppComponent implements OnInit {
       this.onMultipleSubmit();
     }
   }
-
+  get_STLfiles(): Observable<any> {
+    return this.http.get(`http://localhost:3000/multipleFiles`);
+  }
   
   ngOnInit() {
     console.log('init?');

@@ -1,7 +1,7 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, HostListener } from '@angular/core';
+import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output, HostListener } from '@angular/core';
 
 import { fileURLToPath } from 'url';
-import * as fs from 'fs';
+
 import { readFile, writeFile } from 'fs/promises';
 
 import * as THREE from 'three';
@@ -28,23 +28,37 @@ import { addListeners } from './provenanceListeners';
 import { AppComponent } from '../app.component';
 import { read } from 'fs';
 
+enum modes {
+  Translation = 0,
+  Rotation = 1,
+  Cammode = 2,
+}
 
 @Component({
   selector: 'app-brainvis-canvas',
   template: '',
   styleUrls: ['./brainvis-canvas.component.css']
 })
-
+@Injectable({
+  providedIn: 'root'
+})
 
 export class BrainvisCanvasComponent {
+
   private _showSlice = false;
   private _showSliceHandle = false;
   private _showObjects = true;
   private objectSelector: ObjectSelector;
+  private appcomponent: AppComponent;
   private mm;
   private mode;
   // private eventdispatcher = new THREE.EventDispatcher();
   // private annotationAnchorSelector: AnnotationAnchorSelector;
+  @Input() top_button_press() {
+    this.top_button_action();
+    this.top_button_pressed.emit();
+  }
+  @Output() top_button_pressed = new EventEmitter<boolean>();
 
   @Input() set showSlice(showSlice: boolean) {
     this._showSlice = showSlice;
@@ -158,8 +172,8 @@ export class BrainvisCanvasComponent {
     this.camera.right = width / 2;
     this.camera.top = height / 2;
     this.camera.bottom = height / -2;
-    this.camera.near = 1;
-    this.camera.far = 1000;
+    this.camera.near = 0.1;
+    this.camera.far = 1500;
     //perspective camera 
     // this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -183,7 +197,7 @@ export class BrainvisCanvasComponent {
 
     this.scene.background = new THREE.Color('black');
     // this.camera = new THREE.PerspectiveCamera(85, this.width / this.height, 0.1, 20000);
-    this.camera = new THREE.OrthographicCamera(this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 1, 4000);
+    this.camera = new THREE.OrthographicCamera(this.width / - 2, this.width / 2, this.height / 2, this.height / - 2, 0, 1500);
 
     this.renderer.setSize(this.width, this.height);
 
@@ -196,15 +210,14 @@ export class BrainvisCanvasComponent {
     // this.scene.rotateX(-90);
 
     // Initial camera position
-    this.controls.position0.set(0, 0, 5);
+    // this.controls.position0.set(2, 2, 2);
     this.controls.reset();
     //HL_init camera position toward zoomed out
-    this.camera.position.set(1187.0,181.0, -471.0);
 
     //change starting position of the camera
-    let cc_1 = new THREE.Vector3(-3.0910644329944716, -360.60060594128834, 136.36674723121544);
-    let cc_2 = new THREE.Vector3(88.56415535026616, 4.1676014986671985, -19.330792759980017);
-    let cc_3 = new THREE.Vector3(-0.007806819749730532, 0.21960363780433093, 0.9755579407849119);
+    let cc_1 = new THREE.Vector3(63.93992225147875, 401.18157204810524, 139.4781919067431);
+    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_3 = new THREE.Vector3(-0.010160451169232696, -0.042792654981214547, 0.9990323087425409);
     this.controls.changeCamera(cc_1,cc_2,cc_3,0);
 
 
@@ -315,22 +328,22 @@ export class BrainvisCanvasComponent {
     //   });
 
     // Load STL models
-    const dir = '/Users/HeejunLee/Desktop/example1.stl'
-    // const conts = fs.readFile(dir, (err,data)=>{
-    //   console.log(data)});
+    var fs = require('fs');
+    // const conts = fs.readFileSync(dir, (err,data)=>{
+      // console.log(data)});
     const loaderSTL = new STLLoader();
-    // const path = require('path');
-    // const fs = require('fs');
-    // const __dirname = dirname(__filename);
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/lego_cape_1.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0x9FE350, specular: 0x111111, shininess: 200 });
+    // const alpha = this.appcomponent.get_STLfiles();
+    // console.log(alpha);
+    // const STLfileDirectory = "C:/Users/HeejunLee/Desktop/server/uploads";
+    // const paths = fs.promises.readdir(STLfileDirectory, { withFileTypes: true});
+    loaderSTL.load('assets/SP_1.stl', function(geometry) {
+      const material = new THREE.MeshPhongMaterial({ color: 0x9FE350, specular: 0x111111, shininess: 200, wireframe: true });
+      
       const mesh = new THREE.Mesh(geometry, material);
       let centroid = new THREE.Vector3();
       mesh.geometry.computeBoundingBox();
       mesh.geometry.boundingBox.getCenter(centroid);
-      // centroid.x = centroid.x - 700.0;
-      // centroid.y = centroid.y - 100.0;
-      // centroid.z = centroid.z - 200.0;
+
       mesh.name = 'f4';
       geometry.center();
       mesh.position.copy(centroid);
@@ -338,16 +351,14 @@ export class BrainvisCanvasComponent {
       this.objects.add(mesh);
     }.bind(this));
 
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/lego_cape_2.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0xE36250, specular: 0x111111, shininess: 200 });
+    loaderSTL.load('assets/SP_2.stl', function(geometry) {
+      const material = new THREE.MeshPhongMaterial({ color: 0xE36250, specular: 0x111111, shininess: 200});
+
       const mesh = new THREE.Mesh(geometry, material);
       let centroid = new THREE.Vector3();
       mesh.geometry.computeBoundingBox();
       mesh.geometry.boundingBox.getCenter(centroid);
-      // console.log(centroid);
-      // centroid.x = centroid.x - 700.0;
-      // centroid.y = centroid.y - 100.0;
-      // centroid.z = centroid.z - 200.0;
+
       mesh.name = 'f5';
       geometry.center();
       mesh.position.copy(centroid);
@@ -355,15 +366,13 @@ export class BrainvisCanvasComponent {
       this.objects.add(mesh);
     }.bind(this));
 
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/fracture_1.stl', function(geometry) {
+    loaderSTL.load('assets/SP_3.stl', function(geometry) {
       const material = new THREE.MeshPhongMaterial({ color: 0xE3DE50, specular: 0x111111, shininess: 200 });
       const mesh = new THREE.Mesh(geometry, material);
       let centroid = new THREE.Vector3();
       mesh.geometry.computeBoundingBox();
       mesh.geometry.boundingBox.getCenter(centroid);
-      centroid.x = centroid.x - 700.0;
-      centroid.y = centroid.y - 100.0;
-      centroid.z = centroid.z - 200.0;
+
       mesh.name = 'f1';
       geometry.center();
       mesh.position.copy(centroid);
@@ -402,8 +411,9 @@ export class BrainvisCanvasComponent {
       mesh.rotation.set(0,0,0);
       this.objects.add(mesh);
     }.bind(this));
-    
 
+    this.scene.add(new THREE.GridHelper(500, 10));
+    this.scene.add(new THREE.AxesHelper(500));
     // this.meshManipulator = new MeshManipulatorWidget();
     // this.scene.add(this.meshManipulator);
     this.scene.add(this.mm);
@@ -517,6 +527,7 @@ export class BrainvisCanvasComponent {
     this.objectSelector.addEventListener('interactive', (event: any) => {
       const inter = this.objectSelector.getinteractive();
       const mode = this.objectSelector.getmode();
+      const intersection_point = this.objectSelector.getintersection_point();
       this.selectedobj = this.objectSelector.getcurrobject();
       this.setInteractive(inter);
       if (mode == 0 &&this.selectedobj!=undefined){ // Translation 
@@ -594,6 +605,7 @@ export class BrainvisCanvasComponent {
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
+    console.log(newOrientation);
     this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
@@ -782,6 +794,7 @@ export class BrainvisCanvasComponent {
     }
   }
 
+  
 //HL_object related functions
   
   // moveselectedobject = (event) => {
@@ -811,25 +824,161 @@ export class BrainvisCanvasComponent {
 
   recenter_mm(){
     const objpose = new THREE.Vector3();
+    const mode = this.objectSelector.getmode();
     this.selectedobj.geometry.computeBoundingBox();
     this.selectedobj.geometry.boundingBox.getCenter(objpose);
-    // console.log(objpose);
-    this.mm.position.set(objpose.x,objpose.y,objpose.z);
+    if(mode == 1){
+      // objpose.copy(this.objectSelector.getintersection_point());
+      this.mm.position.set(objpose.x,objpose.y,objpose.z);
+    }
+    
+    else
+      this.mm.position.set(objpose.x,objpose.y,objpose.z);
   }
 
-  center_button_Canvas(){
-    let cc_1 = new THREE.Vector3(-3.0910644329944716, -360.60060594128834, 136.36674723121544);
-    let cc_2 = new THREE.Vector3(88.56415535026616, 4.1676014986671985, -19.330792759980017);
-    let cc_3 = new THREE.Vector3(-0.007806819749730532, 0.21960363780433093, 0.9755579407849119);
-    this.controls.changeCamera(cc_1,cc_2,cc_3,0);
+  top_button_action = () => {
+    let position = this.controls.camera.position.toArray();
+    let target = this.controls.target.toArray();
+    let up = this.controls.camera.up.toArray();
+    let orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraStart',
+      orientation
+    });
+    let cc_1 = new THREE.Vector3(79.04693728336045, 48.83983320706323, 435.31227320094433);
+    let cc_2 = new THREE.Vector3(59.43814703496157, 52.492587532642425, 41.07232454541233);
+    let cc_3 = new THREE.Vector3(-0.0011203332525122872, -0.9855698174259453, 0.16926570778555647);
+
+    this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+    position = cc_1.toArray();
+    target =  cc_2.toArray();
+    up = cc_3.toArray();
+    orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraEnd',
+      orientation
+    });
   }
 
-  top_button_Canvas(){
-    let cc_1 = new THREE.Vector3(-3.0910644329944716, -360.60060594128834, 136.36674723121544);
-    let cc_2 = new THREE.Vector3(88.56415535026616, 4.1676014986671985, -19.330792759980017);
-    let cc_3 = new THREE.Vector3(-0.007806819749730532, 0.21960363780433093, 0.9755579407849119);
-    this.controls.changeCamera(cc_1,cc_2,cc_3,0);
+  right_button_action = () => {
+    let position = this.controls.camera.position.toArray();
+    let target = this.controls.target.toArray();
+    let up = this.controls.camera.up.toArray();
+    let orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraStart',
+      orientation
+    });
+    let cc_1 = new THREE.Vector3(-108.0751812993395, 14.601341479214216, 51.487494861984615);
+    let cc_2 = new THREE.Vector3(62.51998096992455, 16.120732697909617, 52.59253054217673);
+    let cc_3 = new THREE.Vector3(-0.18432018828845748, -0.01905803569663521, 0.9826814638855953);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+
+    position = cc_1.toArray();
+    target =  cc_2.toArray();
+    up = cc_3.toArray();
+    orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraEnd',
+      orientation
+    });
   }
+
+  down_button_action = () => {
+    let position = this.controls.camera.position.toArray();
+    let target = this.controls.target.toArray();
+    let up = this.controls.camera.up.toArray();
+    let orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraStart',
+      orientation
+    });
+    let cc_1 = new THREE.Vector3(78.93395034955421, 18.033605300660255, -341.80562730430455);
+    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_3 = new THREE.Vector3(-0.011813425761827983, 0.984677279905051, -0.17398591152819845);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+
+    position = cc_1.toArray();
+    target =  cc_2.toArray();
+    up = cc_3.toArray();
+    orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraEnd',
+      orientation
+    });
+  }
+
+  left_button_action = () => {
+    let position = this.controls.camera.position.toArray();
+    let target = this.controls.target.toArray();
+    let up = this.controls.camera.up.toArray();
+    let orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraStart',
+      orientation
+    });
+    let cc_1 = new THREE.Vector3(231.82217677091097, 19.934669261568146, 31.893269008013046);
+    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_3 = new THREE.Vector3(0.29515668302589193, 0.04500580004728319, 0.9543882912247648);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+
+    position = cc_1.toArray();
+    target =  cc_2.toArray();
+    up = cc_3.toArray();
+    orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraEnd',
+      orientation
+    });
+  }
+
+  front_button_action = () => {
+    let position = this.controls.camera.position.toArray();
+    let target = this.controls.target.toArray();
+    let up = this.controls.camera.up.toArray();
+    let orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraStart',
+      orientation
+    });
+    let cc_1 = new THREE.Vector3(63.93992225147875, 401.18157204810524, 139.4781919067431);
+    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_3 = new THREE.Vector3(-0.010160451169232696, -0.042792654981214547, 0.9990323087425409);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+
+    position = cc_1.toArray();
+    target =  cc_2.toArray();
+    up = cc_3.toArray();
+    orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraEnd',
+      orientation
+    });
+  }  
+  back_button_action = () => {
+    let position = this.controls.camera.position.toArray();
+    let target = this.controls.target.toArray();
+    let up = this.controls.camera.up.toArray();
+    let orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraStart',
+      orientation
+    });
+    let cc_1 = new THREE.Vector3(73.91332775438788, -377.7652164602866, 29.203749259139734);
+    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_3 = new THREE.Vector3(0.0022441251051574444, -0.23613711547278343, 0.9717171535989431);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+
+    position = cc_1.toArray();
+    target =  cc_2.toArray();
+    up = cc_3.toArray();
+    orientation = { position, target, up };
+    this.eventdispatcher.dispatchEvent({
+      type: 'cameraEnd',
+      orientation
+    });
+  }
+  
   
 }
 

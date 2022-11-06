@@ -13,6 +13,7 @@ export interface IIntersectionListener {
     onMouseDown: (intersection: THREE.Intersection, pointer: MouseEvent) => void;
     onMouseUp: (intersection: THREE.Intersection, pointer: MouseEvent) => void;
     onMouseMove: (intersection: THREE.Intersection, pointer: MouseEvent) => void;
+    setkey: (intersection?: THREE.Intersection, pointer?: MouseEvent, event?: any) => void;
     getObjects: () => THREE.Object3D[];
     isEnabled: () => boolean;
 }
@@ -48,6 +49,10 @@ export class StaticGeometryListener implements IIntersectionListener {
         return this.object.visible;
     }
 
+    setkey(intersection?: THREE.Intersection, pointer?: MouseEvent, event?: any) {
+        //
+    }
+
 }
 
 export class IntersectionManager {
@@ -63,6 +68,7 @@ export class IntersectionManager {
         domElement.addEventListener('mousemove', this.onMouseMove, false);
         domElement.addEventListener('mousedown', this.onMouseDown, false);
         domElement.addEventListener('mouseup', this.onMouseUp, false);
+        domElement.addEventListener('keydown', this.setkey, false);
     }
 
     addListener(listener: IIntersectionListener) {
@@ -151,4 +157,8 @@ export class IntersectionManager {
             }
         }
     }
+
+    setkey = (event) => {
+        var a = 1;
+    };
 }

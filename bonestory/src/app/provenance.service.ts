@@ -6,7 +6,7 @@ import {
   ProvenanceGraphTraverser,
   ActionFunctionRegistry,
 } from '@visualstorytelling/provenance-core';
-
+4
 @Injectable({
   providedIn: 'root'
 })
