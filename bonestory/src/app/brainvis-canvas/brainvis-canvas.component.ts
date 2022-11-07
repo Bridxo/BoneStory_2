@@ -1,8 +1,6 @@
-import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output, HostListener } from '@angular/core';
+import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output, OnDestroy, HostListener } from '@angular/core';
 
-import { fileURLToPath } from 'url';
-
-import { readFile, writeFile } from 'fs/promises';
+import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 
 import * as THREE from 'three';
 // import * as AMI from 'ami.js';
@@ -26,7 +24,6 @@ import { registerActions } from './provenanceActions';
 import { addListeners } from './provenanceListeners';
 
 import { AppComponent } from '../app.component';
-import { read } from 'fs';
 
 enum modes {
   Translation = 0,
@@ -44,6 +41,13 @@ enum modes {
 })
 
 export class BrainvisCanvasComponent {
+  //check user offline, online
+  onlineEvent: Observable<Event>;
+  offlineEvent: Observable<Event>;
+  subscriptions: Subscription[] = [];
+
+  //sync with main (appcomponent) and stl_load_models
+
 
   private _showSlice = false;
   private _showSliceHandle = false;
@@ -150,6 +154,9 @@ export class BrainvisCanvasComponent {
   // HJ added values
   private selectedobj: THREE.Mesh;
 
+  // stl file information
+  private stl_objs: FormData;
+
   constructor(elem: ElementRef, provenance: ProvenanceService) {
     // registerActions(provenance.registry, this);
     // addListeners(provenance.tracker, this);
@@ -187,6 +194,23 @@ export class BrainvisCanvasComponent {
 
 
   ngOnInit() {
+
+    //check user offline, online
+    this.onlineEvent = fromEvent(window, 'online');
+    this.offlineEvent = fromEvent(window, 'offline');
+
+    this.subscriptions.push(this.onlineEvent.subscribe(e => {
+      // this.connectionStatusMessage = 'Back to online';
+      // this.connectionStatus = 'online';
+      console.log('Online...');
+    }));
+
+    this.subscriptions.push(this.offlineEvent.subscribe(e => {
+      // this.connectionStatusMessage = 'Connection lost! You are not connected to internet';
+      // this.connectionStatus = 'offline';
+      console.log('Offline...');
+    }));
+
     // todo: remove object from window
     registerActions(this.service.registry, this);
     addListeners(this.service.tracker, this);
@@ -241,6 +265,14 @@ export class BrainvisCanvasComponent {
     this.addEventListeners();
     this.animate();
   }
+
+  ngOnDestroy(): void {
+    /**
+    * Unsubscribe all subscriptions to avoid memory leak
+    */
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+  }
+
 
   initScene() {
 
@@ -327,96 +359,7 @@ export class BrainvisCanvasComponent {
     //     window.console.log(error);
     //   });
 
-    // Load STL models
-    var fs = require('fs');
-    // const conts = fs.readFileSync(dir, (err,data)=>{
-      // console.log(data)});
-    const loaderSTL = new STLLoader();
-    // const alpha = this.appcomponent.get_STLfiles();
-    // console.log(alpha);
-    // const STLfileDirectory = "C:/Users/HeejunLee/Desktop/server/uploads";
-    // const paths = fs.promises.readdir(STLfileDirectory, { withFileTypes: true});
-    loaderSTL.load('assets/SP_1.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0x9FE350, specular: 0x111111, shininess: 200, wireframe: true });
-      
-      const mesh = new THREE.Mesh(geometry, material);
-      let centroid = new THREE.Vector3();
-      mesh.geometry.computeBoundingBox();
-      mesh.geometry.boundingBox.getCenter(centroid);
-
-      mesh.name = 'f4';
-      geometry.center();
-      mesh.position.copy(centroid);
-      mesh.rotation.set(0,0,0);
-      this.objects.add(mesh);
-    }.bind(this));
-
-    loaderSTL.load('assets/SP_2.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0xE36250, specular: 0x111111, shininess: 200});
-
-      const mesh = new THREE.Mesh(geometry, material);
-      let centroid = new THREE.Vector3();
-      mesh.geometry.computeBoundingBox();
-      mesh.geometry.boundingBox.getCenter(centroid);
-
-      mesh.name = 'f5';
-      geometry.center();
-      mesh.position.copy(centroid);
-      mesh.rotation.set(0,0,0);
-      this.objects.add(mesh);
-    }.bind(this));
-
-    loaderSTL.load('assets/SP_3.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0xE3DE50, specular: 0x111111, shininess: 200 });
-      const mesh = new THREE.Mesh(geometry, material);
-      let centroid = new THREE.Vector3();
-      mesh.geometry.computeBoundingBox();
-      mesh.geometry.boundingBox.getCenter(centroid);
-
-      mesh.name = 'f1';
-      geometry.center();
-      mesh.position.copy(centroid);
-      mesh.rotation.set(0,0,0);
-      this.objects.add(mesh);
-    }.bind(this));
-
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/fracture_2.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0x50E3DB, specular: 0x111111, shininess: 200 });
-      const mesh = new THREE.Mesh(geometry, material);
-      let centroid = new THREE.Vector3();
-      mesh.geometry.computeBoundingBox();
-      mesh.geometry.boundingBox.getCenter(centroid);
-      centroid.x = centroid.x - 700.0;
-      centroid.y = centroid.y - 100.0;
-      centroid.z = centroid.z - 200.0;
-      mesh.name = 'f2';
-      geometry.center();
-      mesh.position.copy(centroid);
-      mesh.rotation.set(0,0,0);
-      this.objects.add(mesh);
-    }.bind(this));
-
-    loaderSTL.load('https://raw.githack.com/Bridxo/CT_example/main/fracture_3.stl', function(geometry) {
-      const material = new THREE.MeshPhongMaterial({ color: 0xD250E3, specular: 0x111111, shininess: 200 });
-      const mesh = new THREE.Mesh(geometry, material);
-      let centroid = new THREE.Vector3();
-      mesh.geometry.computeBoundingBox();
-      mesh.geometry.boundingBox.getCenter(centroid);
-      centroid.x = centroid.x - 700.0;
-      centroid.y = centroid.y - 100.0;
-      centroid.z = centroid.z - 200.0;
-      mesh.name = 'f3';
-      geometry.center();
-      mesh.position.copy(centroid);
-      mesh.rotation.set(0,0,0);
-      this.objects.add(mesh);
-    }.bind(this));
-
-    this.scene.add(new THREE.GridHelper(500, 10));
-    this.scene.add(new THREE.AxesHelper(500));
-    // this.meshManipulator = new MeshManipulatorWidget();
-    // this.scene.add(this.meshManipulator);
-    this.scene.add(this.mm);
+    // this.load_stl_models();
   }
   
   addEventListeners() {
@@ -426,6 +369,13 @@ export class BrainvisCanvasComponent {
       this.onWindowResize,
       false
     );
+
+    window.addEventListener("beforeunload", function (e) {
+      var confirmationMessage = "\o/";
+      console.log('user terminated');
+      (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+      return confirmationMessage;                            //Webkit, Safari, Chrome
+    });
     
     window.addEventListener('keydown', (event) => {
       // window.console.log(event);
@@ -917,9 +867,9 @@ export class BrainvisCanvasComponent {
       type: 'cameraStart',
       orientation
     });
-    let cc_1 = new THREE.Vector3(231.82217677091097, 19.934669261568146, 31.893269008013046);
-    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
-    let cc_3 = new THREE.Vector3(0.29515668302589193, 0.04500580004728319, 0.9543882912247648);
+    let cc_1 = new THREE.Vector3(232.07991576629846, 16.34214851857466, 71.45038116439449);
+    let cc_2 = new THREE.Vector3(62.51998096992455, 16.120732697909617, 52.59253054217673);
+    let cc_3 = new THREE.Vector3(0.06835416280425602, -0.0318972021993547, 0.9971510802876224);
     this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
 
     position = cc_1.toArray();
@@ -941,8 +891,8 @@ export class BrainvisCanvasComponent {
       type: 'cameraStart',
       orientation
     });
-    let cc_1 = new THREE.Vector3(63.93992225147875, 401.18157204810524, 139.4781919067431);
-    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_1 = new THREE.Vector3(4.510117573064642, 402.5469684242999, 115.26411789752498);
+    let cc_2 = new THREE.Vector3(3.090176291508914, 17.48612907409751, 28.37845653295272);
     let cc_3 = new THREE.Vector3(-0.010160451169232696, -0.042792654981214547, 0.9990323087425409);
     this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
 
@@ -964,8 +914,8 @@ export class BrainvisCanvasComponent {
       type: 'cameraStart',
       orientation
     });
-    let cc_1 = new THREE.Vector3(73.91332775438788, -377.7652164602866, 29.203749259139734);
-    let cc_2 = new THREE.Vector3(62.519980969923026, 16.12073269790277, 52.592530542170834);
+    let cc_1 = new THREE.Vector3(43.31978666792229, -368.4126787242886, -13.01965410541044);
+    let cc_2 = new THREE.Vector3(31.926439883457444, 25.473270433900815, 10.36912717762066);
     let cc_3 = new THREE.Vector3(0.0022441251051574444, -0.23613711547278343, 0.9717171535989431);
     this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
 
@@ -978,7 +928,70 @@ export class BrainvisCanvasComponent {
       orientation
     });
   }
+
+  load_stl_models = async(alpha) => {
+        const Colorcode = [0xE3DE50, 0x9FE350, 0xE36250, 0x50E3DB, 0xD250E3, 0x641E16]
+
+        //Remove previous objects
+        // for( var i = this.scene.children.length - 1; i >= 0; i--) { 
+        //   let obj = this.scene.children[i];
+        //   this.scene.remove(obj); 
+        // }
+        let number_of_stl = 0; //incresase numbers
+
+        // Load STL models
+        for(var files of alpha)
+        {
+          let name = 'f' + number_of_stl.toString();
+          var newpath = new String('assets/');
+          const color = Colorcode[number_of_stl];
+          newpath = newpath.concat(files);
+          
+          let loaderSTL = new STLLoader();
+          loaderSTL.load(newpath.toString(), function(geometry) {
+            let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 200 });
+            let mesh = new THREE.Mesh(geometry, material);
+            let centroid = new THREE.Vector3();
+            mesh.geometry.computeBoundingBox();
+            mesh.geometry.boundingBox.getCenter(centroid);
+      
+            mesh.name = name.toString();
+            geometry.center();
+            mesh.position.copy(centroid);
+            mesh.rotation.set(0,0,0);
+            this.objects.add(mesh);
+          }.bind(this));
+          number_of_stl++;
+        }
+        // for testing
+        // let loaderSTL = new STLLoader();
+        // loaderSTL.load('assets/1667854819543.stl', function(geometry) {
+        //   let material = new THREE.MeshPhongMaterial({ color: Colorcode[5], specular: 0x111111, shininess: 200 });
+        //   let mesh = new THREE.Mesh(geometry, material);
+        //   let centroid = new THREE.Vector3();
+        //   mesh.geometry.computeBoundingBox();
+        //   mesh.geometry.boundingBox.getCenter(centroid);
+    
+        //   mesh.name = 'f-test';
+        //   geometry.center();
+        //   mesh.position.copy(centroid);
+        //   mesh.rotation.set(0,0,0);
+        //   this.objects.add(mesh);
+        // }.bind(this));
+        this.scene.add(new THREE.GridHelper(500, 10));
+        this.scene.add(new THREE.AxesHelper(500));
+        // this.meshManipulator = new MeshManipulatorWidget();
+        // this.scene.add(this.meshManipulator);
+        this.scene.add(this.mm);
+  }
+
+  set_stl_models = (formdata) => {
+    this.stl_objs = formdata;
+    return 0;
+  }
   
+
+
   
 }
 

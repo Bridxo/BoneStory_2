@@ -25,6 +25,18 @@
         left: 1200px;
         top: -7px;
       }
+      .saveprov_btn {
+        text-align: center;
+        font-size: 19px;
+        display: flex;
+        border-radius: 50%;
+        color:rgb(255, 255, 255);
+        justify-content: center;
+        text-decoration: none;
+        position: fixed;
+        left: 1170px;
+        top: -7px;
+      }
       .arrow {
         border: solid tan;
         border-width: 0 7px 7px 0;
@@ -126,9 +138,11 @@
           type="file"
           name="images"
           multiple
-          (change)="onselect_submit($event)" />
+          (change)="onselect_submit($event, canvas.load_stl_models)"
+          />
     </div>
-    <p class="upload_btn"><i class="fa fa-upload" style="cursor: pointer;" title="Upload STL files" onclick="filesel.click();"></i>
+    <p class="upload_btn"><i class="fa fa-upload" style="cursor: pointer;" title="Load STL files" onclick="filesel.click()" ></i>
+      <p class="saveprov_btn"><i class="fa fa-download" style="cursor: pointer;" title="Save Provenance" onclick="filesel.click()" ></i>
     <div id="instructions">L-click (cam mode): Rotate camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R-click (cam mode): Pan camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double-click: Select Object &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <br />C: Camera mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R (object mode) : Rotate Object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T (object mode): Translate Object</div>
     <div id="bottom-container">

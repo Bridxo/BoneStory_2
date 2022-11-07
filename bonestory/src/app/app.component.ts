@@ -3,7 +3,7 @@ import { ProvenanceService } from './provenance.service';
 import { HttpClient, HttpRequest, HttpEvent } from '@angular/common/http';
 import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.component';
 import * as THREE from 'three';
-import { Observable } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -13,7 +13,8 @@ export class AppComponent implements OnInit {
   title = 'app';
   public formdata: any;
   public upload_show: boolean = false;
-  multipleImages = [];
+  public multipleImages = [];
+  public imgspath = [];
   private BCC: BrainvisCanvasComponent;
   fileinfos: Observable<any> | null = null;
   private eventdispatcher: THREE.EventDispatcher;
@@ -22,6 +23,10 @@ export class AppComponent implements OnInit {
   
   @ViewChild('multipleInput', { static: false })
   multipleInput!: ElementRef;
+
+  private _data$ = new ReplaySubject(1);
+  public data$ = this._data$.asObservable();
+  
 
   constructor(private provenance: ProvenanceService, private http: HttpClient) {
     // console.log(arg);
@@ -42,7 +47,7 @@ export class AppComponent implements OnInit {
     }
   }
  
-  onMultipleSubmit() {
+  async onMultipleSubmit(cb) {
     this.formdata = new FormData();
  
     for (let img of this.multipleImages) {
@@ -52,28 +57,36 @@ export class AppComponent implements OnInit {
  
     this.http.post<any>('http://localhost:3000/multipleFiles', this.formdata)
       .subscribe((res) => {
-        console.log(res)
-        this.multipleInput.nativeElement.value = ""
-    })
-    console.log(this.formdata)
+        this.imgspath = res.path;
+        console.log(this.imgspath);
+        this.multipleInput.nativeElement.value = "";
+        cb(this.imgspath);
+    }
+    
+    )
+
   }
   toggle_upload(){
     this.upload_show = !this.upload_show;
   }
 
-  onselect_submit(event: any) {
+  onselect_submit = (event: any, cb: any) => {
     if (event.target.files.length > 0) {
       this.multipleImages = event.target.files;
-      this.onMultipleSubmit();
+      this.onMultipleSubmit(cb);
     }
+
+    
   }
-  get_STLfiles(): Observable<any> {
-    return this.http.get(`http://localhost:3000/multipleFiles`);
+  get_STLfiles() {
+    return this.imgspath;
   }
   
   ngOnInit() {
     console.log('init?');
   }
+
+
 }
 
 

@@ -16,9 +16,12 @@
     ]
   },
   "dependencies": {
+    "@angular/core": "^14.2.9",
+    "fs-web": "^1.0.1",
     "google-icon": "^1.0.1",
     "path": "^0.12.7",
     "stream": "0.0.2",
-    "three-stdlib": "^2.4.0"
+    "three-stdlib": "^2.4.0",
+    "web-fs": "^2.1.0"
   }
 }

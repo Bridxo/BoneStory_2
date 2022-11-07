@@ -251,6 +251,13 @@
   dependencies:
     tslib "^2.3.0"
 
+"@angular/core@^14.2.9":
+  version "14.2.9"
+  resolved "https://registry.yarnpkg.com/@angular/core/-/core-14.2.9.tgz#e62e3d28c2ab6c18f3fb1eec7e26f99b1e8d9937"
+  integrity sha512-6bExQgGmN9qmBbVMl7WaZ1KFSfTgFK+MmLbvoh4a29b47h7wvEuUWO7ulczzoUJQfMGfXU/4ypEW1a8ZhX+Xrg==
+  dependencies:
+    tslib "^2.3.0"
+
 "@angular/core@~8.2.0":
   version "8.2.14"
   resolved "https://registry.yarnpkg.com/@angular/core/-/core-8.2.14.tgz#35566f5b19480369229477e7e0e0fde740bd5204"
@@ -6617,6 +6624,13 @@ fs-vacuum@^1.2.10, fs-vacuum@~1.2.10:
     path-is-inside "^1.0.1"
     rimraf "^2.5.2"
 
+fs-web@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/fs-web/-/fs-web-1.0.1.tgz#5317e717af94db1687da82a48fc6ee4f808b121b"
+  integrity sha512-PUVyPo4SUkGGF3IxFAlzFMCsBi9g9tiRaruN7Bqqy/JHGxCPcX9FiW3w9EnQSG5j/vy3aG+vXJWxaxY2SI4wig==
+  dependencies:
+    path "git://github.com/component/path#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4"
+
 fs-write-stream-atomic@^1.0.8, fs-write-stream-atomic@~1.0.10:
   version "1.0.10"
   resolved "https://registry.yarnpkg.com/fs-write-stream-atomic/-/fs-write-stream-atomic-1.0.10.tgz#b47df53493ef911df75731e70a9ded0189db40c9"
@@ -11030,6 +11044,10 @@ path@^0.12.7:
     process "^0.11.1"
     util "^0.10.3"
 
+"path@git://github.com/component/path#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4":
+  version "1.0.0"
+  resolved "git://github.com/component/path#7b4f23c38833a5232cd5e3d50ccb8cd13dbcd2f4"
+
 performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
@@ -14404,6 +14422,11 @@ wcwidth@^1.0.0, wcwidth@^1.0.1:
   integrity sha1-8LDc+RW8X/FSivrbLA4XtTLaL+g=
   dependencies:
     defaults "^1.0.3"
+
+web-fs@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/web-fs/-/web-fs-2.1.0.tgz#206d0c43ee5cd75a7f86da7f22b7f6869eea7705"
+  integrity sha512-THXAvJHEoAsFCT6J9J8i3vL0XHLv5zzHPqAM7Gopq9WMd1geXh1rTiBWVoknZiUscBWa084hyBVzs7WNOCu0AA==
 
 webdriver-js-extender@2.1.0:
   version "2.1.0"

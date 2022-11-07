@@ -45,7 +45,7 @@ export default class Trackball{
 
   private forceState = -1;
 
-  private staticMoving = false;
+  private staticMoving = true;
   private dynamicDampingFactor = 0.2;
 
   private minDistance = 0;
