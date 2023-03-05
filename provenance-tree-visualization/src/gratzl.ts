@@ -72,7 +72,7 @@ export default function GratzlLayout<T>(
     });
   });
 
-  /* start at the deepest leaf of activeNode. */
+  /* start at the deepest (active) leaf of activeNode. */
   let deepestLeaf = current;
   deepestLeaf.leaves().forEach(leaf => {
     if (deepestLeaf.depth < leaf.depth) {
@@ -80,7 +80,7 @@ export default function GratzlLayout<T>(
     }
   });
 
-  setTreeX(deepestLeaf, 0);
+  setTreeX(deepestLeaf,0 );
 
   //
   // const maxX = Math.max.apply(null, widths);

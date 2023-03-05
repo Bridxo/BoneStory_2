@@ -2,7 +2,7 @@ import * as THREE from 'three';
 // const { Object3D } = THREE;
 import { IIntersectionListener } from './intersectionManager';
 
-export default class AnnotationAnchorSelector extends THREE.EventDispatcher implements IIntersectionListener {
+export default class Selector extends THREE.EventDispatcher implements IIntersectionListener {
     private objects: THREE.Object3D;
     private previousSelectedObject: THREE.Mesh;
     private previousColor: number;
@@ -11,6 +11,7 @@ export default class AnnotationAnchorSelector extends THREE.EventDispatcher impl
         super();
         this.objects = objects;
     }
+    setkey: (intersection?: THREE.Intersection<THREE.Object3D<THREE.Event>>, pointer?: MouseEvent, event?: any) => void;
 
     onMouseDown(intersection: THREE.Intersection, pointer: MouseEvent) {
         if (intersection !== undefined) {

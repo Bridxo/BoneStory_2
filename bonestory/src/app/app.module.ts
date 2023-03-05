@@ -5,13 +5,16 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 
+
 import { ProvenanceService } from './provenance.service';
 import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.component';
-import { BrainvisCanvasControlsComponent } from './brainvis-canvas-controls/brainvis-canvas-controls.component';
 
+import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import {MatIconModule} from '@angular/material/icon';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import {MatSliderModule} from '@angular/material/slider';
 import {MatButtonModule} from '@angular/material/button';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +28,6 @@ import { HttpClientModule } from '@angular/common/http';
   declarations: [
     AppComponent,
     BrainvisCanvasComponent,
-    BrainvisCanvasControlsComponent,
     ProvenanceVisualizationComponent,
     ProvenanceSlidesComponent,
     SlideAnnotationsComponent
@@ -39,7 +41,8 @@ import { HttpClientModule } from '@angular/common/http';
     MatSidenavModule,
     MatFormFieldModule,
     MatIconModule,
-    HttpClientModule
+    HttpClientModule,
+    MatSliderModule
   ],
   providers: [ProvenanceService],
   bootstrap: [AppComponent]

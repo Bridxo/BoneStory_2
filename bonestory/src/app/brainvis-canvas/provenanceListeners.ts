@@ -24,20 +24,76 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
 
   canvas.addEventListener('cameraStart', (startEvent) => {
     const cameraEndListener = (event) => {
-      // console.log('hello---->'+ (startEvent as any).orientation.position);
       let s_1 = new Vector3((startEvent as any).orientation.position[0],(startEvent as any).orientation.position[1],(startEvent as any).orientation.position[2]);
       let s_2 = new Vector3((event as any).orientation.position[0],(event as any).orientation.position[1],(event as any).orientation.position[2]);
-      // console.log('sumup--->'+  s_1.distanceTo(s_2));
-      // console.log((event as any).orientation);
       if(s_1.distanceTo(s_2)>1.0){
-        tracker.applyAction({
-          metadata: {userIntent: 'exploration'},
-          do: 'CameraMove',
-          doArguments: [(event as any).orientation],
-          undo: 'CameraMove',
-          undoArguments: [(startEvent as any).orientation],
-        });
-      }
+        switch(canvas.viewpoint_action){
+          case 0:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration', screenshot: canvas.ScreenShot()},
+              do: 'CameraMove',
+              doArguments: [(event as any).orientation],
+              undo: 'CameraMove',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+          case 1:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration'},
+              do: 'ViewpointTop',
+              doArguments: [(event as any).orientation],
+              undo: 'ViewpointTop',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+          case 2:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration'},
+              do: 'ViewpointBottom',
+              doArguments: [(event as any).orientation],
+              undo: 'ViewpointBottom',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+          case 3:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration'},
+              do: 'ViewpointLeft',
+              doArguments: [(event as any).orientation],
+              undo: 'ViewpointLeft',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+          case 4:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration'},
+              do: 'ViewpointRight',
+              doArguments: [(event as any).orientation],
+              undo: 'ViewpointRight',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+          case 5:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration'},
+              do: 'ViewpointFront',
+              doArguments: [(event as any).orientation],
+              undo: 'ViewpointFront',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+          case 6:
+            tracker.applyAction({
+              metadata: {userIntent: 'exploration'},
+              do: 'ViewpointBack',
+              doArguments: [(event as any).orientation],
+              undo: 'ViewpointBack',
+              undoArguments: [(startEvent as any).orientation],
+            });
+            break;
+
+        }
+      } 
 
       canvas.removeEventListener('cameraEnd', cameraEndListener);
     };
@@ -65,41 +121,35 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
 
 
   canvas.addEventListener('transStart', (startEvent) => {
-    const transEndListener = (event) => {
-        tracker.applyAction({
-          metadata: {userIntent: 'selection'},
-          do: 'translateObject',
-          doArguments: [(event as any).position],
-          undo: 'translateObject',
-          undoArguments: [(startEvent as any).position],
-          })
-      canvas.removeEventListener('transEnd', transEndListener);
-    };
-  canvas.addEventListener('transEnd',transEndListener);
+      const transEndListener =  debounce ((event) => {
+        let s_1 = new Vector3((startEvent as any).position[0],(startEvent as any).position[1],(startEvent as any).position[2]);
+        let s_2 = new Vector3((event as any).position[0],(event as any).position[1],(event as any).position[2]);
+        if(s_1.distanceTo(s_2)>0){
+          tracker.applyAction({
+            metadata: {userIntent: 'selection'},
+            do: 'TranslateObject',
+            doArguments: [(event as any).position,0],
+            undo: 'TranslateObject',
+            undoArguments: [(startEvent as any).position,0],
+            });
+          }
+        canvas.removeEventListener('transEnd', transEndListener);
+      }, 0 , { trailing: true });
+    canvas.addEventListener('transEnd',transEndListener);
   });
-
+  
   canvas.addEventListener('rotationStart', (startEvent) => {
-    const rotationEndListener = (event) => {
+    const rotationEndListener = debounce ((event) => {
         tracker.applyAction({
           metadata: {userIntent: 'selection'},
           do: 'rotateObject',
           doArguments: [(event as any).rotation],
           undo: 'rotateObject',
           undoArguments: [(startEvent as any).rotation],
-          });
+          })
       canvas.removeEventListener('rotationEnd', rotationEndListener);
-    };
-  canvas.addEventListener('rotationEnd',rotationEndListener);
-  });
-
-  canvas.showrotateObjectChange.subscribe(object => {
-    tracker.applyAction({
-      metadata: {userIntent: 'selection'},
-      do: 'rotateObject',
-      doArguments: [object],
-      undo: 'rotateObject',
-      undoArguments: [!object],
-    }, true);
+        }, 0, { trailing: true });
+  canvas.addEventListener('rotationEnd', rotationEndListener);
   });
 
 
@@ -125,25 +175,8 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
     });
   });
 
-  canvas.showSliceChange.subscribe(val => {
-    tracker.applyAction({
-      metadata: {userIntent: 'configuration'},
-      do: 'showSlice',
-      doArguments: [val],
-      undo: 'showSlice',
-      undoArguments: [!val],
-    }, true);
-  });
 
-  canvas.showSliceHandleChange.subscribe(val => {
-    tracker.applyAction({
-      metadata: {userIntent: 'configuration'},
-      do: 'showSliceHandle',
-      doArguments: [val],
-      undo: 'showSliceHandle',
-      undoArguments: [!val],
-    }, true);
-  });
+
 
   canvas.showObjectsChange.subscribe(val => {
     tracker.applyAction({
@@ -160,10 +193,21 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
   canvas.selectedObjectsChange.subscribe(val => {
     tracker.applyAction({
       metadata: {userIntent: 'configuration'},
-      do: 'selectObject',
-      doArguments: [val[0],val[1],val[2],val[3]],
-      undo: 'selectObject',
-      undoArguments: [val[1],val[0],val[3],val[2]]
+      do: 'SelectObject',
+      doArguments: [val[0],val[1],val[2],val[3]], //  new , old, new color, old color
+      undo: 'SelectObject',
+      undoArguments: [val[1],val[0],val[3],val[2]] // return back old, new, old color, new color
+    }, true);
+  });
+
+
+  canvas.addEventListener('annotation', (event) => {
+    tracker.applyAction({
+      metadata: {userIntent: 'provenance'},
+      do: 'Annotation',
+      doArguments: [(event as any).text, (event as any).inter], //  new , old, new color, old color
+      undo: 'Annotation',
+      undoArguments: ['', (event as any).inter, true] // return back old, new, old color, new color
     }, true);
   });
 };

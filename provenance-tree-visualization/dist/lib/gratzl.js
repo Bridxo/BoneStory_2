@@ -41,7 +41,7 @@ function GratzlLayout(_root, _current) {
             }
         });
     });
-    /* start at the deepest leaf of activeNode. */
+    /* start at the deepest (active) leaf of activeNode. */
     var deepestLeaf = current;
     deepestLeaf.leaves().forEach(function (leaf) {
         if (deepestLeaf.depth < leaf.depth) {

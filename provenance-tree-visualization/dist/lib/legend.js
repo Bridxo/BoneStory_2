@@ -41,7 +41,7 @@ var legendData = {
         },
         {
             name: 'annotation',
-            color: '#ffffb3',
+            color: '#EEE932',
             shape: 'circle',
             opacity: 0.3
         }

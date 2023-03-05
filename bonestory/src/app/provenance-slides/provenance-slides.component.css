@@ -5,6 +5,8 @@ app-provenance-slides {
     width: 100%;
     display: block;
     background-color: #FFF;
+    overflow: hidden;
+    z-index: 9999;
 }
 
 .slides_background_rect {

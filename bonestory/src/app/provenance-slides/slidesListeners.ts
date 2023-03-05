@@ -24,7 +24,7 @@ export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: Prov
     //     element.setAttribute('accept', '.json');
     //     element.style.display = 'none';
     //     document.body.appendChild(element);
-    //     document.getElementById('input-file').addEventListener('change', (e: Event) => getFile(e))
+    //     // document.getElementById('input-file').addEventListener('change', (e: Event) => getFile(e))
     //     element.click(); // simulate click
     //     document.body.removeChild(element);
     // }
@@ -50,20 +50,20 @@ export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: Prov
     // }
 
     // function exportJson(e:Event) : void {
-    //     let myJson = deck.serializeSelf();
-    //     downloadJson(myJson);
+        // let myJson = deck.serializeSelf();
+        // downloadJson(myJson);
     // }
 
-    function downloadJson(myJson: any){
-        var sJson = JSON.stringify(myJson, null, 2);
-        var element = document.createElement('a');
-        element.setAttribute('href', "data:text/json;charset=UTF-8," + encodeURIComponent(sJson));
-        element.setAttribute('download', "slides-template.json");
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        element.click(); // simulate click
-        document.body.removeChild(element);
-    }
+    // function downloadJson(myJson: any){
+    //     var sJson = JSON.stringify(myJson, null, 2);
+    //     var element = document.createElement('a');
+    //     element.setAttribute('href', "data:text/json;charset=UTF-8," + encodeURIComponent(sJson));
+    //     element.setAttribute('download', "slides-template.json");
+    //     element.style.display = 'none';
+    //     document.body.appendChild(element);
+    //     element.click(); // simulate click
+    //     document.body.removeChild(element);
+    // }
 
     // function importJsonMerge(e: Event) : void{
     //     let element = document.createElement('input');

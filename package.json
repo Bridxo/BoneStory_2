@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@angular/core": "^14.2.9",
+    "firebase": "^9.14.0",
     "fs-web": "^1.0.1",
     "google-icon": "^1.0.1",
     "path": "^0.12.7",

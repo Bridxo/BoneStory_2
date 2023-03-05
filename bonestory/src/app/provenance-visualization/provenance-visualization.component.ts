@@ -20,7 +20,11 @@ export class ProvenanceVisualizationComponent implements OnInit {
       this.elementRef.nativeElement,
     );
     
-    // addVisualizationListeners(this._viz, this.provenance);
+    addVisualizationListeners(this._viz, this.provenance);
+  }
+
+  update() {
+    this._viz.update();
   }
 
 

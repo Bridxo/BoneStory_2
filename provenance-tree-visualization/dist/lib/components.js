@@ -168,9 +168,38 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
     // taskListButton
     //   .append('div')
     //   .attr('class', 'mat-button-focus-overlay');
+    var HidecameraButton = provenanceTreeVisualization.container
+        .append('button')
+        .attr('id', 'camera-trigger')
+        .attr('class', 'mat-icon-button mat-button-base mat-primary')
+        .attr('color', 'primary')
+        .attr('style', 'position: absolute; z-index: 1; top: 17%;')
+        .attr('ng-reflect-color', 'primary')
+        .on('mousedown', function () {
+        if (provenanceTreeVisualization.traverser.graph.root) {
+            provenanceTreeVisualization.camerahide();
+        }
+    });
+    HidecameraButton
+        .append('span')
+        .attr('class', 'mat-button-wrapper')
+        .append('mat-icon')
+        .attr('class', 'mat-icon notranslate material-icons mat-icon-no-color')
+        .attr('role', 'img')
+        .attr('aria-hidden', 'true')
+        .text('camera_alt');
+    HidecameraButton
+        .append('div')
+        .attr('class', 'mat-button-ripple mat-ripple mat-button-ripple-round')
+        .attr('ng-reflect-centered', 'true')
+        .attr('ng-reflect-disabled', 'false')
+        .attr('ng-reflect-trigger', '[object HTMLButtonElement]');
+    HidecameraButton
+        .append('div')
+        .attr('class', 'mat-button-focus-overlay');
     var goToTheRootButton = provenanceTreeVisualization.container
         .append('button')
-        .attr('id', 'downward-trigger')
+        .attr('id', 'root-trigger')
         .attr('class', 'mat-icon-button mat-button-base mat-primary')
         .attr('color', 'primary')
         .attr('style', 'position: absolute; z-index: 1; top: 2%;')
@@ -270,7 +299,7 @@ exports.addAggregationButtons = addAggregationButtons;
 function addSlider(elem, onChange) {
     var container = elem.append('div');
     container.attr('class', 'sliderContainer');
-    container.attr('style', 'visibility: hidden');
+    container.attr('style', 'visibility: show');
     var slider = container
         .append('input')
         .attr('id', 'arg')

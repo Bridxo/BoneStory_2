@@ -46,6 +46,7 @@ export interface IAggregation {
  */
 export class ProvenanceTreeVisualization {
   public traverser: ProvenanceGraphTraverser;
+  public camera_show: boolean = true;
   public colorScheme: any;
   public g: D3SVGGSelection;
   public svg: D3SVGSelection;
@@ -64,6 +65,9 @@ export class ProvenanceTreeVisualization {
   
   private TreeLength: any = 0;
   private TreeWidth: any = 0.1;
+
+  private sizeX: any = window.innerWidth;
+  private sizeY: any = window.innerHeight;
 
   public mergingEnabled: boolean = false;
   public transferringEnabled: boolean = false;
@@ -113,28 +117,35 @@ export class ProvenanceTreeVisualization {
     this.svg.call(this.zoomer);
   }
   public setZoomExtent() {
-    this.zoomer.scaleExtent([0.25, 2.5]).on('zoom', () => {
+    this.zoomer.scaleExtent([0.25, 4]).on('zoom', () => {
       this.g.attr('transform', (d3 as any).event.transform);
     });
     this.scaleToFit();
   }
 
   public scaleToFit() {
-    const sizeX = this.svg.node()!.clientWidth;
-    const sizeY = this.svg.node()!.clientHeight;
+
+
     const maxScale = 3;
-    const magicNum = 0.55; // todo: get relevant number based on dimensions
-    const relY = sizeY * 4.1 - (yScale * maxScale * this.currentHierarchyNodelength);
-    // console.log(sizeY/2);
-    // const scaleFactor = Math.min(
-    //   maxScale,
-    //   Math.pow(magicNum,this.y_zoom-maxScale) * maxScale 
-    // );
+    const magicNum = 0.75; // todo: get relevant number based on dimensions
+    this.sizeX = window.innerWidth * 0.2;
+    this.sizeY = window.innerHeight;
+    const margin = 0;
+    const node_length = (this.currentHierarchyNodelength) * yScale * maxScale;
+    const node_max = Math.floor(this.sizeY / (yScale * maxScale));
+    const trans_y = (node_length > this.sizeY)? (this.currentHierarchyNodelength - node_max + margin) * yScale * maxScale: -20;
+
+
+    const scaleFactor = Math.min(
+      maxScale,
+      (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale)
+    );
+
     this.svg
       .transition()
       .duration(0)
       .call(this.zoomer.transform, () =>
-        d3.zoomIdentity.translate(sizeX / 2, relY).scale(maxScale) // fix size
+        d3.zoomIdentity.translate(this.sizeX / 2.1, -trans_y).scale(maxScale)
       );
   }
 
@@ -192,31 +203,28 @@ export class ProvenanceTreeVisualization {
     });
   }
 
+  public camerahide(): void {
+    this.camera_show = this.camera_show ? false : true;
+    this.update();
+  }
+
   public getFullsizeview(): void {
-    let sizeX = this.svg.node()!.clientWidth;
-    let sizeY = this.svg.node()!.clientHeight;
+    this.sizeX = window.innerWidth * 0.2;
+    this.sizeY = window.innerHeight;
     const maxScale = 3;
-    let magicNum_W = 0.25;
-    let magicNum_H = 0.7; // todo: get relevant number based on dimensions
-    if(this.TreeLength<=14)
-      magicNum_H = 1.4;
-    else if(this.TreeLength<=24)
-      magicNum_H = 1.3;
-    else
-      magicNum_H = 1.0;
-    if(this.TreeWidth>=4)
-      sizeX = sizeX + 100;
+    const margin = 0;
+    const node_length = (this.currentHierarchyNodelength + margin) * yScale * maxScale;
+    const node_max = this.sizeY / node_length;
     //Need to Modify
     const scaleFactor = Math.min(
       maxScale,
-      maxScale - (magicNum_H * (this.TreeLength)/15),
-      maxScale - (magicNum_W * this.TreeWidth)
+      maxScale * node_max
     ); // find the smallest scale(Length, Width, )
     this.svg
     .transition()
     .duration(0)
     .call(this.zoomer.transform, () =>
-      d3.zoomIdentity.translate(sizeX / 2, 40).scale(scaleFactor) // fix size
+      d3.zoomIdentity.translate(this.sizeX / 2, 20).scale(scaleFactor) // fix size
     );
   }
 
@@ -228,7 +236,7 @@ export class ProvenanceTreeVisualization {
   /**
    * @description Update the tree layout.
    */
-  public update() {
+  public update = ()  =>  {
     const wrappedRoot = wrapNode(this.traverser.graph.root);
     // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
     const hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated de treeRoot
@@ -239,9 +247,22 @@ export class ProvenanceTreeVisualization {
     );
     this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode).length;
     const tree = gratzl(hierarchyRoot, currentHierarchyNode);
+    //I want to modify the tree -> for hide camera and view
+    // const tree = tree_original.copy();
     this.hierarchyRoot = tree;
+    var treeNodes;
+    const searchpattern = /Camera|View/;
     // console.log(tree);
-    const treeNodes = tree.descendants().filter((d: any) => d.data.wrappedNodes[0].metadata.option !== 'merged');
+     if (this.camera_show == false)
+    {
+      tree.each(function(node) {
+        if(searchpattern.test(node.data.wrappedNodes[0].label))
+          node.data.wrappedNodes[0].metadata.option = 'merged';
+      })
+    }
+    treeNodes = tree.descendants().filter((d: any) => d.data.wrappedNodes[0].metadata.option !== 'merged');
+      
+    
     const treemaxwidth = tree.descendants().map(function (item) {return item.x}).reduce(function(prev, current) {return (prev > current) ? prev : current});
     const treemaxlength = tree.descendants().map(function (item) {return item.y}).reduce(function(prev, current) {return (prev > current) ? prev : current});
     const oldNodes = this.g.selectAll('g.node').data(treeNodes, (d: any) => {
@@ -311,13 +332,13 @@ export class ProvenanceTreeVisualization {
         if (d.x === 0) {
           d.data.wrappedNodes[0].metadata.mainbranch = true;
         }
-        return d.x === 0;
+        return d.x === 0; 
       })
       .attr('class', 'node branch-active')
       .filter((d: any) => {
         let neighbourNode: boolean = false;
-        if ((this.traverser.graph.current as any).parent) {
-          neighbourNode = (this.traverser.graph.current as any).parent === d.data.wrappedNodes[0] ? true : neighbourNode;
+        if ((this.traverser.graph.current as any).parent) { // 위에 뭐가 있는지 확인
+          neighbourNode = (this.traverser.graph.current as any).parent === d.data.wrappedNodes[0] ? true : neighbourNode; // 현 노드에 위가 있으면 네이버는 참
           d.data.wrappedNodes[0].metadata.neighbour = neighbourNode ? true : neighbourNode;
         }  
         if ((this.traverser.graph.current as any).children.length !== 0) {
@@ -378,7 +399,7 @@ export class ProvenanceTreeVisualization {
       
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
         this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
-        (window as any).slideDeck.onChange(this.traverser.graph.current.metadata.branchnumber);
+        // (window as any).slideDeck.onChange(this.traverser.graph.current.metadata.branchnumber);
         this.update();
       }
     });
@@ -430,16 +451,11 @@ export class ProvenanceTreeVisualization {
       .attr('d', (d: any) => this.linkPath(d));
 
     const updatedLinks = oldLinks.merge(newLinks as any);
-    // console.log("--tree--");
-    // console.log(tree);
-    // console.log("--newLinks--");
-    // console.log(newLinks);
-    // console.log("--updateNodes--");
-    // console.log(updateNodes);
-
     if (this.caterpillarActivated) {
       caterpillar(updateNodes, treeNodes, updatedLinks, this);
     }
+
+    // this.scaleToFit();
   } // end update
 
   public getTraverser(): ProvenanceGraphTraverser {

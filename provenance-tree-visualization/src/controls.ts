@@ -35,42 +35,42 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
             graph.current.metadata.story = true;
             (window as any).slideDeck.onAdd(graph.current);
         }
-        // ctrl + 1  / all neighbour nodes are added to the slide deck (by creation order)
-        else if (evtobj.keyCode === 49 && evtobj.altKey) {
-            let nodes = graph.getNodes();
-            var arrayNodes = [];
+        // // ctrl + 1  / all neighbour nodes are added to the slide deck (by creation order)
+        // else if (evtobj.keyCode === 49 && evtobj.altKey) {
+        //     let nodes = graph.getNodes();
+        //     var arrayNodes = [];
 
-            for (const nodeId of Object.keys(nodes)) {
-                let node = nodes[nodeId];
-                arrayNodes.push(node);
-            }
+        //     for (const nodeId of Object.keys(nodes)) {
+        //         let node = nodes[nodeId];
+        //         arrayNodes.push(node);
+        //     }
 
-            for (const node of arrayNodes) {
-                if (((node.metadata.creationOrder > graph.current.metadata.creationOrder - 2) == true) &&     // the range can be adjusted
-                    ((node.metadata.creationOrder < graph.current.metadata.creationOrder + 2) == true)) {
-                    node.metadata.story = true;
-                    (window as any).slideDeck.onAdd(node);
-                }
-            }
-        }
+        //     for (const node of arrayNodes) {
+        //         if (((node.metadata.creationOrder > graph.current.metadata.creationOrder - 2) == true) &&     // the range can be adjusted
+        //             ((node.metadata.creationOrder < graph.current.metadata.creationOrder + 2) == true)) {
+        //             node.metadata.story = true;
+        //             (window as any).slideDeck.onAdd(node);
+        //         }
+        //     }
+        // }
 
-        // ctrl + W  / derivation and annotation (by creation order)
-        else if (evtobj.keyCode === 87 && evtobj.altKey) {
-            let nodes = graph.getNodes();
-            var arrayNodes: any[] = [];
+        // // ctrl + W  / derivation and annotation (by creation order)
+        // else if (evtobj.keyCode === 87 && evtobj.altKey) {
+        //     let nodes = graph.getNodes();
+        //     var arrayNodes: any[] = [];
 
-            for (const nodeId of Object.keys(nodes)) {
-                let node = nodes[nodeId];
-                arrayNodes.push(node);
-            }
+        //     for (const nodeId of Object.keys(nodes)) {
+        //         let node = nodes[nodeId];
+        //         arrayNodes.push(node);
+        //     }
 
-            arrayNodes.shift();
+        //     arrayNodes.shift();
 
-            for (const node of (arrayNodes as any).filter((node: any) => node.action.metadata.userIntent == 'derivation' || 'annotation')) {
-                node.metadata.story = true;
-                (window as any).slideDeck.onAdd(node);
-            }
-        }
+        //     for (const node of (arrayNodes as any).filter((node: any) => node.action.metadata.userIntent == 'derivation' || 'annotation')) {
+        //         node.metadata.story = true;
+        //         (window as any).slideDeck.onAdd(node);
+        //     }
+        // }
         provenanceTreeVisualization.update();
     }
 

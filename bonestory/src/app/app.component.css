@@ -1,19 +1,32 @@
 app-brainvis-canvas {
-  flex:1;
-  flex-grow: 1;
-  display: flex;
-  display: -webkit-box;
-  display: -ms-flexbox;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
+#gui { position: absolute; top: 2px; left: 2px }
+
 #bottom-container {
   position: absolute;
+  display: block;
   bottom: 0;
-  height: 20%;
-  width: 85%;
+
+  height: 15%;
+  width: 80%;
   background-color: #fafafa;
+  transition: display 0.5s ease-in-out;
 }
+
+#side-container {
+  position: absolute;
+  display: block;
+  right: 0;
+
+  height: 100%;
+  width: 20%;
+  background-color: #fafafa;
+  transition: display 0.5s ease-in-out;
+}
+
 #instructions {
   color: white;
   position: absolute;
@@ -22,26 +35,9 @@ app-brainvis-canvas {
   margin-left: -120px;
   font-family: monospace;
 }
-mat-sidenav, mat-bottom {
-  overflow: visible;
-  visibility: visible !important;
-  background-color: rgba(0, 0, 0, .8)
-}
-mat-sidenav-container, mat-sidenav-content {
-  display: flex;
-  flex: 1;
-}
 
 
-#sidenav-trigger {
-  position: absolute;
-  left: -50px;
-}
 
-#provnav-trigger {
-  position: absolute;
-  bottom: 300px;
-}
 #instructions {
   color: white;
   position: absolute;
@@ -49,19 +45,97 @@ mat-sidenav-container, mat-sidenav-content {
   top: 10px;
   margin-left: -420px;
   font-family: monospace;
+  -moz-user-select: none; /* For Firefox */
+  -webkit-user-select: none; /* For Safari */
+  -ms-user-select: none; /* For IE 10+ */
+  user-select: none; /* Standard syntax */
 }
 
 #filesel {
   right: 0px;
   top: 20px;
-  position: absolute;
+  width: 100%;
+  height: 100%;
   color: white;
 }
 
 #fileup {
   right: 210px;
   top: 60px;
+  width: 100%;
+  height: 100%;
+}
+
+#sidenav-trigger {
+  color: white;
   position: absolute;
+  right:20%;
+  z-index: 9999;
+}
+
+#upload_btn {
+  text-align: center;
+  font-size: 19px;
+  border-radius: 50%;
+  color:rgb(255, 255, 255);
+  justify-content: center;
+  text-decoration: none;
+  position: absolute;
+  right : 22%;
+  z-index: 9999;
+}
+#saveprov_btn {
+  text-align: center;
+  font-size: 19px;
+  border-radius: 50%;
+  color:rgb(255, 255, 255);
+  justify-content: center;
+  text-decoration: none;
+  position: absolute;
+  right : 24.5%;
+  z-index: 9999;
+}  
+
+.provslider {
+  top: 23%;
+  left: -1.5%;
+  display: flex;
+  flex-direction: column;
+}
+.provslider .mat-slider-thumb-label {
+  transform: translateY(50%) rotate(-90deg) !important;
+  transform-origin: right center !important;
 }
 
 
+.annotation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  margin-left: 15px;
+  margin-top: 15px;
+  padding: 1em;
+  width: 200px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: .5em;
+  font-size: 12px;
+  line-height: 1.2;
+  transition: opacity .5s;
+}
+
+.annotation::before {
+  content: '1';
+  position: absolute;
+  top: -30px;
+  left: -30px;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 30px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.8);
+}

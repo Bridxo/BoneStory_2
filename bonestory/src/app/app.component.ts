@@ -4,6 +4,7 @@ import { HttpClient, HttpRequest, HttpEvent } from '@angular/common/http';
 import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.component';
 import * as THREE from 'three';
 import { Observable, ReplaySubject } from 'rxjs';
+import { MatSidenav } from '@angular/material/sidenav';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -15,7 +16,7 @@ export class AppComponent implements OnInit {
   public upload_show: boolean = false;
   public multipleImages = [];
   public imgspath = [];
-  private BCC: BrainvisCanvasComponent;
+  public slider_value = 0;
   fileinfos: Observable<any> | null = null;
   private eventdispatcher: THREE.EventDispatcher;
 
@@ -29,17 +30,13 @@ export class AppComponent implements OnInit {
   
 
   constructor(private provenance: ProvenanceService, private http: HttpClient) {
-    // console.log(arg);
     this.eventdispatcher = new THREE.EventDispatcher();
     console.log('constructor');
   }
-  addEventListener(type, listener){
-    this.eventdispatcher.addEventListener(type,listener);
-  }
+  // addEventListener(type, listener){
+  //   this.eventdispatcher.addEventListener(type,listener);
+  // }
 
-  top_button_Canvas() {
-    this.BCC.top_button_press;
-  }
  
   selectMultipleImage(event: any) {
     if (event.target.files.length > 0) {
@@ -49,23 +46,43 @@ export class AppComponent implements OnInit {
  
   async onMultipleSubmit(cb) {
     this.formdata = new FormData();
- 
-    for (let img of this.multipleImages) {
-      //store form name as files with file data
-      this.formdata.append('files',img)
-    }
- 
-    this.http.post<any>('http://localhost:3000/multipleFiles', this.formdata)
-      .subscribe((res) => {
-        this.imgspath = res.path;
-        console.log(this.imgspath);
-        this.multipleInput.nativeElement.value = "";
-        cb(this.imgspath);
-    }
-    
-    )
-
+        // files is not a regular Array
+        return Promise.all([].map.call(this.multipleImages, function (file) {
+          return new Promise(function (resolve, reject) {
+              var reader = new FileReader();
+              reader.onloadend = function () {
+                  resolve({ result: reader.result, file: file });
+              };
+              reader.readAsArrayBuffer(file);
+          });
+      })).then(function (results) {
+          results.forEach(function (result) {
+          });
+          cb(results);
+          return results;
+      });
   }
+    // for (let img of this.multipleImages) {
+    //   //store form name as files with file data
+    //   var reader = new FileReader();
+    //   reader.readAsArrayBuffer(img);
+
+    //   reader.addEventListener("load", () => {
+    //     console.log(reader.result);
+    //     cb(reader.result);
+    //   }, false);
+    // }
+
+    // this.http.post<any>('gs://radiant-voyage-171301.appspot.com/multiplefiles', this.formdata)
+    //   .subscribe((res) => {
+    //     this.imgspath = res.path;
+    //     console.log(this.imgspath);
+    //     this.multipleInput.nativeElement.value = "";
+    //     cb(this.imgspath);
+    // }
+    
+    // )
+
   toggle_upload(){
     this.upload_show = !this.upload_show;
   }
@@ -75,8 +92,6 @@ export class AppComponent implements OnInit {
       this.multipleImages = event.target.files;
       this.onMultipleSubmit(cb);
     }
-
-    
   }
   get_STLfiles() {
     return this.imgspath;
@@ -86,6 +101,29 @@ export class AppComponent implements OnInit {
     console.log('init?');
   }
 
+  onSidenavToggle() {
+    const button = document.getElementById('sidenav-trigger');
+    const button2 = document.getElementById('upload_btn');
+    const button3 = document.getElementById('saveprov_btn');
+    const slide = document.getElementById('bottom-container');
+    const prov = document.getElementById('side-container');
+    const slideDisplay = window.getComputedStyle(slide).getPropertyValue("display");
+    
+    if (slideDisplay === 'block') {
+      button.style.right = '0%';
+      button2.style.right = `2%`;
+      button3.style.right = `4.5%`;
+      slide.style.display = 'none';
+      prov.style.display = 'none';
+
+    } else {
+      button.style.right = `20%`;
+      button2.style.right = `22%`;
+      button3.style.right = `24.5%`;
+      slide.style.display = 'block';
+      prov.style.display = 'block';
+    }
+  }
 
 }
 

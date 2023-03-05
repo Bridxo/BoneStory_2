@@ -1,135 +1,24 @@
-<mat-sidenav-container hasBackdrop="false">
-  <mat-sidenav position="end" #sidenav mode="over" [opened]="false" hasBackdrop="false">
-    <button id="sidenav-trigger" color="primary" style="color: white" mat-icon-button (click)="sidenav.toggle()" title="Provenance History">
-      <mat-icon>menu</mat-icon>
-    </button>
 
-    <!-- Sidenav content -->
-    <app-provenance-visualization></app-provenance-visualization>
-    <!-- <app-provenance-slides #slides></app-provenance-slides> -->
-  </mat-sidenav>
-
-  <mat-sidenav-content>
-
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-      .upload_btn {
-        text-align: center;
-        font-size: 19px;
-        display: flex;
-        border-radius: 50%;
-        color:rgb(255, 255, 255);
-        justify-content: center;
-        text-decoration: none;
-        position: fixed;
-        left: 1200px;
-        top: -7px;
-      }
-      .saveprov_btn {
-        text-align: center;
-        font-size: 19px;
-        display: flex;
-        border-radius: 50%;
-        color:rgb(255, 255, 255);
-        justify-content: center;
-        text-decoration: none;
-        position: fixed;
-        left: 1170px;
-        top: -7px;
-      }
-      .arrow {
-        border: solid tan;
-        border-width: 0 7px 7px 0;
-        line-height: 2.5;
-        position: absolute;
-        padding: 7px;
-        cursor: pointer;
-      }
-      .rectangle {
-        height: 15px;
-        width: 15px;
-        background-color: tan;
-        border-radius: 50%;
-        position: absolute;
-        display: inline-block;
-
-        cursor: pointer;
-      }
-
-      .arrow:hover {
-        border: solid rgb(189, 255, 9);
-        border-width: 0 7px 7px 0;
-        line-height: 2.5;
-      }
-
-      .arrow:active {
-        border: solid rgb(255, 94, 0);
-        border-width: 0 7px 7px 0;
-        line-height: 2.5;
-      }
-
-      .rectangle:hover {
-        border: solid rgb(189, 255, 9);
-        line-height: 0.1;
-      }
-
-      .rectangle:active {
-        border: solid rgb(255, 94, 0);
-        line-height: 0.1;
-      }
-
-      .right {
-        transform: rotate(-45deg);
-        -webkit-transform: rotate(-45deg);
-        left: 110px;
-        top: 65px;
-      }
-
-      .left {
-        transform: rotate(135deg);
-        -webkit-transform: rotate(135deg);
-        left: 50px;
-        top: 65px;
-      }
-
-      .up {
-        transform: rotate(-135deg);
-        -webkit-transform: rotate(-135deg);
-        left: 80px;
-        top: 40px;
-      }
-
-      .down {
-        transform: rotate(45deg);
-        -webkit-transform: rotate(45deg);
-        left: 80px;
-        top: 90px;
-      }
-
-      .r_front {
-        left: 82px;
-        top: 79px;
-        font-size: 10px;
-        text-align: center;
-      }
-
-      .r_back {
-        left: 82px;
-        top: 59px;
-        font-size: 10px;
-        text-align: center;
-      }
-
-      </style>
-    <app-brainvis-canvas #canvas>
-
+    <app-brainvis-canvas #canvas> 
     </app-brainvis-canvas>
-    <i class="arrow up" (click)="canvas.top_button_action()" title="Orientation Up"> </i>
-    <i class="arrow down" (click)="canvas.down_button_action()" title="Orientation down"></i>
-    <i class="arrow left" (click)="canvas.left_button_action()" title="Orientation left"></i>
-    <i class="arrow right" (click)="canvas.right_button_action()" title="Orientation right"></i>
-    <i class="rectangle r_front" (click)="canvas.front_button_action()" title="Orientation front"> F </i>
-    <i class="rectangle r_back" (click)="canvas.back_button_action()" title="Orientation back"> B </i>
+
+    <div id="bottom-container">
+      <app-provenance-slides #slides></app-provenance-slides>
+    </div>
+    <div id="side-container">
+      <div id="side-child"><app-provenance-visualization #provvis></app-provenance-visualization></div>
+      <mat-slider
+      class="provslider"
+      [max]="30"
+      [min]="0"
+      [step]="1"
+      [thumbLabel]="true"
+      [tickInterval]="5"
+      [(ngModel)]="slider_value"
+      [vertical]="true"
+      style="height: 300px;"
+    ></mat-slider>
+    </div>
     <div style="height:0px;">
       <input
           #multipleInput
@@ -141,18 +30,17 @@
           (change)="onselect_submit($event, canvas.load_stl_models)"
           />
     </div>
-    <p class="upload_btn"><i class="fa fa-upload" style="cursor: pointer;" title="Load STL files" onclick="filesel.click()" ></i>
-      <p class="saveprov_btn"><i class="fa fa-download" style="cursor: pointer;" title="Save Provenance" onclick="filesel.click()" ></i>
+    <div>
+      <button id="upload_btn" mat-icon-button onclick="filesel.click()" title="Load STL files" style="cursor: pointer;">
+        <mat-icon>cloud_upload</mat-icon>
+      </button>
+      <button id="saveprov_btn" mat-icon-button onclick="filesel.click()" title="Save Prov files(json)" style="cursor: pointer;">
+        <mat-icon>cloud_download</mat-icon>
+      </button>
+      <button id="sidenav-trigger" mat-icon-button (click)="onSidenavToggle(); provvis.update();" title="Provenance Tool" style="cursor: pointer;">
+        <mat-icon>menu</mat-icon>
+      </button>
+    </div>
     <div id="instructions">L-click (cam mode): Rotate camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R-click (cam mode): Pan camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double-click: Select Object &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <br />C: Camera mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R (object mode) : Rotate Object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T (object mode): Translate Object</div>
-    <div id="bottom-container">
-      <app-provenance-slides #slides></app-provenance-slides>
-      <!-- <app-brainvis-canvas-controls [canvas]="canvas"></app-brainvis-canvas-controls> -->
-    </div>
-    <!-- <app-slide-annotations id="annotation-overlay" [slides]="slides">
-      bladiebla
-    </app-slide-annotations> -->
-    <!--<p><mat-slide-toggle>sidenav.opened</mat-slide-toggle></p>-->
-    <!--<p></p>-->
-  </mat-sidenav-content>
-</mat-sidenav-container>
+

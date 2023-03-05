@@ -47,9 +47,6 @@ export interface NodeMetadata {
    * Enable custom properties
    */
   [key: string]: any;
-
-
-  branchnumber: number;
 }
 
 /**
@@ -235,15 +232,6 @@ export interface IProvenanceGraph {
    */
   getNode(id: NodeIdentifier): ProvenanceNode;
 
-  getNodes(): {
-    [key: string]: ProvenanceNode;
-};
-setNodes(nodes: {
-    [key: string]: ProvenanceNode;
-}): {
-    [key: string]: ProvenanceNode;
-};
-
   emitNodeChangedEvent(node: ProvenanceNode): void;
 
   /**
@@ -292,14 +280,13 @@ export interface IProvenanceTracker {
    */
   registry: IActionFunctionRegistry;
 
-
-  screenShotProvider: IScreenShotProvider | null;
+  // screenShotProvider: IScreenShotProvider | null;
 
   /**
    * If true, adds a screenshot to all provenance nodes metadata
    * (if screenShotProvider is set)
    */
-  autoScreenShot: boolean;
+  // autoScreenShot: boolean;
 
   /**
    * 1. Calls the action.do function with action.doArguments
@@ -413,7 +400,6 @@ export interface IProvenanceSlidedeck {
   autoScreenShot: boolean;
 
   addSlide(slide?: IProvenanceSlide, index?: number): IProvenanceSlide;
-  changeSlide(index?: number): IProvenanceSlide[];
   removeSlide(slide: IProvenanceSlide): void;
   removeSlideAtIndex(index: number): void;
   moveSlide(indexFrom: number, indexTo: number, count?: number): void;

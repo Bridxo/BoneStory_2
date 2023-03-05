@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-
 import "./style.css";
 
 import {
@@ -131,7 +130,7 @@ export class SlideDeckVisualization {
     private onChange = (bnumber: number) => {
         let slideDeck = this._slideDeck;
         bnumber = slideDeck.graph.current.metadata.branchnumber;
-        this._slideDeck.slides = this._slideDeck.changeSlide(bnumber);
+        // this._slideDeck.slides = this._slideDeck.changeSlide(bnumber);
 
     }
     private onAdd = () => {
@@ -920,7 +919,7 @@ export class SlideDeckVisualization {
 
         this.fixDrawingPriorities();
 
-        this.displayGridLevel();
+        // this.displayGridLevel();
 
         allExistingNodes.exit().remove();
     }
@@ -1060,6 +1059,18 @@ export class SlideDeckVisualization {
 
         this._slideTable
             .append("svg:foreignObject")
+            .attr("class", "player_pause")
+            .attr("x", 22)
+            .attr("y", 25)
+            .attr("cursor", "pointer")
+            .attr("width", 20)
+            .attr("height", 20)
+            .append("xhtml:body")
+            .on("click", this.onPause)
+            .html('<i class="fa fa-play"></i>');
+
+        this._slideTable
+            .append("svg:foreignObject")
             .attr("class", "player_forward")
             .attr("x", 22)
             .attr("y", 45)
@@ -1076,22 +1087,22 @@ export class SlideDeckVisualization {
             .attr("x", this._originPosition + 10)
             .attr("y", 110);
 
-        this._slideTable
-            .append("text")
-            .attr("class", "checkBox_text")
-            .attr("x", this._originPosition + 195)
-            .attr("y", 110)
-            .text("Grid Snap");
+        // this._slideTable
+        //     .append("text")
+        //     .attr("class", "checkBox_text")
+        //     .attr("x", this._originPosition + 195)
+        //     .attr("y", 110)
+        //     .text("Grid Snap");
 
-        this._slideTable
-            .append("foreignObject")
-            .attr("width", 13)
-            .attr("height", 15)
-            .attr("x", this._originPosition + 175)
-            .attr("y", 96)
-            .append("xhtml:body")
-            .html("<form><input type=checkbox class=gridSnap/></form>")
-            .on("click", this.updateGridSnap);
+        // this._slideTable
+        //     .append("foreignObject")
+        //     .attr("width", 13)
+        //     .attr("height", 15)
+        //     .attr("x", this._originPosition + 175)
+        //     .attr("y", 96)
+        //     .append("xhtml:body")
+        //     .html("<form><input type=checkbox class=gridSnap/></form>")
+        //     .on("click", this.updateGridSnap);
 
         // let area = this._root
         //     .append<SVGElement>("svg")

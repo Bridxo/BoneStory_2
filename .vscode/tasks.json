@@ -4,7 +4,7 @@
 		{
 			"type": "npm",
 			"script": "start",
-			"path": "bonestory/",
+			// "path": "bonestory/",
 			"label": "npm: start",
 			"isBackground": true,
 			"presentation": {
@@ -34,8 +34,9 @@
 					}
 				}
 			},
-			"options": {"cwd": "${workspaceFolder}/bonestory"}
-
-		},
+			"options": {
+				"cwd": "${workspaceFolder}/bonestory"
+			}
+		}
 	]
   }

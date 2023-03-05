@@ -20,14 +20,15 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
   private _selectedSlide: IProvenanceSlide | null;
 
   private _screenShotProvider: IScreenShotProvider | null = null;
-  private _autoScreenShot = false;
+  private _autoScreenShot = true;
 
   constructor(application: Application, traverser: IProvenanceGraphTraverser) {
     this._mitt = mitt();
     this._application = application;
     this._graph = traverser.graph;
     this._traverser = traverser;
-
+    this._screenShotProvider = null;
+    this._autoScreenShot = true;
     this._selectedSlide = null;
   }
 

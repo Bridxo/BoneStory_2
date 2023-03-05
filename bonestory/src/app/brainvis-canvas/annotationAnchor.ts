@@ -104,6 +104,8 @@ export default class AnnotationAnchor extends THREE.Object3D implements IInterse
         }
     }
 
+    setkey: (intersection?: THREE.Intersection<THREE.Object3D<THREE.Event>>, pointer?: MouseEvent, event?: any) => void;
+
     getObjects() {
         return this.children;
     }

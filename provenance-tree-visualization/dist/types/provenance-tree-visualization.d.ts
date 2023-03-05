@@ -18,6 +18,7 @@ export interface IAggregation {
  */
 export declare class ProvenanceTreeVisualization {
     traverser: ProvenanceGraphTraverser;
+    camera_show: boolean;
     colorScheme: any;
     g: D3SVGGSelection;
     svg: D3SVGSelection;
@@ -29,6 +30,8 @@ export declare class ProvenanceTreeVisualization {
     private currentHierarchyNodelength;
     private TreeLength;
     private TreeWidth;
+    private sizeX;
+    private sizeY;
     mergingEnabled: boolean;
     transferringEnabled: boolean;
     copyingEnabled: boolean;
@@ -43,11 +46,12 @@ export declare class ProvenanceTreeVisualization {
      * @descriptionWrap text labels
      */
     wrap(text: any, width: any): void;
+    camerahide(): void;
     getFullsizeview(): void;
     setTraverser(traverser: ProvenanceGraphTraverser): void;
     /**
      * @description Update the tree layout.
      */
-    update(): void;
+    update: () => void;
     getTraverser(): ProvenanceGraphTraverser;
 }

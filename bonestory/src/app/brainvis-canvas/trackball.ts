@@ -383,7 +383,6 @@ export default class Trackball{
         changeTime += delta;
         if (changeTime > 1.0) {
           this.changeCamera(toPosition, toTarget, toUp, 0);
-          // console.log('end anim');
           clearInterval(this.changeTimeout);
           this.changeTimeout = undefined;
           this.enabled = true;
@@ -506,7 +505,6 @@ export default class Trackball{
     if (this.forceState === -1) {
       this.state = STATE.NONE;
     }
-
     this.eventdispatcher.dispatchEvent({
       type: 'end',
       state: previousState,

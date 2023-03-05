@@ -1,6 +1,7 @@
 app-provenance-visualization {
     height: 100%;
-    width: 300px;
+    width: 100%;
+    position: absolute;
     display: block;
     background-color: white;
 }
@@ -86,7 +87,7 @@ app-provenance-visualization {
 .circle-text {
     font-size: 6px;
     display: block;
-    dominant-baseline: central;  /* for firefox */
+
   }
   
   .circle-label {
