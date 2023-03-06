@@ -29,13 +29,26 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
       if(s_1.distanceTo(s_2)>1.0){
         switch(canvas.viewpoint_action){
           case 0:
-            tracker.applyAction({
-              metadata: {userIntent: 'exploration'},
-              do: 'CameraMove',
-              doArguments: [(event as any).orientation],
-              undo: 'CameraMove',
-              undoArguments: [(startEvent as any).orientation],
-            });
+            if(event.state == 0){
+              tracker.applyAction({
+                metadata: {userIntent: 'exploration'},
+                do: 'CameraMove',
+                doArguments: [(event as any).orientation],
+                undo: 'CameraMove',
+                undoArguments: [(startEvent as any).orientation],
+              });
+            }
+            else {
+              tracker.applyAction({
+                metadata: {userIntent: 'exploration'},
+                do: 'CameraPan',
+                doArguments: [(event as any).orientation],
+                undo: 'CameraPan',
+                undoArguments: [(startEvent as any).orientation],
+              });
+            }
+            console.log('start: '+ startEvent.orientation.position);
+            console.log('end: ' + event.orientation.position);
             break;
           case 1:
             tracker.applyAction({
@@ -114,10 +127,12 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
         undo: 'CameraZoom',
         undoArguments: [(startEvent as any).orientation],
       }, true);
-    }, 500, { trailing: true });
+      console.log('start: '+ startEvent.orientation.position);
+      console.log('end: ' + event.orientation.position);
+    }, 600, { trailing: true });
     canvas.addEventListener('zoomEnd', zoomEndListener);
   };
-  canvas.addEventListener('zoomStart', debounce(zoomStartListener, 500, { leading: true }));
+  canvas.addEventListener('zoomStart', debounce(zoomStartListener, 600, { leading: true }));
 
 
   canvas.addEventListener('transStart', (startEvent) => {

@@ -358,11 +358,18 @@ export class BrainvisCanvasComponent {
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
       const orientation = { position, target, up };
-
-      this.eventdispatcher.dispatchEvent({
-        type: 'cameraStart',
-        orientation
-      });
+      if(event.state == 0){
+        this.eventdispatcher.dispatchEvent({
+          type: 'cameraStart',
+          orientation
+        });
+      }
+      else{
+        this.eventdispatcher.dispatchEvent({
+          type: 'cameraStart',
+          orientation
+        });
+      }
     });
     
     this.controls.addEventListener('end', (event) => {
@@ -470,11 +477,23 @@ export class BrainvisCanvasComponent {
   }
 
   CameraZoom(newOrientation: IOrientation, within: number) {
-    this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
-      new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
-      new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
-      within > 0 ? within : 1000);
-    this.controls.zoomCamera();
+    console.log(this.camera.position);
+    console.log(newOrientation.position);
+    // this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
+    //   new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
+    //   new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
+    //   0);
+    const position = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
+    const target = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
+    const up = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
+    const eye = new THREE.Vector3().subVectors(position, target);
+
+    this.camera.position.set(position.x, position.y, position.z);
+    this.camera.lookAt(target);
+    this.camera.up.set(up.x, up.y, up.z);
+    this.camera.updateProjectionMatrix();
+    this.renderer.render(this.scene, this.camera);
+    console.log(this.camera.position);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
@@ -749,7 +768,7 @@ export class BrainvisCanvasComponent {
       let orientation = { position, target, up };
       this.eventdispatcher.dispatchEvent({
         type: 'cameraStart',
-        orientation
+        orientation,
       });
       let cc_1 = new THREE.Vector3(-700,0,0);
       let cc_2 = new THREE.Vector3(0,0,0);

@@ -308,7 +308,6 @@ export default class Trackball{
 
     if (this.lastPosition.distanceToSquared(this.camera.position) > this.EPS) {
       this.eventdispatcher.dispatchEvent({ type: 'change' });
-
       this.lastPosition.copy(this.camera.position);
     }
     this.camera.updateProjectionMatrix();
@@ -324,6 +323,7 @@ export default class Trackball{
   }
 
   changeCamera(newPosition: THREE.Vector3, newTarget: THREE.Vector3, newUp: THREE.Vector3, milliseconds: number, done?: () => void) {
+    
     if (this.target.equals(newTarget) && this.camera.position.equals(newPosition) && this.camera.up.equals(newUp)) {
       return;
     }
@@ -338,8 +338,6 @@ export default class Trackball{
       this.eye.subVectors(this.camera.position, this.target);
 
       this.camera.lookAt(this.target);
-
-      // _this.dispatchEvent(changeEvent);
 
       this.lastPosition.copy(this.camera.position);
     } else {
@@ -461,11 +459,11 @@ export default class Trackball{
     
     if(this.state === STATE.PAN && !this.noPan){
       const alphs = 1;
-      this.eventdispatcher.dispatchEvent({ type: 'start', alphs});
+      this.eventdispatcher.dispatchEvent({ type: 'start', alphs, state: this.state});
     }
     else{
       const alphs = 0;
-      this.eventdispatcher.dispatchEvent({ type: 'start', alphs});
+      this.eventdispatcher.dispatchEvent({ type: 'start', alphs, state: this.state});
     }
 
   }
@@ -616,7 +614,7 @@ export default class Trackball{
       }
     }
 
-    this.eventdispatcher.dispatchEvent({ type: 'start' });
+    this.eventdispatcher.dispatchEvent({ type: 'start', state: this.state });
   }
 
   touchmove(event) {
