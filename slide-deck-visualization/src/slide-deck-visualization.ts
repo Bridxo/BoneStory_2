@@ -12,6 +12,7 @@ import {
 import { AnnotationDisplayContainer } from "./annotation-display/annotation-display-container";
 import { PositionedString } from "./annotation-display/annotation-display";
 (window as any).global = window;
+
 function firstArgThis(f: (...args: any[]) => any) {
     return function(this: any, ...args: any[]) {
         return f(this, ...args);
@@ -63,6 +64,7 @@ export class SlideDeckVisualization {
             this._slideDeck.slides.filter((slide: any) => slide.node === node);
             this._slideDeck.removeSlide(this._slideDeck.slides[0]);      
         }
+        this.selectSlide(null);
     }
 
     private onSelect = (slide: IProvenanceSlide) => {
@@ -93,7 +95,6 @@ export class SlideDeckVisualization {
             artificialTransitionTime >= 0 ? artificialTransitionTime : 0;
         this._slideDeck.selectedSlide = slide;
         slide.transitionTime = originalSlideTransitionTime;
-
         this._annotationContainer.loadForSlide(slide);
         this.update();
     }
@@ -136,7 +137,7 @@ export class SlideDeckVisualization {
     private onAdd = () => {
         let slideDeck = this._slideDeck;
         const node = slideDeck.graph.current;
-        const slide = new ProvenanceSlide(node.label, 1000, 0, [], node);
+        const slide = new ProvenanceSlide(node.label, 1500, 0, [], node);
         slideDeck.addSlide(slide, slideDeck.slides.length);
         node.metadata.bookmarked = true;
         (slideDeck.graph.current as StateNode).metadata.bookmarked = true;
@@ -148,7 +149,7 @@ export class SlideDeckVisualization {
         let slideDeck = this._slideDeck;
         const cloneSlide = new ProvenanceSlide(
             slide.name,
-            5000,
+            2000,
             0,
             [],
             slide.node
@@ -625,7 +626,7 @@ export class SlideDeckVisualization {
             .append("text") // appended previous slides_text
             .attr("class", "slides_text")
             .attr("y", this._resizebarwidth + 2 * this._barPadding)
-            .attr("font-size", 20)
+            .attr("font-size", 12)
             .attr("dy", ".35em");
 
         slideGroup

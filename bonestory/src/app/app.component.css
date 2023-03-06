@@ -14,17 +14,30 @@ app-brainvis-canvas {
   width: 80%;
   background-color: #fafafa;
   transition: display 0.5s ease-in-out;
+  z-index: 1000;
+
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 #side-container {
   position: absolute;
   display: block;
   right: 0;
-
+  
   height: 100%;
   width: 20%;
   background-color: #fafafa;
   transition: display 0.5s ease-in-out;
+  z-index: 1000;
+  overflow-x: hidden;
+
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 #instructions {

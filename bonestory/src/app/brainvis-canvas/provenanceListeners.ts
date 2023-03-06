@@ -30,7 +30,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
         switch(canvas.viewpoint_action){
           case 0:
             tracker.applyAction({
-              metadata: {userIntent: 'exploration', screenshot: canvas.ScreenShot()},
+              metadata: {userIntent: 'exploration'},
               do: 'CameraMove',
               doArguments: [(event as any).orientation],
               undo: 'CameraMove',
@@ -140,6 +140,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
   
   canvas.addEventListener('rotationStart', (startEvent) => {
     const rotationEndListener = debounce ((event) => {
+      if (startEvent.rotation.toVector3().distanceTo(event.rotation.toVector3()) != 0) {
         tracker.applyAction({
           metadata: {userIntent: 'selection'},
           do: 'rotateObject',
@@ -147,6 +148,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
           undo: 'rotateObject',
           undoArguments: [(startEvent as any).rotation],
           })
+        }
       canvas.removeEventListener('rotationEnd', rotationEndListener);
         }, 0, { trailing: true });
   canvas.addEventListener('rotationEnd', rotationEndListener);

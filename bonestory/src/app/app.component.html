@@ -1,12 +1,12 @@
 
-    <app-brainvis-canvas #canvas> 
+    <app-brainvis-canvas #canvas z-index="998"> 
     </app-brainvis-canvas>
 
     <div id="bottom-container">
       <app-provenance-slides #slides></app-provenance-slides>
     </div>
     <div id="side-container">
-      <div id="side-child"><app-provenance-visualization #provvis></app-provenance-visualization></div>
+      <div id="side-child"><app-provenance-visualization #provvis z-index="997"></app-provenance-visualization></div>
       <mat-slider
       class="provslider"
       [max]="30"

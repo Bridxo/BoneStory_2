@@ -322,12 +322,6 @@ export default class Trackball{
       this.changeCamera(this.toPosition, this.toTarget, this.toUp, 0);
     }
   }
-  // changeZoom(newZoom: THREE.Vector2, milliseconds: number, done?: ()=> void){
-  //   if(this.zoomEnd.equals(newZoom)){
-  //     return;
-  //   }
-  //   this.zoom
-  // }
 
   changeCamera(newPosition: THREE.Vector3, newTarget: THREE.Vector3, newUp: THREE.Vector3, milliseconds: number, done?: () => void) {
     if (this.target.equals(newTarget) && this.camera.position.equals(newPosition) && this.camera.up.equals(newUp)) {
@@ -538,8 +532,8 @@ export default class Trackball{
       this.customStart.y += delta * 0.01;
     }
 
-    this.eventdispatcher.dispatchEvent({ type: 'zoomstart' });
-    this.eventdispatcher.dispatchEvent({ type: 'zoomend', state: STATE.ZOOM, newTarget: this.target, newPosition: this.target, newUp: this.target });
+    this.eventdispatcher.dispatchEvent({ type: 'zoom_track_start' });
+    this.eventdispatcher.dispatchEvent({ type: 'zoom_track_end', state: STATE.ZOOM, newTarget: this.target, newPosition: this.target, newUp: this.target });
   }
 
   touchstart(event) {

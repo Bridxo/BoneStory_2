@@ -132,13 +132,15 @@ export class ProvenanceTreeVisualization {
     this.sizeY = window.innerHeight;
     const margin = 0;
     const node_length = (this.currentHierarchyNodelength) * yScale * maxScale;
+    const node_width = (this.TreeWidth) * xScale * maxScale;
     const node_max = Math.floor(this.sizeY / (yScale * maxScale));
     const trans_y = (node_length > this.sizeY)? (this.currentHierarchyNodelength - node_max + margin) * yScale * maxScale: -20;
 
 
     const scaleFactor = Math.min(
       maxScale,
-      (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale)
+      (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale),
+      (magicNum * this.sizeX) / (this.TreeWidth * -xScale)
     );
 
     this.svg
@@ -216,15 +218,17 @@ export class ProvenanceTreeVisualization {
     const node_length = (this.currentHierarchyNodelength + margin) * yScale * maxScale;
     const node_max = this.sizeY / node_length;
     //Need to Modify
+    const tx = (this.TreeWidth >= 4) ? (this.sizeX / 1.8) : (this.sizeX / 2);
     const scaleFactor = Math.min(
       maxScale,
-      maxScale * node_max
+      maxScale * node_max,
+      maxScale * this.sizeX / (this.TreeWidth * -xScale * 2.1 * maxScale)
     ); // find the smallest scale(Length, Width, )
     this.svg
     .transition()
     .duration(0)
     .call(this.zoomer.transform, () =>
-      d3.zoomIdentity.translate(this.sizeX / 2, 20).scale(scaleFactor) // fix size
+      d3.zoomIdentity.translate(tx, 20).scale(scaleFactor) // fix size
     );
   }
 
@@ -318,9 +322,9 @@ export class ProvenanceTreeVisualization {
       this.update();
       d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
       if (!d.data.wrappedNodes[0].metadata.bookmarked) {
-        (window as any).slideDeck.onDelete(null, this.traverser.graph.current);
+        (window as any).slideDeckViz.onDelete(null, this.traverser.graph.current);
       } else {
-        (window as any).slideDeck.onAdd(this.traverser.graph.current);
+        (window as any).slideDeckViz.onAdd(this.traverser.graph.current);
       }
     });
 
@@ -399,7 +403,7 @@ export class ProvenanceTreeVisualization {
       
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
         this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
-        // (window as any).slideDeck.onChange(this.traverser.graph.current.metadata.branchnumber);
+        // (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
         this.update();
       }
     });

@@ -929,10 +929,10 @@
                   _this.update();
                   d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
                   if (!d.data.wrappedNodes[0].metadata.bookmarked) {
-                      window.slideDeck.onDelete(null, _this.traverser.graph.current);
+                      window.slideDeckViz.onDelete(null, _this.traverser.graph.current);
                   }
                   else {
-                      window.slideDeck.onAdd(_this.traverser.graph.current);
+                      window.slideDeckViz.onAdd(_this.traverser.graph.current);
                   }
               });
               // set classes on node
@@ -1002,7 +1002,7 @@
               updateNodes.on('click', function (d) {
                   if (d.data.wrappedNodes[0].id !== _this.traverser.graph.current.id) {
                       _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
-                      // (window as any).slideDeck.onChange(this.traverser.graph.current.metadata.branchnumber);
+                      // (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
                       _this.update();
                   }
               });
@@ -1091,9 +1091,10 @@
           this.sizeY = window.innerHeight;
           var margin = 0;
           var node_length = (this.currentHierarchyNodelength) * yScale * maxScale;
+          var node_width = (this.TreeWidth) * xScale * maxScale;
           var node_max = Math.floor(this.sizeY / (yScale * maxScale));
           var trans_y = (node_length > this.sizeY) ? (this.currentHierarchyNodelength - node_max + margin) * yScale * maxScale : -20;
-          var scaleFactor = Math.min(maxScale, (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale));
+          var scaleFactor = Math.min(maxScale, (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale), (magicNum * this.sizeX) / (this.TreeWidth * -xScale));
           this.svg
               .transition()
               .duration(0)
@@ -1149,7 +1150,6 @@
           this.update();
       };
       ProvenanceTreeVisualization.prototype.getFullsizeview = function () {
-          var _this = this;
           this.sizeX = window.innerWidth * 0.2;
           this.sizeY = window.innerHeight;
           var maxScale = 3;
@@ -1157,12 +1157,13 @@
           var node_length = (this.currentHierarchyNodelength + margin) * yScale * maxScale;
           var node_max = this.sizeY / node_length;
           //Need to Modify
-          var scaleFactor = Math.min(maxScale, maxScale * node_max); // find the smallest scale(Length, Width, )
+          var tx = (this.TreeWidth >= 4) ? (this.sizeX / 1.8) : (this.sizeX / 2);
+          var scaleFactor = Math.min(maxScale, maxScale * node_max, maxScale * this.sizeX / (this.TreeWidth * -xScale * 2.1 * maxScale)); // find the smallest scale(Length, Width, )
           this.svg
               .transition()
               .duration(0)
               .call(this.zoomer.transform, function () {
-              return d3.zoomIdentity.translate(_this.sizeX / 2, 20).scale(scaleFactor);
+              return d3.zoomIdentity.translate(tx, 20).scale(scaleFactor);
           } // fix size
           );
       };

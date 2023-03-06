@@ -47,15 +47,22 @@ export class AnnotationDisplayContainer {
 
     public loadForSlide(slide: IProvenanceSlide) {
         this.clear();
-        slide.annotations.forEach(annotation => {
+        for (const annotation of slide.annotations) {
             if (
-                annotation.data &&
-                annotation.data.value &&
-                annotation.data.x &&
-                annotation.data.y
+                annotation.id
             ) {
                 this.add(annotation as SlideAnnotation<PositionedString>);
             }
-        });
+        }
+        // slide.annotations.forEach(annotation => {
+        //     if (
+        //         annotation.data &&
+        //         annotation.data.value &&
+        //         annotation.data.x &&
+        //         annotation.data.y
+        //     ) {
+        //         this.add(annotation as SlideAnnotation<PositionedString>);
+        //     }
+        // });
     }
 }

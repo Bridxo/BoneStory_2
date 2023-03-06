@@ -2,7 +2,8 @@ app-provenance-visualization {
     height: 100%;
     width: 100%;
     position: absolute;
-    display: block;
+    display: flex;
+    z-index: 0; /* lower z-index */
     background-color: white;
 }
 

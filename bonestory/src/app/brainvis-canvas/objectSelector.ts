@@ -99,13 +99,14 @@ export default class ObjectSelector  implements IIntersectionListener  {
         else if(this.previousSelectedObject.name != undefined && this.state == modes.Rotation){
             this.interactive = false;
             this.isobjrotating = true;
+            const temp_pos = this.previousSelectedObject.position.clone();
             const temp_rot = this.previousSelectedObject.rotation.clone();
             this.srotation = temp_rot.toVector3();
-            this.eventdispatcher.dispatchEvent({type:'r_start', rotation: temp_rot});
+            this.eventdispatcher.dispatchEvent({type:'r_start', rotation: temp_rot, position: temp_pos});
         }
         else{
             this.interactive = true;
-            // this.state = modes.Cammode;
+            this.state = modes.Cammode;
         }
         this.eventdispatcher.dispatchEvent({
             type: 'interactive'
@@ -190,10 +191,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     } 
     if (this.isobjrotating) {
       this.isobjrotating = false;
-      
-      if (this.previousSelectedObject.rotation.toVector3().distanceTo(this.srotation) != 0) {
-        this.eventdispatcher.dispatchEvent({ type: 'r_end', rotation: this.previousSelectedObject.rotation.clone() });
-      }
+      this.eventdispatcher.dispatchEvent({ type: 'r_end', rotation: this.previousSelectedObject.rotation.clone(), position: this.previousSelectedObject.position });
     }
     this.interactive = true;
     this.state = modes.Cammode;
@@ -225,11 +223,15 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.state = modes.Cammode;
         break;
       case 'a':
-        this.state = modes.Annotationmode;
-        var annotationText = prompt("Enter the text for the annotation:");
-        const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
-        const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
-        this.canvas.Annotation(annotationText, annotation_intersect);
+        if(!(window as any).istyping){
+          this.state = modes.Annotationmode;
+          var annotationText = prompt("Enter the text for the annotation:");
+          const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
+          const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
+          this.canvas.Annotation(annotationText, annotation_intersect);
+        }
+        else
+          this.state = modes.Cammode;
         break;
       case 'delete':
         this.state = modes.Delete;
@@ -385,7 +387,6 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
             changeTime += delta;
             if (changeTime > 1.0) {
               this.changecontrols(toPosition, 0);
-              // console.log('end anim');
               clearInterval(this.changeTimeout);
               this.changeTimeout = undefined;
               if (done) {

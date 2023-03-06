@@ -127,6 +127,7 @@ export class AnnotationDisplay {
     }
 
     remove() {
+        console.log('remove() called!');
         this._options.container.removeChild(this._rootElement);
     }
 
@@ -153,8 +154,10 @@ export class AnnotationDisplay {
         if (editable) {
             this._mde.codemirror.focus();
             this._mde.codemirror.getInputField().focus();
+            (window as any).istyping = true;
         } else {
             this._mde.codemirror.getInputField().blur();
+            (window as any).istyping = false;
         }
         this._rootElement.classList.toggle("editable", editable);
     }

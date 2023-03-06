@@ -1,11 +1,11 @@
 #annotation-container {
     position: absolute;
+    z-index: 9999;
 }
 
 .provenanceAnnotation {
     position: fixed;
-    background-color: transparent;
-    z-index: 100;
+    background-color: #eee;
 }
 
 .provenanceAnnotation > .editor-toolbar {

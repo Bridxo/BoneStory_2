@@ -25,6 +25,8 @@ import { addListeners } from './provenanceListeners';
 import { AppComponent } from '../app.component';
 import { add, filter } from 'lodash';
 
+(window as any).istyping = false;
+
 enum modes {
   Translation = 0,
   Rotation = 1,
@@ -61,7 +63,6 @@ export class BrainvisCanvasComponent {
   guiElement: HTMLElement;
 
   //sync with main (appcomponent) and stl_load_models
-
   private _showSlice = false;
   private _showSliceHandle = false;
   private _showObjects = true;
@@ -142,8 +143,8 @@ export class BrainvisCanvasComponent {
     this.objects = new THREE.Object3D();
     this.objectSelector = new ObjectSelector(this.objects,this.renderer.domElement, this.camera, this);
     // todo: remove object from window
-    registerActions(this.service.registry, this);
-    addListeners(this.service.tracker, this);
+    // registerActions(this.service.registry, this);
+    // addListeners(this.service.tracker, this);
   }
   addEventListener(type, listener){
       this.eventdispatcher.addEventListener(type,listener);
@@ -175,6 +176,11 @@ export class BrainvisCanvasComponent {
 
   ngOnInit() {
 
+
+    // register actions for provenance
+    registerActions(this.service.registry, this);
+    addListeners(this.service.tracker, this);
+
     //check user offline, online
     this.onlineEvent = fromEvent(window, 'online');
     this.offlineEvent = fromEvent(window, 'offline');
@@ -191,9 +197,7 @@ export class BrainvisCanvasComponent {
       console.log('Offline...');
     }));
 
-    // todo: remove object from window
-    // registerActions(this.service.registry, this);
-    // addListeners(this.service.tracker, this);
+
     // this.elem = ElementRef.nativeElement;
     (window as any).canvas = this;
     this.width = this.elem.clientWidth;
@@ -280,6 +284,8 @@ export class BrainvisCanvasComponent {
     var customContainer = document.getElementById('gui');
     customContainer.appendChild(this.ui.domElement);
   }
+
+
   
   addEventListeners() {
       // resize event
@@ -292,6 +298,11 @@ export class BrainvisCanvasComponent {
       this.onWindowResize,
       false
     );
+
+    window.addEventListener("wheel", event => {
+      const delta = Math.sign(event.deltaY);
+      console.info(delta);
+  });
 
     window.addEventListener("beforeunload", function (e) {
       var confirmationMessage = "\o/";
@@ -306,7 +317,7 @@ export class BrainvisCanvasComponent {
       keydown_coordinate = e;
       // const have = this.intersectionManager.intersectObjects(e,this.objects.children);
   }, false);
-
+  
     window.addEventListener('keydown', (event) => {
       
       this.objectSelector.setkey(event, keydown_coordinate);
@@ -318,27 +329,27 @@ export class BrainvisCanvasComponent {
       // this.controls.update();
       });
 
-    this.controls.addEventListener('zoomstart', (event) => {
+    this.controls.addEventListener('zoom_track_start', (event) => {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
       const orientation = { position, target, up };
-
       this.eventdispatcher.dispatchEvent({
         type: 'zoomStart',
         orientation
       });
     });
 
-    this.controls.addEventListener('zoomend', (event) => {
+    this.controls.addEventListener('zoom_track_end', (event) => {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
       const orientation = { position, target, up };
-
+      const state = event.state;
       this.eventdispatcher.dispatchEvent({
         type: 'zoomEnd',
-        orientation
+        orientation,
+        state
       });
     });
 
@@ -407,7 +418,6 @@ export class BrainvisCanvasComponent {
       const inter = this.objectSelector.getinteractive();
       const mode = this.objectSelector.getmode();
       this.selectedobj = this.objectSelector.getcurrobject();
-      console.log('interactive: ' + inter);
       this.setInteractive(inter);
       if (mode == 0 && this.selectedobj!=undefined){ // Translation 
         this.mm.setMode('translate');
@@ -464,7 +474,7 @@ export class BrainvisCanvasComponent {
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
       within > 0 ? within : 1000);
-    // this.controls.zoomCamera()
+    this.controls.zoomCamera();
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
@@ -475,7 +485,7 @@ export class BrainvisCanvasComponent {
   }
 
   CameraPan(newOrientation: IOrientation, within: number) {
-    this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
+      this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
       within > 0 ? within : 1000);
@@ -646,13 +656,14 @@ export class BrainvisCanvasComponent {
     const objpose = new THREE.Vector3();
     const mode = this.objectSelector.getmode();
     this.selectedobj.geometry.boundingBox.getCenter(objpose);
-    if(mode === 1){ // if rotation
-      this.mm.position.set(intersect['x'],intersect['y'],intersect['z']);
-      // this.mm.position.set(0,0,0);
+    if(mode === 0){ // if translation
+      this.mm.position.set(0,0,0);
     }
     
-    else // if translation
-      this.mm.position.set(objpose.x,objpose.y,objpose.z);
+    else {// if rotation
+      const Base= intersect.sub( this.selectedobj.position);
+      this.mm.position.set(Base.x,Base.y,Base.z);
+    }
   }
   viewpoint_button = {
     click_top: () => {
@@ -828,11 +839,6 @@ export class BrainvisCanvasComponent {
           geometry.center();
           mesh.position.copy(centroid);
           mesh.rotation.set(0,0,0);
-          // can add this but too complicated when there are many edges in the model
-          // const edgesGeometry = new THREE.EdgesGeometry(geometry);
-          // const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-          // const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-          // mesh.add(edges);
           this.objects.add(mesh);
 
           fragment_folder.add(material, 'opacity', 0, 1).name(name)
@@ -893,6 +899,9 @@ export class BrainvisCanvasComponent {
     var dataURL = this.renderer.domElement.toDataURL('image/png');
     var img = document.createElement('img');
     img.src = dataURL;
+    const dataURLSample =
+  'data:image/png;base64,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';
+    (window as any).slideDeckViz.screenShotProvider = dataURLSample;
     return img;
   }
 

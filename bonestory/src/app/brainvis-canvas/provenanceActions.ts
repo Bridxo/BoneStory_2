@@ -2,9 +2,9 @@ import { ActionFunction, ActionFunctionRegistry } from '@visualstorytelling/prov
 import { BrainvisCanvasComponent } from './brainvis-canvas.component';
 
 const getActions = (canvas: BrainvisCanvasComponent): {[key: string]: ActionFunction} => ({
-  CameraZoom: (args) => Promise.resolve(canvas.CameraZoom(args, 500)),
+  CameraZoom: (args) => Promise.resolve(canvas.CameraMove(args, 500)),
   CameraMove: (args) => Promise.resolve(canvas.CameraMove(args, 500)),
-  CameraPan: (args) => Promise.resolve(canvas.CameraPan(args, 500)),
+  CameraPan: (args) => Promise.resolve(canvas.CameraMove(args, 500)),
   ViewpointRight: (args) => Promise.resolve(canvas.CameraMove(args, 500)),
   ViewpointLeft: (args) => Promise.resolve(canvas.CameraMove(args, 500)),
   ViewpointTop: (args) => Promise.resolve(canvas.CameraMove(args, 500)),
@@ -14,8 +14,8 @@ const getActions = (canvas: BrainvisCanvasComponent): {[key: string]: ActionFunc
   showObjects: (value: boolean) => Promise.resolve(canvas.showObjects = value),
   showSegmentedObjects: (value: boolean) => Promise.resolve(canvas.showObjects = value),
   SelectObject: (value: any[], valueb: any[], valuec: any[], valued: any[]) => Promise.resolve(canvas.selectObject = [value,valueb,valuec,valued]),
-  TranslateObject: (value:any) => Promise.resolve(canvas.ObjectTrans(value,500)),
-  rotateObject: (value: any) => Promise.resolve(canvas.ObjectRotate(value, 0)),
+  TranslateObject: (value:any) => Promise.resolve(canvas.ObjectTrans(value,2000)),
+  rotateObject: (value: any) => Promise.resolve(canvas.ObjectRotate(value, 2000)),
   Annotation: (value: any, inter: any, undo: any) => Promise.resolve(canvas.Annotation(value, inter, undo)),
 });
 
