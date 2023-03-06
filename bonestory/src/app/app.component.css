@@ -107,7 +107,19 @@ app-brainvis-canvas {
   position: absolute;
   right : 24.5%;
   z-index: 9999;
-}  
+}
+
+#demo_btn {
+  text-align: center;
+  font-size: 19px;
+  border-radius: 50%;
+  color:rgb(255, 255, 255);
+  justify-content: center;
+  text-decoration: none;
+  position: absolute;
+  right : 27%;
+  z-index: 9999;
+}
 
 .provslider {
   top: 23%;

@@ -6,7 +6,8 @@ import {
     ProvenanceSlide,
     IProvenanceSlidedeck,
     SlideAnnotation,
-    StateNode
+    StateNode,
+    ProvenanceNode
 } from "@visualstorytelling/provenance-core";
 
 import { AnnotationDisplayContainer } from "./annotation-display/annotation-display-container";
@@ -127,6 +128,20 @@ export class SlideDeckVisualization {
     // (slideDeck.graph.current as StateNode).metadata.bookmarked = true;
     // this.selectSlide(slide);
     // this._slidesInDeck += 1;
+
+    private provchanged = (node: ProvenanceNode) => {
+        let slideDeck = this._slideDeck;
+        let match = false;
+        slideDeck.slides.forEach(slide => {
+            if(slide.node != null && slide.node.id === node.id){
+                this.selectSlide(slide);
+                match = true;
+                return;
+            }
+        });
+        if(match === false)
+            this.selectSlide(null);
+    }
 
     private onChange = (bnumber: number) => {
         let slideDeck = this._slideDeck;

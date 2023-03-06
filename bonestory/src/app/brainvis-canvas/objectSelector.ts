@@ -225,10 +225,12 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
       case 'a':
         if(!(window as any).istyping){
           this.state = modes.Annotationmode;
-          var annotationText = prompt("Enter the text for the annotation:");
           const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
           const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
-          this.canvas.Annotation(annotationText, annotation_intersect);
+          if(annotation_intersect.length != 0){
+            var annotationText = prompt("Enter the text for the annotation:");
+            this.canvas.Annotation(annotationText, annotation_intersect, false);
+          }
         }
         else
           this.state = modes.Cammode;

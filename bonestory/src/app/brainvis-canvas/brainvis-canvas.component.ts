@@ -477,23 +477,10 @@ export class BrainvisCanvasComponent {
   }
 
   CameraZoom(newOrientation: IOrientation, within: number) {
-    console.log(this.camera.position);
-    console.log(newOrientation.position);
-    // this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
-    //   new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
-    //   new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
-    //   0);
-    const position = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
-    const target = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
-    const up = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
-    const eye = new THREE.Vector3().subVectors(position, target);
-
-    this.camera.position.set(position.x, position.y, position.z);
-    this.camera.lookAt(target);
-    this.camera.up.set(up.x, up.y, up.z);
-    this.camera.updateProjectionMatrix();
-    this.renderer.render(this.scene, this.camera);
-    console.log(this.camera.position);
+    this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
+      new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
+      new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
+      within > 0 ? within : 1000);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
@@ -520,96 +507,74 @@ export class BrainvisCanvasComponent {
     this.objectSelector.setrotateobj(newRotation);
   }
   Annotation(text: string, intersect: any, undo?: boolean) {
-    const filteredchildren = this.scene.children.filter(child => child.type == 'Sprite');
-    if(intersect[0] != undefined){
-      for (var i = 0; i < filteredchildren.length; i++) {
-        if (filteredchildren[i].position.equals(intersect[0].point)) {
-          if(undo == true){
-            this.scene.remove(filteredchildren[i]);
-            return;
-          }
-          else{
-          }
+    if(undo === true){
+      intersect[0].object.children.forEach (function (child) {
+        if(child.name === text){
+          child.material.dispose();
+          intersect[0].object.remove(child);
+        }
+      });
+      return;
+    }
+    var text_plane =  new THREE.CanvasTexture(function () {
+      
+      var plane = document.createElement('canvas');
+
+      var context = plane.getContext('2d');
+      var metrics = context.measureText(text);
+      var planeLength = 160, textHeight = 60;
+      plane.width = 512;
+      
+      var words = text.split(' ');
+      var line = '';
+      var lineCount = 0;
+      var lines = [];
+      for (var n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + ' ';
+        var testWidth = context.measureText(testLine).width;
+        if (testWidth > planeLength) {
+          lines.push(line);
+          line = words[n] + ' ';
+          lineCount++;
+        } else {
+          line = testLine;
         }
       }
-      var text_plane =  new THREE.CanvasTexture(function () {
-        
-        var plane = document.createElement('canvas');
+      lineCount++;
+      lines.push(line);
+      plane.height = textHeight + lineCount * textHeight;
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, 512, textHeight + (lineCount * textHeight));
+      context.font = '50px Arial';
+      context.fillStyle = 'black';
+      context.textAlign = 'left';
+      context.textBaseline = 'middle';
+      context.imageSmoothingEnabled = true;
+      context.arc(32,32,30,0,Math.PI*2);
+      for (var i = 0; i < lineCount; i++) {
+        context.fillText(lines[i], 0, textHeight + (i * textHeight), 512);
+      }
+      return plane;
+    }());
+    text_plane.needsUpdate = true;
+    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      color: 0xffffff,
+      alphaTest: 0.5,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false}));
+    sprite.name = text;
+    sprite.scale.set(100, 50, 1);
+    sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
+    sprite.material.map = text_plane;
+    sprite.material.opacity = 0.5;
+    intersect[0].object.add(sprite); //add annotation on the object
 
-        var context = plane.getContext('2d');
-        var metrics = context.measureText(text);
-        var planeLength = 160, textHeight = 60;
-        plane.width = 512;
-        
-        var words = text.split(' ');
-        var line = '';
-        var lineCount = 0;
-        var lines = [];
-        for (var n = 0; n < words.length; n++) {
-          var testLine = line + words[n] + ' ';
-          var testWidth = context.measureText(testLine).width;
-          if (testWidth > planeLength) {
-            lines.push(line);
-            line = words[n] + ' ';
-            lineCount++;
-          } else {
-            line = testLine;
-          }
-        }
-        lineCount++;
-        lines.push(line);
-        plane.height = textHeight + lineCount * textHeight;
-        context.fillStyle = 'white';
-        context.fillRect(0, 0, 512, textHeight + (lineCount * textHeight));
-        context.font = '50px Arial';
-        context.fillStyle = 'black';
-        context.textAlign = 'left';
-        context.textBaseline = 'middle';
-        context.imageSmoothingEnabled = true;
-        context.arc(32,32,30,0,Math.PI*2);
-        for (var i = 0; i < lineCount; i++) {
-          context.fillText(lines[i], 0, textHeight + (i * textHeight), 512);
-        }
-        return plane;
-      }());
-      text_plane.needsUpdate = true;
-      var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-        color: 0xffffff,
-        alphaTest: 0.5,
-        transparent: true,
-        depthTest: false,
-        depthWrite: false}));
-      sprite.scale.set(100, 50, 1);
-      sprite.position.copy(intersect[0].point);
-      sprite.material.map = text_plane;
-      sprite.material.opacity = 0.5;
-      intersect[0].object.add(sprite);
-      // this.scene.add(sprite);
-      this.eventdispatcher.dispatchEvent({
-        type: 'annotation',
-        text: text,
-        inter: intersect
-      });
-    }
-    else if(text == '' && intersect[0] != undefined){
-      this.eventdispatcher.dispatchEvent({
-        type: 'annotation',
-        text: text,
-        inter: intersect
-      });
-    }
-    else{
-      const annotation_2d = new Annotation_2D({
-        position: new THREE.Vector3(10, 10, 0),
-        text: 'Hello, world!',
-      }, this.camera);
-      this.scene.add(annotation_2d);
-      this.eventdispatcher.dispatchEvent({
-        type: 'annotation',
-        text: text,
-        inter: intersect
-      });
-    }
+    this.eventdispatcher.dispatchEvent({
+      type: 'annotation',
+      text: text,
+      inter: intersect
+    });
   }
 
   animate = () => {
@@ -886,6 +851,56 @@ export class BrainvisCanvasComponent {
         center.sub(new THREE.Vector3(0, 0, 0));
         this.objects.position.set(0,0,0);
   }
+  // load_demo = () =>{
+  //       // Load STL models  
+  //       const alpha = ['assets/SP_1.stl','assets/SP_2.stl','assets/SP_3.stl'];      
+  //       const fragment_folder = this.ui.addFolder('Fragments Opecity');
+  //       for(var file of alpha)
+  //       {
+  //         let name = 'f' + this.number_of_stl.toString();
+  //         const color = this.selectColor(this.number_of_stl);
+  //         let loaderSTL = new STLLoader();
+          
+  //         let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 100, transparent: true});
+  //         let geometry = loaderSTL.load(file,function(geometry){          
+  //           const mesh = new THREE.Mesh(geometry, material);
+  //           let centroid = new THREE.Vector3();
+  //           mesh.geometry.computeBoundingBox();
+  //           centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
+  //           centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
+  //           centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+  //           mesh.name = name.toString();
+  //           geometry.center();
+  //           mesh.position.copy(centroid);
+  //           mesh.rotation.set(0,0,0);
+  //           this.objects.add(mesh);
+  //         }.bind(this));
+  //         fragment_folder.add(material, 'opacity', 0, 1).name(name)
+  //         .onChange((value) => {material.opacity = value;});
+  //         fragment_folder.open();
+  //         this.number_of_stl++;
+  //       }
+  //       //positioning all loaded meshes to the center of the scene. 
+  //       // compute average position of child meshes
+  //       const center = new THREE.Vector3();
+  //       this.objects.children.forEach((child) => {
+  //         center.add(child.position);
+  //       });
+  //       center.divideScalar(alpha.length);
+  //       const origin = new THREE.Vector3(0, 0, 0);
+  //       const direction = center.clone().sub(origin).normalize();
+  //       const distance = origin.distanceTo(center);
+  //       const newVector = origin.clone().add(direction.multiplyScalar(distance));
+  //       // subtract the average position from each child mesh's position
+  //       this.objects.children.forEach((child) => {
+  //         child.position.sub(newVector);
+  //       });
+
+  //       // set the parent object's position to the negative of the average position
+  //       this.objects.position.copy(center);
+  //       center.sub(new THREE.Vector3(0, 0, 0));
+  //       this.objects.position.set(0,0,0);
+  // }
   generateHeight( width, height ) {
 
     const size = width * height, data = new Uint8Array( size ),

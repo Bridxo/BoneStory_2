@@ -1063,6 +1063,7 @@
           addAggregationButtons(this.container, this);
           traverser.graph.on('currentChanged', function () {
               _this.update();
+              window.slideDeckViz.provchanged(_this.traverser.graph.current);
           });
           traverser.graph.on('nodeChanged', function () {
               _this.update();

@@ -100,6 +100,7 @@ export class ProvenanceTreeVisualization {
 
     traverser.graph.on('currentChanged', () => {
       this.update();
+      (window as any).slideDeckViz.provchanged(this.traverser.graph.current);
     });
 
     traverser.graph.on('nodeChanged', () => {

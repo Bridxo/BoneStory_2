@@ -47,8 +47,6 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
                 undoArguments: [(startEvent as any).orientation],
               });
             }
-            console.log('start: '+ startEvent.orientation.position);
-            console.log('end: ' + event.orientation.position);
             break;
           case 1:
             tracker.applyAction({
@@ -127,8 +125,6 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
         undo: 'CameraZoom',
         undoArguments: [(startEvent as any).orientation],
       }, true);
-      console.log('start: '+ startEvent.orientation.position);
-      console.log('end: ' + event.orientation.position);
     }, 600, { trailing: true });
     canvas.addEventListener('zoomEnd', zoomEndListener);
   };
@@ -222,9 +218,9 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
     tracker.applyAction({
       metadata: {userIntent: 'provenance'},
       do: 'Annotation',
-      doArguments: [(event as any).text, (event as any).inter], //  new , old, new color, old color
+      doArguments: [(event as any).text, (event as any).inter,false], //  new , old, new color, old color
       undo: 'Annotation',
-      undoArguments: ['', (event as any).inter, true] // return back old, new, old color, new color
+      undoArguments: [(event as any).text, (event as any).inter, true] // return back old, new, old color, new color
     }, true);
   });
 };
