@@ -7,7 +7,8 @@ import {
   ActionFunctionWithThis,
   ProvenanceNode,
   RootNode,
-  IScreenShotProvider
+  IScreenShotProvider,
+  SerializedProvenanceGraph
 } from './api';
 import { generateUUID, generateTimestamp } from './utils';
 /**
@@ -132,6 +133,10 @@ export class ProvenanceTracker implements IProvenanceTracker {
 
   get autoScreenShot(): boolean {
     return this._autoScreenShot;
+  }
+
+  getGraph(): SerializedProvenanceGraph {
+    return this.graph.getSelf();
   }
 
   set autoScreenShot(value: boolean) {

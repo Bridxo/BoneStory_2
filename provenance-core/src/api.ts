@@ -2,6 +2,8 @@
  * String identifier for nodes (e.g., a generated UUID)
  */
 
+import { ProvenanceGraph } from "./ProvenanceGraph";
+
 export type NodeIdentifier = string;
 
 /**
@@ -217,7 +219,7 @@ export interface IProvenanceGraph {
    * Pointer to the currently active node
    */
   current: ProvenanceNode;
-
+  id: string;
   root: RootNode;
 
   /**
@@ -245,6 +247,8 @@ export interface IProvenanceGraph {
    */
   on(type: string, handler: Handler): void;
   off(type: string, handler: Handler): void;
+  getSelf(): SerializedProvenanceGraph;
+  restoreSelf(sgraph: SerializedProvenanceGraph): ProvenanceGraph;
 }
 
 /**
@@ -368,6 +372,19 @@ export interface ISlideAnnotation<T> {
   off(type: string, handler: Handler): any;
 }
 
+export type SerializedProvenanceSlide = {
+  node: string | null;
+  name: string;
+  duration: number;
+  transitionTime: number;
+  mainAnnotation: string;
+}
+
+export type SerializedSlidedeck = {
+  slides: SerializedProvenanceSlide[];
+  id: string;
+}
+
 export interface IProvenanceSlide {
   id: string;
   node: ProvenanceNode | null;
@@ -420,6 +437,12 @@ export interface IProvenanceSlidedeck {
    */
   on(type: string, handler: Handler): void;
   off(type: string, handler: Handler): void;
+  serializeSelf(): SerializedSlidedeck;
+  restoreSelf(
+    serializedSlides: SerializedSlidedeck,
+    traverser: IProvenanceGraphTraverser,
+    graph: ProvenanceGraph,
+    app: Application): IProvenanceSlidedeck;
 }
 
 export type IScreenShot = any;

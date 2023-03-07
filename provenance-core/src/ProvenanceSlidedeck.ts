@@ -6,9 +6,12 @@ import {
   Application,
   Handler,
   IProvenanceSlide,
-  IScreenShotProvider
+  IScreenShotProvider,
+  SerializedSlidedeck,
+  SerializedProvenanceSlide
 } from './api';
-import { ProvenanceSlide } from './ProvenanceSlide';
+import { ProvenanceSlide, restoreSlide, serializeSlide } from './ProvenanceSlide';
+import { ProvenanceGraph } from './ProvenanceGraph';
 
 export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
   private _application: Application;
@@ -205,5 +208,47 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
 
   off(type: string, handler: Handler) {
     this._mitt.off(type, handler);
+  }
+
+  serializeSelf() : SerializedSlidedeck {
+    return serializeSlideDeck(this);
+  }
+
+  restoreSelf(
+    serializedSlides: SerializedSlidedeck, 
+    traverser: IProvenanceGraphTraverser, 
+    graph: ProvenanceGraph,
+    app: Application) : IProvenanceSlidedeck {
+    return restoreSlideDeck(serializedSlides, traverser, graph, app);
+  }
+  
+}
+
+/** The following two functions are used to serialize and deserialize a ProvenanceSlideDeck */
+
+export function restoreSlideDeck(
+  serializedSlides: SerializedSlidedeck, 
+  traverser: IProvenanceGraphTraverser, 
+  graph: ProvenanceGraph,
+  app: Application) : IProvenanceSlidedeck {
+    // if(serializedSlides.id != graph.id){
+    //   alert("Graph and slide deck mismatch");
+    // }
+    let deck = new ProvenanceSlidedeck(app, traverser);
+    serializedSlides.slides.forEach(serializedSlide => {
+      deck.addSlide(restoreSlide(serializedSlide, graph));
+    });
+    deck.selectedSlide = deck.slides[0];
+    return deck;
+}
+
+export function serializeSlideDeck(slideDeck: ProvenanceSlidedeck) : SerializedSlidedeck{
+  let slides: SerializedProvenanceSlide[] = []
+  slideDeck.slides.forEach(slide => {
+    slides.push(serializeSlide(slide));
+  });
+  return {
+    slides: slides,
+    id: slideDeck.graph.id,
   }
 }

@@ -1,4 +1,5 @@
-import { IProvenanceSlide, ProvenanceNode, Handler } from './api';
+import { IProvenanceSlide, ProvenanceNode, Handler, SerializedProvenanceSlide} from './api';
+import {ProvenanceGraph} from './ProvenanceGraph';
 import { generateUUID } from './utils';
 import { SlideAnnotation } from './SlideAnnotation';
 import mitt from './mitt';
@@ -99,5 +100,31 @@ export class ProvenanceSlide implements IProvenanceSlide {
   }
   public get metadata() {
     return this._metadata;
+  }
+}
+/** The following two functions are used to serialize and deserialize a ProvenanceSlide */
+
+export function restoreSlide(serialized: SerializedProvenanceSlide, graph: ProvenanceGraph) : ProvenanceSlide{
+  let slide = new ProvenanceSlide(serialized.name, serialized.duration, serialized.transitionTime);
+  if(serialized.node != null){
+    const node = graph.nodes[serialized.node];
+    slide.node = node;
+  }
+  return slide;
+}
+
+export function serializeSlide(slide: IProvenanceSlide) : SerializedProvenanceSlide{
+  let nodeId: string | null;
+  if(slide.node != null){
+    nodeId = slide.node.id;
+  } else {
+    nodeId = null;
+  }
+  return {
+    node: nodeId,
+    name: slide.name, 
+    transitionTime: slide.transitionTime,
+    duration: slide.duration,
+    mainAnnotation: ""
   }
 }

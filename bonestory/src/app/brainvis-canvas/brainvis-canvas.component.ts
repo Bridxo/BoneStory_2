@@ -564,8 +564,10 @@ export class BrainvisCanvasComponent {
       depthTest: false,
       depthWrite: false}));
     sprite.name = text;
-    sprite.scale.set(100, 50, 1);
     sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
+    const scaler= this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+    const scale_value = scaler/2;
+    sprite.scale.set(scale_value, scale_value/5, 1);
     sprite.material.map = text_plane;
     sprite.material.opacity = 0.5;
     intersect[0].object.add(sprite); //add annotation on the object
@@ -804,8 +806,13 @@ export class BrainvisCanvasComponent {
     }
   }
   load_stl_models = async(alpha) => {
-        // Load STL models        
-        const fragment_folder = this.ui.addFolder('Fragments Opecity');
+        // Load STL models
+        let fragment_folder
+        let uis = this.ui;
+        if(uis.__folders['Fragments Opecity']==null)
+          fragment_folder = uis.addFolder('Fragments Opecity');
+        else
+          fragment_folder = uis.__folders['Fragments Opecity'];
         for(var file of alpha)
         {
           let name = 'f' + this.number_of_stl.toString();

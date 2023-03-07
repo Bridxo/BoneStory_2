@@ -49,6 +49,7 @@ export class ProvenanceGraph implements IProvenanceGraph {
     this.addNode(this.root);
     this._current = this.root;
   }
+  id!: string;
 
   addNode(node: ProvenanceNode): void {
     if (this._nodes[node.id]) {
@@ -104,6 +105,13 @@ export class ProvenanceGraph implements IProvenanceGraph {
 
   off(type: string, handler: Handler) {
     this._mitt.off(type, handler);
+  }
+  getSelf(): SerializedProvenanceGraph {
+    return serializeProvenanceGraph(this);
+  }
+
+  restoreSelf(sgraph: SerializedProvenanceGraph): ProvenanceGraph {
+    return restoreProvenanceGraph(sgraph);
   }
 }
 

@@ -9,11 +9,11 @@ import {ProvenanceService} from '../provenance.service';
 
 export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, service: ProvenanceService) => {
 
-    let exportButton = document.getElementById('exportButton');
-    // exportButton.addEventListener("click", (e: Event) => downloadJson(e, service.tracker.getGraph()));
+    let exportButton = document.getElementById('saveprov_btn');
+    exportButton.addEventListener("click", (e: Event) => downloadJson(e, service.tracker.getGraph()));
 
     let importButton = document.getElementById('importButton');
-    // importButton.addEventListener('click', (e: Event) => importJson(e));
+    importButton.addEventListener('click', (e: Event) => importJson(e));
   
 /** The next 3 functions are used for importing a graph. The first one (importJson) loads the file, the second one (getFile) reads the data in it
  * and the last one (restoreGraph) converts it to a graph object. 
@@ -52,9 +52,9 @@ export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, ser
         console.log("Hello");  
         service.graph = graph;
         service.registry = new ActionFunctionRegistry();
-        // service.tracker = new ProvenanceTracker(service.registry, service.graph, "Unknown", graph.current);
+        service.tracker = new ProvenanceTracker(service.registry, service.graph, "Unknown");
         service.traverser = new ProvenanceGraphTraverser(service.registry, service.graph, service.tracker);
-        // tree.setTraverser(service.traverser);
+        tree.setTraverser(service.traverser);
         tree.update();
         let elem = document.getElementById('fake');
         elem.click();
@@ -73,4 +73,12 @@ export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, ser
       element.click(); // simulate click
       document.body.removeChild(element);
   }
+
+  function removeParent(obj: any) {
+    delete obj.parent;
+    if (obj.children) {
+      obj.children.forEach(removeParent);
+    }
+  }
+  
 }

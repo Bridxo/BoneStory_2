@@ -37,7 +37,7 @@
       <button id="upload_btn" mat-icon-button onclick="filesel.click()" title="Load STL files" style="cursor: pointer;">
         <mat-icon>cloud_upload</mat-icon>
       </button>
-      <button id="saveprov_btn" mat-icon-button onclick="filesel.click()" title="Save Prov files(json)" style="cursor: pointer;">
+      <button id="saveprov_btn" mat-icon-button (click)="provvis.downloadJson()" title="Save Prov files(json)" style="cursor: pointer;">
         <mat-icon>cloud_download</mat-icon>
       </button>
       <button id="sidenav-trigger" mat-icon-button (click)="onSidenavToggle(); provvis.update();" title="Provenance Tool" style="cursor: pointer;">

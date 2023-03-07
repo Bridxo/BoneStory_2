@@ -135,53 +135,6 @@ export default class ObjectSelector  implements IIntersectionListener  {
     //         // this.eventdispatcher.dispatchEvent({type:'rotateEnd_origin', rotation_x: this.previousSelectedObject.rotateX, rotation_y: this.previousSelectedObject.rotateY, rotation_z: this.previousSelectedObject.rotateZ});
     //     }
     }
-  //   rotateAroundObjectAxis(object, axis, radians) {
-  //       let rotationMatrix = new THREE.Matrix4();
-
-  //       rotationMatrix.makeRotationAxis(axis.normalize(), radians);
-  //       object.matrix.multiply(rotationMatrix);
-  //       object.rotation.setFromRotationMatrix( object.matrix );
-
-  //   }
-
-  //   rotateAroundWorldAxis( object, axis, radians ) {
-
-  //     let rotationMatrix = new THREE.Matrix4();
-
-  //     rotationMatrix.makeRotationAxis( axis.normalize(), radians );
-  //     rotationMatrix.multiply( object.matrix );                       // pre-multiply
-  //     object.matrix = rotationMatrix;
-  //     object.rotation.setFromRotationMatrix( object.matrix );
-  // }
-
-//   onMouseDoubleclick(intersection: THREE.Intersection, pointer: MouseEvent) {
-//     if (intersection === undefined) return;
-
-//     pointer.stopImmediatePropagation();
-
-//     const currentMesh = intersection.object as THREE.Mesh;
-//     if (!(currentMesh instanceof THREE.Mesh)) return;
-
-//     const currentMaterial = currentMesh.material as THREE.MeshPhongMaterial;
-//     if (!(currentMaterial instanceof THREE.MeshPhongMaterial)) return;
-
-//     const previousMaterial = this.previousSelectedObject?.material as THREE.MeshPhongMaterial;
-
-//     if (currentMesh !== this.previousSelectedObject) {
-//         this.pastColor = this.previousColor;
-//         this.previousColor = currentMaterial.color.getHex();
-//         this.pastSelectedObject = this.previousSelectedObject;
-//         this.previousSelectedObject = currentMesh;
-//     } else {
-//         this.pastSelectedObject = this.previousSelectedObject;
-//         // currentMaterial.color.setHex(this.previousColor); // return to original color
-//     }
-
-//     this.eventdispatcher.dispatchEvent({
-//         type: 'objectSelection',
-//         newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
-//     });
-// }
 onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     this.isdragging = false;
     
@@ -235,9 +188,14 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         else
           this.state = modes.Cammode;
         break;
-      case 'delete':
+      case 'Delete':
         this.state = modes.Delete;
-        
+        const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
+        const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
+        if(annotation_intersect.length != 0){
+          var annotationText = prompt("Enter the text for the annotation:");
+          this.canvas.Annotation(annotationText, annotation_intersect, false);
+        }
         break;
       default:
         this.state = modes.Cammode;
