@@ -1,5 +1,5 @@
 import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output, OnDestroy, HostListener, ViewChild, AfterViewInit } from '@angular/core';
-
+// import {CSS2DRenderer, CSS2DObject} from 'three-css2drenderer'
 import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 
 import * as THREE from 'three';
@@ -73,6 +73,7 @@ export class BrainvisCanvasComponent {
   public intersection_info;
   public keydown_coordinate: THREE.Vector2;
   public viewpoint_action = 0;
+  relativePos: THREE.Vector3;
 
   @Input() set showObjects(showObjects: boolean) {
     this._showObjects = showObjects;
@@ -95,7 +96,7 @@ export class BrainvisCanvasComponent {
   private height: number;
   private elem: Element;
   public scene = new THREE.Scene();
-  private group = new THREE.Group();
+  private pivot_group = new THREE.Group();
   private objects: THREE.Object3D; // all the loaded objects go in here
 
   // private camera: THREE.PerspectiveCamera;
@@ -106,7 +107,7 @@ export class BrainvisCanvasComponent {
   private number_of_stl = 0; //incresase numbers
   
   private controls: Trackball;
-  private stackHelper = 0;
+  private stackHelper = 1;
   // private sliceManipulator: SliceManipulatorWidget;
   // private meshManipulator: MeshManipulatorWidget;
   private eventdispatcher: THREE.EventDispatcher;
@@ -132,6 +133,7 @@ export class BrainvisCanvasComponent {
   private selectedobj: THREE.Mesh; // for indicating selected object
   public helper; // for indicating selected object surface normal
   public annotations = []; // Create an array to store the annotations
+  public Base;
   // stl file information
   private stl_objs: FormData;
 
@@ -224,6 +226,7 @@ export class BrainvisCanvasComponent {
     this.controls.update();
     this.mm = new TransformControls(this.camera, this.renderer.domElement);
     this.mm.setSize(0.4);
+    
 
     
     this.intersectionManager = new IntersectionManager(this.renderer.domElement, this.camera);
@@ -246,21 +249,21 @@ export class BrainvisCanvasComponent {
 
     // Setup lights
     this.scene.add(new THREE.AmbientLight(0xffffff,0.1));
-    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    let directionallight_2 = new THREE.DirectionalLight(0xffffff, 1);
+    this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    // let directionallight_2 = new THREE.DirectionalLight(0xffffff, 1);
     this.directionalLight.position.set(1, 1, 1).normalize();
-    directionallight_2.position.set(-1,-1,-1).normalize();
+    // directionallight_2.position.set(-1,-1,-1).normalize();
     const gridHelper = new THREE.GridHelper(500, 10);
     const AxesHelper = new THREE.AxesHelper(500);
     var instructions = document.getElementById('instructions');
 
     
     this.scene.add(this.directionalLight);
-    this.scene.add(directionallight_2);
-    this.scene.add(this.group);
+    // this.scene.add(directionallight_2);
     this.scene.add(this.mm);
     this.scene.add(gridHelper);
     this.scene.add(AxesHelper);
+    this.scene.add(this.pivot_group);
 
     this.ui = new dat.GUI({autoPlace: false, width: 200});
     const vis_helper = this.ui.addFolder('Helpers');
@@ -292,6 +295,7 @@ export class BrainvisCanvasComponent {
     var x = 0, y = 0;
     var keydown_coordinate;
 
+   
 
     this.renderer.domElement.addEventListener(
       "resize",
@@ -403,23 +407,18 @@ export class BrainvisCanvasComponent {
     this.objectSelector.addEventListener('r_start', (event:any) => {
       this.eventdispatcher.dispatchEvent({
         type: 'rotationStart',
-        rotation: event.rotation
+        rotation: event.rotation,
+        position: event.position.add(this.pivot_group.position.clone())
       });
     });
     this.objectSelector.addEventListener('r_end', (event:any) => {
+
       this.eventdispatcher.dispatchEvent({
         type: 'rotationEnd',
-        rotation: event.rotation
+        rotation: this.selectedobj.rotation.clone(),
+        position: this.selectedobj.position.clone()
       });
     });
-    // this.objectSelector.addEventListener('translateObject', (event: any) => {
-    //   this.eventdispatcher.dispatchEvent({
-    //     type: 'objectMove',
-    //     position: event.position
-    //   });
-    // });
-    
-
 
     this.objectSelector.addEventListener('interactive', (event: any) => {
       const inter = this.objectSelector.getinteractive();
@@ -428,15 +427,19 @@ export class BrainvisCanvasComponent {
       this.setInteractive(inter);
       if (mode == 0 && this.selectedobj!=undefined){ // Translation 
         this.mm.setMode('translate');
-        this.recenter_mm(event.intersect);
+        this.mm.position.set(0,0,0);
         this.mm.attach(this.selectedobj);
         this.controls.enabled = false;
       }
       else if (mode == 1 && this.selectedobj!=undefined){ //Rotation
         this.mm.setMode('rotate');
         if(event.intersect!=undefined){
-          this.mm.attach(this.selectedobj);
-          this.recenter_mm(event.intersect);
+          this.pivot_group.position.set(0,0,0);
+          this.pivot_group.rotation.set(0,0,0);
+          this.pivot_group.add(this.selectedobj);
+          this.pivot_group.position.copy(event.intersect);
+          this.selectedobj.position.sub(event.intersect);
+          this.mm.attach(this.pivot_group);
         }
 
         this.controls.enabled = false;
@@ -445,7 +448,6 @@ export class BrainvisCanvasComponent {
         this.mm.detach();
         this.controls.enabled = true;
       }
-      // this.controls.update();
     });
 
     this.objectSelector.addEventListener('objectSelection', (event: any) => {
@@ -456,13 +458,6 @@ export class BrainvisCanvasComponent {
       this.setInteractive(inter);
       this.mm.detach();
     });
-
-    // this.objectSelector.addEventListener('objectTranslation', (event: any) => {
-    //   this.showtranslateObject = this.objectSelector.gettranslateObject();
-    // });
-    // this.objectSelector.addEventListener('objectRotation', (event: any) => {
-    //   this.showrotateObject = this.objectSelector.gettranslateObject();
-    // });
     
   }
 
@@ -477,10 +472,10 @@ export class BrainvisCanvasComponent {
   }
 
   CameraZoom(newOrientation: IOrientation, within: number) {
-    this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
-      new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
-      new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
-      within > 0 ? within : 1000);
+    let cc_1 = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
+    let cc_2 = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
+    let cc_3 = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
+    this.controls.changeCamera(cc_1, cc_2, cc_3,within > 0 ? within : 1000);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
@@ -497,14 +492,16 @@ export class BrainvisCanvasComponent {
       within > 0 ? within : 1000);
   }
 
-  async ObjectTrans(newPosition: any, within: number) {
-    await this.changeControlsAsync(newPosition, within);
-    this.objectSelector.settransobj(newPosition);
+  ObjectTrans(newPosition: any, within: number) {
+    within = 500;
+    this.objectSelector.changecontrols(new THREE.Vector3(newPosition[0], newPosition[1], newPosition[2]), within);
   }
 
-  ObjectRotate(newRotation: THREE.Vector3, within: number) {
-    this.objectSelector.changecontrols_rotation(new THREE.Vector3(newRotation.x, newRotation.y, newRotation.z), within > 0 ? within : 1000);
-    this.objectSelector.setrotateobj(newRotation);
+  async ObjectRotate(newargs: any, newpos:any ,within: number) {
+    within = 500;
+    // this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), within, undefined, new THREE.Vector3(newargs.x, newargs.y, newargs.z));
+    this.objectSelector.changecontrols_rotation(new THREE.Vector3(newargs.x, newargs.y, newargs.z), within);
+    this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), 0);
   }
   Annotation(text: string, intersect: any, undo?: boolean) {
     if(undo === true){
@@ -597,7 +594,7 @@ export class BrainvisCanvasComponent {
     }
 
     this.controls.update();
-    this.mm.addEventListener( 'change', function() {this.render}.bind(this));
+    
     this.render();
     
   }
@@ -608,18 +605,6 @@ export class BrainvisCanvasComponent {
   getrender() {
     return this.renderer.render(this.scene, this.camera);
   }
-
-
-  
-//HL_object related functions
-  
-  // moveselectedobject = (event) => {
-  //   if(this.selectedObjects){ //if fragment selected
-  //   }
-  //   else{ //if fragment not selected
-
-  //   }
-  // }
 
   onShowObjectsChange = (visible) => {
 
@@ -636,20 +621,6 @@ export class BrainvisCanvasComponent {
 
   toggleObjects(visible) {
     this.objects.visible = visible;
-  }
-
-  recenter_mm(intersect?){
-    const objpose = new THREE.Vector3();
-    const mode = this.objectSelector.getmode();
-    this.selectedobj.geometry.boundingBox.getCenter(objpose);
-    if(mode === 0){ // if translation
-      this.mm.position.set(0,0,0);
-    }
-    
-    else {// if rotation
-      const Base= intersect.sub( this.selectedobj.position);
-      this.mm.position.set(Base.x,Base.y,Base.z);
-    }
   }
   viewpoint_button = {
     click_top: () => {
@@ -809,16 +780,16 @@ export class BrainvisCanvasComponent {
         // Load STL models
         let fragment_folder
         let uis = this.ui;
-        if(uis.__folders['Fragments Opecity']==null)
-          fragment_folder = uis.addFolder('Fragments Opecity');
+        if(uis.__folders['Fragments Opacity']==null)
+          fragment_folder = uis.addFolder('Fragments Opacity');
         else
-          fragment_folder = uis.__folders['Fragments Opecity'];
+          fragment_folder = uis.__folders['Fragments Opacity'];
         for(var file of alpha)
         {
           let name = 'f' + this.number_of_stl.toString();
           const color = this.selectColor(this.number_of_stl);
           let loaderSTL = new STLLoader();
-          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 100, transparent: true});
+          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 50, transparent: true});
           let geometry = loaderSTL.parse(file.result);
           let mesh = new THREE.Mesh(geometry, material);
           let centroid = new THREE.Vector3();
@@ -831,7 +802,7 @@ export class BrainvisCanvasComponent {
           mesh.position.copy(centroid);
           mesh.rotation.set(0,0,0);
           this.objects.add(mesh);
-
+          // this.connect_label(mesh);
           fragment_folder.add(material, 'opacity', 0, 1).name(name)
           .onChange((value) => {material.opacity = value;});
           fragment_folder.open();
@@ -858,56 +829,56 @@ export class BrainvisCanvasComponent {
         center.sub(new THREE.Vector3(0, 0, 0));
         this.objects.position.set(0,0,0);
   }
-  // load_demo = () =>{
-  //       // Load STL models  
-  //       const alpha = ['assets/SP_1.stl','assets/SP_2.stl','assets/SP_3.stl'];      
-  //       const fragment_folder = this.ui.addFolder('Fragments Opecity');
-  //       for(var file of alpha)
-  //       {
-  //         let name = 'f' + this.number_of_stl.toString();
-  //         const color = this.selectColor(this.number_of_stl);
-  //         let loaderSTL = new STLLoader();
+  load_demo = () =>{
+        // Load STL models  
+        const alpha = ['assets/SP_1.stl','assets/SP_2.stl','assets/SP_3.stl','assets/Clavicle Mid Shaft Bone Plate_2.stl'];      
+        const fragment_folder = this.ui.addFolder('Fragments Opecity');
+        for(var file of alpha)
+        {
+          let name = 'f' + this.number_of_stl.toString();
+          const color = this.selectColor(this.number_of_stl);
+          let loaderSTL = new STLLoader();
           
-  //         let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 100, transparent: true});
-  //         let geometry = loaderSTL.load(file,function(geometry){          
-  //           const mesh = new THREE.Mesh(geometry, material);
-  //           let centroid = new THREE.Vector3();
-  //           mesh.geometry.computeBoundingBox();
-  //           centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
-  //           centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
-  //           centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
-  //           mesh.name = name.toString();
-  //           geometry.center();
-  //           mesh.position.copy(centroid);
-  //           mesh.rotation.set(0,0,0);
-  //           this.objects.add(mesh);
-  //         }.bind(this));
-  //         fragment_folder.add(material, 'opacity', 0, 1).name(name)
-  //         .onChange((value) => {material.opacity = value;});
-  //         fragment_folder.open();
-  //         this.number_of_stl++;
-  //       }
-  //       //positioning all loaded meshes to the center of the scene. 
-  //       // compute average position of child meshes
-  //       const center = new THREE.Vector3();
-  //       this.objects.children.forEach((child) => {
-  //         center.add(child.position);
-  //       });
-  //       center.divideScalar(alpha.length);
-  //       const origin = new THREE.Vector3(0, 0, 0);
-  //       const direction = center.clone().sub(origin).normalize();
-  //       const distance = origin.distanceTo(center);
-  //       const newVector = origin.clone().add(direction.multiplyScalar(distance));
-  //       // subtract the average position from each child mesh's position
-  //       this.objects.children.forEach((child) => {
-  //         child.position.sub(newVector);
-  //       });
+          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 100, transparent: true});
+          let geometry = loaderSTL.load(file,function(geometry){          
+            const mesh = new THREE.Mesh(geometry, material);
+            let centroid = new THREE.Vector3();
+            mesh.geometry.computeBoundingBox();
+            centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
+            centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
+            centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+            mesh.name = name.toString();
+            geometry.center();
+            mesh.position.copy(centroid);
+            mesh.rotation.set(0,0,0);
+            this.objects.add(mesh);
+          }.bind(this));
+          fragment_folder.add(material, 'opacity', 0, 1).name(name)
+          .onChange((value) => {material.opacity = value;});
+          fragment_folder.open();
+          this.number_of_stl++;
+        }
+        //positioning all loaded meshes to the center of the scene. 
+        // compute average position of child meshes
+        const center = new THREE.Vector3();
+        this.objects.children.forEach((child) => {
+          center.add(child.position);
+        });
+        center.divideScalar(alpha.length);
+        const origin = new THREE.Vector3(0, 0, 0);
+        const direction = center.clone().sub(origin).normalize();
+        const distance = origin.distanceTo(center);
+        const newVector = origin.clone().add(direction.multiplyScalar(distance));
+        // subtract the average position from each child mesh's position
+        this.objects.children.forEach((child) => {
+          child.position.sub(newVector);
+        });
 
-  //       // set the parent object's position to the negative of the average position
-  //       this.objects.position.copy(center);
-  //       center.sub(new THREE.Vector3(0, 0, 0));
-  //       this.objects.position.set(0,0,0);
-  // }
+        // set the parent object's position to the negative of the average position
+        this.objects.position.copy(center);
+        center.sub(new THREE.Vector3(0, 0, 0));
+        this.objects.position.set(0,0,0);
+  }
   generateHeight( width, height ) {
 
     const size = width * height, data = new Uint8Array( size ),

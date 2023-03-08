@@ -2,6 +2,7 @@ app-brainvis-canvas {
   position: absolute;
   width: 100%;
   height: 100%;
+  z-index: 1000;
 }
 #gui { position: absolute; top: 2px; left: 2px }
 
@@ -32,8 +33,7 @@ app-brainvis-canvas {
   background-color: #fafafa;
   transition: display 0.5s ease-in-out;
   z-index: 1000;
-  overflow-x: hidden;
-
+  overflow-x:auto;
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
@@ -126,6 +126,8 @@ app-brainvis-canvas {
   left: -1.5%;
   display: flex;
   flex-direction: column;
+  overflow-x: visible;
+  z-index: 1100;
 }
 .provslider .mat-slider-thumb-label {
   transform: translateY(50%) rotate(-90deg) !important;

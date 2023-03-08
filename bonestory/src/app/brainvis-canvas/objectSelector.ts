@@ -101,7 +101,6 @@ export default class ObjectSelector  implements IIntersectionListener  {
             this.isobjrotating = true;
             const temp_pos = this.previousSelectedObject.position.clone();
             const temp_rot = this.previousSelectedObject.rotation.clone();
-            this.srotation = temp_rot.toVector3();
             this.eventdispatcher.dispatchEvent({type:'r_start', rotation: temp_rot, position: temp_pos});
         }
         else{
@@ -140,11 +139,21 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     
     if (this.isobjmoving) {
       this.isobjmoving = false;
-      this.eventdispatcher.dispatchEvent({ type: 't_end', position: this.previousSelectedObject.position });
+      this.eventdispatcher.dispatchEvent({ type: 't_end', position: this.previousSelectedObject.position.clone() });
     } 
     if (this.isobjrotating) {
       this.isobjrotating = false;
-      this.eventdispatcher.dispatchEvent({ type: 'r_end', rotation: this.previousSelectedObject.rotation.clone(), position: this.previousSelectedObject.position });
+      let tempQuaternion = new THREE.Quaternion();
+      let tempVector = new THREE.Vector3();
+      this.previousSelectedObject.getWorldQuaternion(tempQuaternion);
+      this.previousSelectedObject.getWorldPosition(tempVector);
+      this.objects.add(this.previousSelectedObject);
+      this.previousSelectedObject.setRotationFromQuaternion(tempQuaternion);
+      this.previousSelectedObject.position.set(tempVector.x,tempVector.y ,tempVector.z);
+      this.previousSelectedObject.updateMatrixWorld();
+      const temp_pos = this.previousSelectedObject.position.clone();
+      const temp_rot = this.previousSelectedObject.rotation.clone();
+      this.eventdispatcher.dispatchEvent({ type: 'r_end', rotation: temp_rot, position: temp_pos, object: this.previousSelectedObject });
     }
     this.interactive = true;
     this.state = modes.Cammode;
@@ -161,8 +170,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         }
         break;
       case 'r':
-
-        if(this.previousSelectedObject.name != undefined){
+        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshPhongMaterial).color.getHex() == 0x0000ff){
           this.setUpRaycaster(keydown_coordinate_);
           const intersectInfo = this.raycaster.intersectObject(this.previousSelectedObject, false)?.[0];
           if (intersectInfo) {
@@ -254,95 +262,53 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
       }
 
   }
-    
-    // onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
-    //     //
-    //     if(this.isdragging){
-    //         this.isdragging = false;
-    //         if(this.isobjmoving){
-    //             this.isobjmoving = false;
-    //             if(this.previousSelectedObject.position.distanceTo(this.sposition)>=1)
-    //                 this.eventdispatcher.dispatchEvent({type:'t_end', position: this.previousSelectedObject.position});
-    //         }
-    //         else if(this.isobjrotating){
-    //             const rot_remp = this.previousSelectedObject.rotation.clone();
-    //             this.isobjrotating = false;
-    //             if(rot_remp.toVector3().distanceTo(this.srotation)>=1)
-    //                 this.eventdispatcher.dispatchEvent({type:'r_end', rotation: rot_remp});
-
-    //         }
-    //     }
-    //     if(this.interactive){
-    //         this.interactive = true;
-    //     }
-    //     this.state = modes.Cammode;
-    //     this.eventdispatcher.dispatchEvent({
-    //         type: 'interactive'
-    //         // newObject: this.previousSelectedObject
-    //     });
-    // }
-    // setkey(event: any, keydown_coordinate_: any) {
-        
-        
-    //     if (event.key == 't') {
-    //       this.state = modes.Translation; //Translation
-        
-    //     } 
-    //     else if (event.key == 'r') {
-    //         this.state = modes.Rotation; //Rotation
-            
-    //         const pointerVector = this.setUpRaycaster(keydown_coordinate_);
-    //         // this.raycaster.setFromCamera(pointerVector,this.camera);
-    //         let intersect_info = this.raycaster.intersectObject(this.previousSelectedObject,false);
-
-
-    //         this.eventdispatcher.dispatchEvent({
-    //             type: 'interactive',
-    //             intersect: new THREE.Vector3(intersect_info[0].point['x'],intersect_info[0].point['y'],intersect_info[0].point['z'])
-    //         });
-    //     } 
-    //     else if (event.key == 'c'){
-    //       this.state = modes.Cammode; // camera
-    //     }
-    //     else if (event.key == 'a'){
-    //         this.state = modes.Annotationmode; // add annotation
-            
-    //     }
-    //     else{
-    //         this.state = modes.Cammode; // camera as idle
-    //     }
-    //     this.eventdispatcher.dispatchEvent({
-    //         type: 'interactive'
-    //     });
-
-    // }
-    async changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void) {
-        if (this.previousSelectedObject.position == undefined){
-            return;
+    changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
+      if (this.previousSelectedObject.position == undefined){
+          return;
+      }
+      if (this.previousSelectedObject.position.equals(newPosition)) {
+          return;
         }
-        if (this.previousSelectedObject.position.equals(newPosition)) {
-            return;
+      if (milliseconds <= 0) {
+        this.previousSelectedObject.position.copy(newPosition);
+        if(newRotation !== undefined)
+          this.previousSelectedObject.rotation.toVector3().equals(newRotation);
+      } 
+      else {
+        // cancel previous animation
+        if (this.changeTimeout !== undefined) {
+          clearInterval(this.changeTimeout);
+          this.changeTimeout = undefined;
+        }
+        this.toPosition = newPosition;
+        if(newRotation !== undefined)
+          this.toRotation = newRotation;
+        let changeTime = 0;
+        const delta = 30 / milliseconds;
+        this.changeTimeout = setInterval((fromPosition: THREE.Vector3, toPosition: THREE.Vector3, fromRotation: THREE.Vector3, toRotation: THREE.Vector3) => {
+          const t = changeTime;
+          const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
+          const nextPosition = fromPosition.clone();
+          const distancePosition = toPosition.clone();
+          distancePosition.sub(fromPosition);
+          nextPosition.addScaledVector(distancePosition, interPolateTime);
+          if(newRotation !== undefined){
+            const nextRotation = fromRotation.clone() as THREE.Vector3;
+            const distanceRotation = toRotation.clone() as THREE.Vector3;
+            distanceRotation.sub(fromRotation as THREE.Vector3);
+            nextRotation.addScaledVector(distanceRotation, interPolateTime);
+            this.changecontrols(nextPosition, 0,undefined,nextRotation);
+            changeTime += delta;
+            if (changeTime > 1.0) {
+              this.changecontrols(toPosition, 0,undefined,toRotation);
+              clearInterval(this.changeTimeout);
+              this.changeTimeout = undefined;
+              if (done) {
+                done();
+              }
+            }
           }
-        if (milliseconds <= 0) {
-          this.previousSelectedObject.position.copy(newPosition);
-        } 
-        else {
-          // cancel previous animation
-          if (this.changeTimeout !== undefined) {
-            clearInterval(this.changeTimeout);
-            this.changeTimeout = undefined;
-          }
-          this.toPosition = newPosition;
-          let changeTime = 0;
-          const delta = 30 / milliseconds;
-          this.changeTimeout = setInterval((fromPosition, toPosition) => {
-            const t = changeTime;
-            const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
-            const nextPosition = fromPosition.clone();
-            const distancePosition = toPosition.clone();
-            distancePosition.sub(fromPosition);
-            nextPosition.addScaledVector(distancePosition, interPolateTime);
-    
+          else{
             this.changecontrols(nextPosition, 0);
             changeTime += delta;
             if (changeTime > 1.0) {
@@ -353,11 +319,51 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
                 done();
               }
             }
-          }, 0, this.previousSelectedObject.position, newPosition);
-        }
+          }
+        }, 30, this.previousSelectedObject.position.clone(), newPosition.clone(), new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y, this.previousSelectedObject.rotation.z ), newRotation.clone());
       }
+    }
+    // changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
+    //     if (this.previousSelectedObject.position == undefined){
+    //         return;
+    //     }
+    //     if (this.previousSelectedObject.position.equals(newPosition)) {
+    //         return;
+    //       }
+    //     if (milliseconds <= 0) {
+    //       this.previousSelectedObject.position.copy(newPosition);
+    //     } 
+    //     else {
+    //       // cancel previous animation
+    //       if (this.changeTimeout !== undefined) {
+    //         clearInterval(this.changeTimeout);
+    //         this.changeTimeout = undefined;
+    //       }
+    //       this.toPosition = newPosition;
+    //       let changeTime = 0;
+    //       const delta = 30 / milliseconds;
+    //       this.changeTimeout = setInterval((fromPosition, toPosition) => {
+    //         const t = changeTime;
+    //         const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
+    //         const nextPosition = fromPosition.clone();
+    //         const distancePosition = toPosition.clone();
+    //         distancePosition.sub(fromPosition);
+    //         nextPosition.addScaledVector(distancePosition, interPolateTime);
+    //         this.changecontrols(nextPosition, 0);
+    //         changeTime += delta;
+    //         if (changeTime > 1.0) {
+    //           this.changecontrols(toPosition, 0);
+    //           clearInterval(this.changeTimeout);
+    //           this.changeTimeout = undefined;
+    //           if (done) {
+    //             done();
+    //           }
+    //         }
+    //       }, 30, this.previousSelectedObject.position.clone(), newPosition.clone());
+    //     }
+    //   }
 
-    async changecontrols_rotation(newrotation: THREE.Vector3, milliseconds: number, done?: () => void) {
+    changecontrols_rotation(newrotation: THREE.Vector3, milliseconds: number, done?: () => void) {
         if (this.previousSelectedObject == <THREE.Mesh>{}){
             return;
         }
@@ -394,7 +400,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
                 done();
               }
             }
-          }, 0, this.previousSelectedObject.rotation.toVector3(), newrotation);
+          }, 30, this.previousSelectedObject.rotation.toVector3().clone(), newrotation.clone());
         }
       }
     

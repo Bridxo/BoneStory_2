@@ -1,7 +1,6 @@
 import { Component, OnInit, ElementRef, ViewChild, EventEmitter, Output } from '@angular/core';
 import { ProvenanceService } from './provenance.service';
-import { HttpClient, HttpRequest, HttpEvent } from '@angular/common/http';
-import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.component';
+import { HttpClient} from '@angular/common/http';
 import * as THREE from 'three';
 import { Observable, ReplaySubject } from 'rxjs';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -105,14 +104,17 @@ export class AppComponent implements OnInit {
     const button = document.getElementById('sidenav-trigger');
     const button2 = document.getElementById('upload_btn');
     const button3 = document.getElementById('saveprov_btn');
+    const button4 = document.getElementById('demo_btn');
     const slide = document.getElementById('bottom-container');
     const prov = document.getElementById('side-container');
     const slideDisplay = window.getComputedStyle(slide).getPropertyValue("display");
+    
     
     if (slideDisplay === 'block') {
       button.style.right = '0%';
       button2.style.right = `2%`;
       button3.style.right = `4.5%`;
+      button4.style.right = `7%`;
       slide.style.display = 'none';
       prov.style.display = 'none';
 
@@ -120,6 +122,7 @@ export class AppComponent implements OnInit {
       button.style.right = `20%`;
       button2.style.right = `22%`;
       button3.style.right = `24.5%`;
+      button4.style.right = `27%`;
       slide.style.display = 'block';
       prov.style.display = 'block';
     }

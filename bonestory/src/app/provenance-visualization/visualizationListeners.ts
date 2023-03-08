@@ -12,8 +12,8 @@ export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, ser
     let exportButton = document.getElementById('saveprov_btn');
     exportButton.addEventListener("click", (e: Event) => downloadJson(e, service.tracker.getGraph()));
 
-    let importButton = document.getElementById('importButton');
-    importButton.addEventListener('click', (e: Event) => importJson(e));
+    // let importButton = document.getElementById('importButton');
+    // importButton.addEventListener('click', (e: Event) => importJson(e));
   
 /** The next 3 functions are used for importing a graph. The first one (importJson) loads the file, the second one (getFile) reads the data in it
  * and the last one (restoreGraph) converts it to a graph object. 

@@ -459,6 +459,7 @@
           .attr('color', 'primary')
           .attr('style', 'position: absolute; z-index: 1; top: 17%;')
           .attr('ng-reflect-color', 'primary')
+          .attr('title', 'Hide/Show Camera Actions')
           .on('mousedown', function () {
           if (provenanceTreeVisualization.traverser.graph.root) {
               provenanceTreeVisualization.camerahide();
@@ -486,6 +487,7 @@
           .attr('id', 'root-trigger')
           .attr('class', 'mat-icon-button mat-button-base mat-primary')
           .attr('color', 'primary')
+          .attr('title', 'Show the full provenance tree')
           .attr('style', 'position: absolute; z-index: 1; top: 2%;')
           .attr('ng-reflect-color', 'primary')
           .on('mousedown', function () {
@@ -513,6 +515,7 @@
       var upwardButton = provenanceTreeVisualization.container
           .append('button')
           .attr('id', 'upward-trigger')
+          .attr('title', 'Move Up One Node')
           .attr('class', 'mat-icon-button mat-button-base mat-primary')
           .attr('color', 'primary')
           .attr('style', 'position: absolute; z-index: 1; top: 7%;')
@@ -543,6 +546,7 @@
       var downwardButton = provenanceTreeVisualization.container
           .append('button')
           .attr('id', 'downward-trigger')
+          .attr('title', 'Move Down One Node')
           .attr('class', 'mat-icon-button mat-button-base mat-primary')
           .attr('color', 'primary')
           .attr('style', 'position: absolute; z-index: 1; top: 12%;')

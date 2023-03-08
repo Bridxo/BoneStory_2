@@ -14,8 +14,8 @@ const getActions = (canvas: BrainvisCanvasComponent): {[key: string]: ActionFunc
   showObjects: (value: boolean) => Promise.resolve(canvas.showObjects = value),
   showSegmentedObjects: (value: boolean) => Promise.resolve(canvas.showObjects = value),
   SelectObject: (value: any[], valueb: any[], valuec: any[], valued: any[]) => Promise.resolve(canvas.selectObject = [value,valueb,valuec,valued]),
-  TranslateObject: (value:any) => Promise.resolve(canvas.ObjectTrans(value,2000)),
-  rotateObject: (value: any) => Promise.resolve(canvas.ObjectRotate(value, 2000)),
+  TranslateObject: (value:any) => Promise.resolve(canvas.ObjectTrans(value,500)),
+  rotateObject: (value: any, valueb: any) => Promise.resolve(canvas.ObjectRotate(value, valueb, 500)),
   Annotation: (value: any, inter: any, undo: any) => Promise.resolve(canvas.Annotation(value, inter, undo)),
 });
 

@@ -8,7 +8,7 @@ import { AppComponent } from './app.component';
 
 import { ProvenanceService } from './provenance.service';
 import { BrainvisCanvasComponent } from './brainvis-canvas/brainvis-canvas.component';
-
+import { CpuGpuUsageComponent } from './util/cpu-gpu-usage.component';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {MatIconModule} from '@angular/material/icon';
@@ -22,6 +22,8 @@ import { ProvenanceVisualizationComponent } from './provenance-visualization/pro
 import { ProvenanceSlidesComponent } from './provenance-slides/provenance-slides.component';
 import { SlideAnnotationsComponent } from './slide-annotations/slide-annotations.component';
 import { HttpClientModule } from '@angular/common/http';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 
 
 @NgModule({
@@ -30,12 +32,14 @@ import { HttpClientModule } from '@angular/common/http';
     BrainvisCanvasComponent,
     ProvenanceVisualizationComponent,
     ProvenanceSlidesComponent,
-    SlideAnnotationsComponent
+    SlideAnnotationsComponent,
+    // CpuGpuUsageComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
     BrowserAnimationsModule,
+    MatTooltipModule,
     MatButtonModule,
     MatSlideToggleModule,
     MatSidenavModule,

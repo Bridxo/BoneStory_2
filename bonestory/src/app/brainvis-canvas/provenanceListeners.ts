@@ -125,10 +125,10 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
         undo: 'CameraZoom',
         undoArguments: [(startEvent as any).orientation],
       }, true);
-    }, 600, { trailing: true });
+    }, 500, { trailing: true });
     canvas.addEventListener('zoomEnd', zoomEndListener);
   };
-  canvas.addEventListener('zoomStart', debounce(zoomStartListener, 600, { leading: true }));
+  canvas.addEventListener('zoomStart', debounce(zoomStartListener, 500, { leading: true }));
 
 
   canvas.addEventListener('transStart', (startEvent) => {
@@ -143,7 +143,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
             undo: 'TranslateObject',
             undoArguments: [(startEvent as any).position,0],
             });
-          }
+        }
         canvas.removeEventListener('transEnd', transEndListener);
       }, 0 , { trailing: true });
     canvas.addEventListener('transEnd',transEndListener);
@@ -155,13 +155,13 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
         tracker.applyAction({
           metadata: {userIntent: 'selection'},
           do: 'rotateObject',
-          doArguments: [(event as any).rotation],
+          doArguments: [(event as any).rotation,(event as any).position],
           undo: 'rotateObject',
-          undoArguments: [(startEvent as any).rotation],
+          undoArguments: [(startEvent as any).rotation,(startEvent as any).position],
           })
         }
-      canvas.removeEventListener('rotationEnd', rotationEndListener);
-        }, 0, { trailing: true });
+        canvas.removeEventListener('rotationEnd', rotationEndListener);
+      }, 0, { trailing: true });
   canvas.addEventListener('rotationEnd', rotationEndListener);
   });
 

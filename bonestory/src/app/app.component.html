@@ -17,6 +17,7 @@
       [(ngModel)]="slider_value"
       [vertical]="true"
       style="height: 300px;"
+      matTooltip="Provenance-Grouping Slider"
     ></mat-slider>
     </div>
     <div style="height:0px;">
@@ -31,9 +32,9 @@
           />
     </div>
     <div>
-      <!-- <button id="demo_btn" mat-icon-button (click)="canvas.load_demo()" title="Load STL files" style="cursor: pointer;">
+      <button id="demo_btn" mat-icon-button (click)="canvas.load_demo()" title="Load Demo Models" style="cursor: pointer;">
         <mat-icon>school</mat-icon>
-      </button> -->
+      </button>
       <button id="upload_btn" mat-icon-button onclick="filesel.click()" title="Load STL files" style="cursor: pointer;">
         <mat-icon>cloud_upload</mat-icon>
       </button>
@@ -44,6 +45,14 @@
         <mat-icon>menu</mat-icon>
       </button>
     </div>
-    <div id="instructions">L-click (cam mode): Rotate camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R-click (cam mode): Pan camera &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Double-click: Select Object &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <br />C: Camera mode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R (object mode) : Rotate Object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T (object mode): Translate Object</div>
+    <!-- <div id="cpus">
+      <app-cpu-gpu-usage></app-cpu-gpu-usage>
+    </div> -->
+    <div id="instructions">L-click (cam mode): Rotate camera <br />
+      R-click (cam mode): Pan camera <br />
+      Double-click: Select Object <br />
+      C: Camera mode<br />
+      R (object mode) : Rotate Object<br />
+      T (object mode): Translate Object<br />
+      A (annotation mode): Add annotation on Object</div>
 

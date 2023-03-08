@@ -11,8 +11,8 @@ export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: Prov
     let exportButton = document.getElementById("saveprov_btn");
     exportButton.addEventListener("click", (e: Event) => exportJson(e));
 
-    let importButton = document.getElementById("slidesImportButton");
-    importButton.addEventListener("click", (e: Event)  => importJson(e));
+    // let importButton = document.getElementById("slidesImportButton");
+    // importButton.addEventListener("click", (e: Event)  => importJson(e));
 
     // let mergeButton = document.getElementById("slidesMergeButton");
     // mergeButton.addEventListener("click", (e: Event) =>  merge(e));
