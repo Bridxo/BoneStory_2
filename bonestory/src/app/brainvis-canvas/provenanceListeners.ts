@@ -223,4 +223,14 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
       undoArguments: [(event as any).text, (event as any).inter, true] // return back old, new, old color, new color
     }, true);
   });
+
+  canvas.addEventListener('measure', (event) => {
+    tracker.applyAction({
+      metadata: {userIntent: 'provenance'},
+      do: 'Measurement',
+      doArguments: [(event as any).measuregroup, false], //  new , old, new color, old color
+      undo: 'Measurement',
+      undoArguments: [(event as any).measuregroup, true] // return back old, new, old color, new color
+    }, true);
+  });
 };

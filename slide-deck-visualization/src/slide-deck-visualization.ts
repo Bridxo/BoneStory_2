@@ -23,6 +23,7 @@ function firstArgThis(f: (...args: any[]) => any) {
 type IndexedSlide = { slide: IProvenanceSlide; startTime: number };
 
 export class SlideDeckVisualization {
+    private _slideDocker: IProvenanceSlidedeck[] = [];
     private _slideDeck: IProvenanceSlidedeck; // possible to extend HLEE
     private _root: d3.Selection<HTMLDivElement, undefined, null, undefined>;
     private _slideTable: d3.Selection<SVGElement, undefined, null, undefined>;
@@ -54,6 +55,9 @@ export class SlideDeckVisualization {
     private _colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
     private _annotationContainer = new AnnotationDisplayContainer();
+
+    private selectslidedeck = (deck: IProvenanceSlidedeck) => {
+    }
 
     private onDelete = (slide: IProvenanceSlide) => {
         const node = this._slideDeck.graph.current;

@@ -10,7 +10,8 @@ enum modes {
   Rotation = 1,
   Cammode = 2,
   Annotationmode = 3,
-  Delete = 4
+  Delete = 4,
+  Measure = 5
 }
 
 export default class ObjectSelector  implements IIntersectionListener  {
@@ -205,6 +206,13 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
           this.canvas.Annotation(annotationText, annotation_intersect, false);
         }
         break;
+      case 'm':
+        this.state = modes.Measure;
+        const Measure_vector = this.setUpRaycaster(keydown_coordinate_);
+        const Measure_intersect = this.raycaster.intersectObjects(this.objects.children);
+        if(Measure_intersect.length != 0){
+          this.canvas.Measure(Measure_intersect, false);
+        }
       default:
         this.state = modes.Cammode;
         break;
@@ -262,93 +270,53 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
       }
 
   }
-    changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
-      if (this.previousSelectedObject.position == undefined){
-          return;
-      }
-      if (this.previousSelectedObject.position.equals(newPosition)) {
-          return;
-        }
-      if (milliseconds <= 0) {
-        this.previousSelectedObject.position.copy(newPosition);
-        if(newRotation !== undefined)
-          this.previousSelectedObject.rotation.toVector3().equals(newRotation);
-      } 
-      else {
-        // cancel previous animation
-        if (this.changeTimeout !== undefined) {
-          clearInterval(this.changeTimeout);
-          this.changeTimeout = undefined;
-        }
-        this.toPosition = newPosition;
-        if(newRotation !== undefined)
-          this.toRotation = newRotation;
-        let changeTime = 0;
-        const delta = 30 / milliseconds;
-        this.changeTimeout = setInterval((fromPosition: THREE.Vector3, toPosition: THREE.Vector3, fromRotation: THREE.Vector3, toRotation: THREE.Vector3) => {
-          const t = changeTime;
-          const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
-          const nextPosition = fromPosition.clone();
-          const distancePosition = toPosition.clone();
-          distancePosition.sub(fromPosition);
-          nextPosition.addScaledVector(distancePosition, interPolateTime);
-          if(newRotation !== undefined){
-            const nextRotation = fromRotation.clone() as THREE.Vector3;
-            const distanceRotation = toRotation.clone() as THREE.Vector3;
-            distanceRotation.sub(fromRotation as THREE.Vector3);
-            nextRotation.addScaledVector(distanceRotation, interPolateTime);
-            this.changecontrols(nextPosition, 0,undefined,nextRotation);
-            changeTime += delta;
-            if (changeTime > 1.0) {
-              this.changecontrols(toPosition, 0,undefined,toRotation);
-              clearInterval(this.changeTimeout);
-              this.changeTimeout = undefined;
-              if (done) {
-                done();
-              }
-            }
-          }
-          else{
-            this.changecontrols(nextPosition, 0);
-            changeTime += delta;
-            if (changeTime > 1.0) {
-              this.changecontrols(toPosition, 0);
-              clearInterval(this.changeTimeout);
-              this.changeTimeout = undefined;
-              if (done) {
-                done();
-              }
-            }
-          }
-        }, 30, this.previousSelectedObject.position.clone(), newPosition.clone(), new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y, this.previousSelectedObject.rotation.z ), newRotation.clone());
-      }
-    }
     // changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
-    //     if (this.previousSelectedObject.position == undefined){
-    //         return;
+    //   if (this.previousSelectedObject.position == undefined){
+    //       return;
+    //   }
+    //   if (this.previousSelectedObject.position.equals(newPosition)) {
+    //       return;
     //     }
-    //     if (this.previousSelectedObject.position.equals(newPosition)) {
-    //         return;
+    //   if (milliseconds <= 0) {
+    //     this.previousSelectedObject.position.copy(newPosition);
+    //     if(newRotation !== undefined)
+    //       this.previousSelectedObject.rotation.toVector3().equals(newRotation);
+    //   } 
+    //   else {
+    //     // cancel previous animation
+    //     if (this.changeTimeout !== undefined) {
+    //       clearInterval(this.changeTimeout);
+    //       this.changeTimeout = undefined;
+    //     }
+    //     this.toPosition = newPosition;
+    //     if(newRotation !== undefined)
+    //       this.toRotation = newRotation;
+    //     let changeTime = 0;
+    //     const delta = 30 / milliseconds;
+    //     this.changeTimeout = setInterval((fromPosition: THREE.Vector3, toPosition: THREE.Vector3, fromRotation: THREE.Vector3, toRotation: THREE.Vector3) => {
+    //       const t = changeTime;
+    //       const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
+    //       const nextPosition = fromPosition.clone();
+    //       const distancePosition = toPosition.clone();
+    //       distancePosition.sub(fromPosition);
+    //       nextPosition.addScaledVector(distancePosition, interPolateTime);
+    //       if(newRotation !== undefined){
+    //         const nextRotation = fromRotation.clone() as THREE.Vector3;
+    //         const distanceRotation = toRotation.clone() as THREE.Vector3;
+    //         distanceRotation.sub(fromRotation as THREE.Vector3);
+    //         nextRotation.addScaledVector(distanceRotation, interPolateTime);
+    //         this.changecontrols(nextPosition, 0,undefined,nextRotation);
+    //         changeTime += delta;
+    //         if (changeTime > 1.0) {
+    //           this.changecontrols(toPosition, 0,undefined,toRotation);
+    //           clearInterval(this.changeTimeout);
+    //           this.changeTimeout = undefined;
+    //           if (done) {
+    //             done();
+    //           }
+    //         }
     //       }
-    //     if (milliseconds <= 0) {
-    //       this.previousSelectedObject.position.copy(newPosition);
-    //     } 
-    //     else {
-    //       // cancel previous animation
-    //       if (this.changeTimeout !== undefined) {
-    //         clearInterval(this.changeTimeout);
-    //         this.changeTimeout = undefined;
-    //       }
-    //       this.toPosition = newPosition;
-    //       let changeTime = 0;
-    //       const delta = 30 / milliseconds;
-    //       this.changeTimeout = setInterval((fromPosition, toPosition) => {
-    //         const t = changeTime;
-    //         const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
-    //         const nextPosition = fromPosition.clone();
-    //         const distancePosition = toPosition.clone();
-    //         distancePosition.sub(fromPosition);
-    //         nextPosition.addScaledVector(distancePosition, interPolateTime);
+    //       else{
     //         this.changecontrols(nextPosition, 0);
     //         changeTime += delta;
     //         if (changeTime > 1.0) {
@@ -359,9 +327,49 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     //             done();
     //           }
     //         }
-    //       }, 30, this.previousSelectedObject.position.clone(), newPosition.clone());
-    //     }
+    //       }
+    //     }, 30, this.previousSelectedObject.position.clone(), newPosition.clone(), new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y, this.previousSelectedObject.rotation.z ), newRotation.clone());
     //   }
+    // }
+    changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
+        if (this.previousSelectedObject.position == undefined){
+            return;
+        }
+        if (this.previousSelectedObject.position.equals(newPosition)) {
+            return;
+          }
+        if (milliseconds <= 0) {
+          this.previousSelectedObject.position.copy(newPosition);
+        } 
+        else {
+          // cancel previous animation
+          if (this.changeTimeout !== undefined) {
+            clearInterval(this.changeTimeout);
+            this.changeTimeout = undefined;
+          }
+          this.toPosition = newPosition;
+          let changeTime = 0;
+          const delta = 30 / milliseconds;
+          this.changeTimeout = setInterval((fromPosition, toPosition) => {
+            const t = changeTime;
+            const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
+            const nextPosition = fromPosition.clone();
+            const distancePosition = toPosition.clone();
+            distancePosition.sub(fromPosition);
+            nextPosition.addScaledVector(distancePosition, interPolateTime);
+            this.changecontrols(nextPosition, 0);
+            changeTime += delta;
+            if (changeTime > 1.0) {
+              this.changecontrols(toPosition, 0);
+              clearInterval(this.changeTimeout);
+              this.changeTimeout = undefined;
+              if (done) {
+                done();
+              }
+            }
+          }, 30, this.previousSelectedObject.position.clone(), newPosition.clone());
+        }
+      }
 
     changecontrols_rotation(newrotation: THREE.Vector3, milliseconds: number, done?: () => void) {
         if (this.previousSelectedObject == <THREE.Mesh>{}){

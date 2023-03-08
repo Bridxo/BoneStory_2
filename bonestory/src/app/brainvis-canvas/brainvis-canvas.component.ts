@@ -27,6 +27,12 @@ import { add, filter } from 'lodash';
 
 (window as any).istyping = false;
 
+enum Measurement {
+  Zero = 0,
+  One = 1,
+  Two = 2
+}
+
 enum modes {
   Translation = 0,
   Rotation = 1,
@@ -132,8 +138,8 @@ export class BrainvisCanvasComponent {
   // HJ added values
   private selectedobj: THREE.Mesh; // for indicating selected object
   public helper; // for indicating selected object surface normal
-  public annotations = []; // Create an array to store the annotations
-  public Base;
+  public measure_groups = []; // Create an array to store the annotations
+  public measure_counter = [];
   // stl file information
   private stl_objs: FormData;
 
@@ -503,6 +509,76 @@ export class BrainvisCanvasComponent {
     this.objectSelector.changecontrols_rotation(new THREE.Vector3(newargs.x, newargs.y, newargs.z), within);
     this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), 0);
   }
+  Measure(intersect: any, undo?: boolean) {
+    if(undo === true){
+      intersect[0].object.children.forEach (function (child) {
+        if(child.name === 'measure'){
+          child.material.dispose();
+          intersect[0].object.remove(child);
+        }
+      });
+      return;
+    }
+    if (this.measure_counter.length == Measurement.Zero) {
+      this.measure_counter.push(intersect[0].point.clone());
+      const geometry = new THREE.CylinderGeometry(2, 2, 2, 32);
+      const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const cylinder = new THREE.Mesh(geometry, material);
+      cylinder.position.copy(this.measure_counter[0]);
+      cylinder.name = 'measure';
+      this.measure_counter.push(cylinder);
+      this.scene.add(cylinder);
+    }
+    else if (this.measure_counter.length == Measurement.Two) {
+      this.measure_counter.push(intersect[0].point);
+      //calulate distance
+      const distance = this.measure_counter[0].distanceTo(intersect[0].point);
+      const cylinder = this.measure_counter[1];
+      //calculate middle point
+      const middlePoint = new THREE.Vector3();
+      middlePoint.addVectors(this.measure_counter[0], intersect[0].point);
+      middlePoint.multiplyScalar(0.5);
+      cylinder.position.copy(middlePoint);
+      // Change the height of the cylinder
+      const newHeight = distance; // New height in units
+      const radius = cylinder.geometry.parameters.radiusTop; // Get the radius of the cylinder
+      cylinder.scale.setY(newHeight / 2); // Set the scale along the y-axis to twice the new height divided by the radius
+      cylinder.lookAt(intersect[0].point);
+      cylinder.rotateX(Math.PI / 2);
+
+      // Add Distance Label on the top
+      // Set the position of the sprite to be above the mesh
+      const text = distance.toFixed(2) + " mm";
+      const sprite = this.makeTextSprite(text,{ fontsize: 60 });
+      sprite.position.copy(middlePoint);
+      // Add the sprite to the scene
+      this.scene.add(sprite);
+
+      // reset the counter
+      this.measure_groups.push([cylinder, sprite]);
+      this.Measurement([cylinder, sprite]);
+      this.measure_counter = [];
+    }
+    else {
+
+    }
+  }
+  Measurement(measuregroup: any, undo?: boolean) {
+    console.log(measuregroup[0]);
+    if(undo === true){
+      measuregroup[0].material.visible = false;
+      measuregroup[1].material.visible = false;
+    }
+    else{
+      measuregroup[0].material.visible = true;
+      measuregroup[1].material.visible = true;
+    }
+    this.eventdispatcher.dispatchEvent({
+      type: 'measure',
+      measuregroup: measuregroup,
+      undo: false
+    });
+  }
   Annotation(text: string, intersect: any, undo?: boolean) {
     if(undo === true){
       intersect[0].object.children.forEach (function (child) {
@@ -564,7 +640,7 @@ export class BrainvisCanvasComponent {
     sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
     const scaler= this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
     const scale_value = scaler/2;
-    sprite.scale.set(scale_value, scale_value/5, 1);
+    sprite.scale.set(scale_value/5, scale_value/5, 1);
     sprite.material.map = text_plane;
     sprite.material.opacity = 0.5;
     intersect[0].object.add(sprite); //add annotation on the object
@@ -839,7 +915,7 @@ export class BrainvisCanvasComponent {
           const color = this.selectColor(this.number_of_stl);
           let loaderSTL = new STLLoader();
           
-          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 100, transparent: true});
+          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 50, transparent: true});
           let geometry = loaderSTL.load(file,function(geometry){          
             const mesh = new THREE.Mesh(geometry, material);
             let centroid = new THREE.Vector3();
@@ -917,12 +993,33 @@ export class BrainvisCanvasComponent {
     return img;
   }
 
-  changeControlsAsync(newPosition: number[], within: number): Promise<void> {
-    return new Promise(resolve => {
-      this.objectSelector.changecontrols(new THREE.Vector3(newPosition[0], newPosition[1], newPosition[2]), within);
-      resolve();
-    });
-  }
+  makeTextSprite = ( message, parameters ) => {
+        if ( parameters === undefined ) parameters = {};
+        var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Courier New";
+        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+        var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+        var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+        var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:0, g:0, b:0, a:1.0 };
+        var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
+
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        context.font = "Bold " + fontsize + "px " + fontface;
+        var metrics = context.measureText( message );
+        var textWidth = metrics.width;
+
+        context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
+        context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
+        context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
+        context.fillText( message, borderThickness, fontsize + borderThickness);
+
+        var texture = new THREE.Texture(canvas) 
+        texture.needsUpdate = true;
+        var spriteMaterial = new THREE.SpriteMaterial( { map: texture, depthWrite: false, depthTest: false } );
+        var sprite = new THREE.Sprite( spriteMaterial );
+        sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
+        return sprite;  
+    }
 }
 
 
