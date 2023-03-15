@@ -14,7 +14,7 @@
                 "webpack:///*": "${workspaceRoot}/*"
             },
             "smartStep": true,
-            "skipFiles":["${workspaceFolder}/node_modules/**", "*.js"]
+            "skipFiles":["${workspaceFolder}/node_modules/**"]
         }
     ]
 }

@@ -3,7 +3,7 @@ app-brainvis-canvas {
   width: 100%;
   height: 100%;
 }
-#gui { position: absolute; top: 2px; left: 2px }
+#gui { position: absolute; top: 2px; left: 2px; overflow-y: auto !important; max-height: 80vh;}
 
 #bottom-container {
   position: absolute;

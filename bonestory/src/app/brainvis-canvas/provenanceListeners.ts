@@ -151,7 +151,11 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
   
   canvas.addEventListener('rotationStart', (startEvent) => {
     const rotationEndListener = debounce ((event) => {
-      if (startEvent.rotation.toVector3().distanceTo(event.rotation.toVector3()) != 0) {
+      if (
+        Math.abs(startEvent.rotation.x - event.rotation.x) > 0 ||
+        Math.abs(startEvent.rotation.y - event.rotation.y) > 0 ||
+        Math.abs(startEvent.rotation.z - event.rotation.z) > 0
+      ) {
         tracker.applyAction({
           metadata: {userIntent: 'selection'},
           do: 'rotateObject',

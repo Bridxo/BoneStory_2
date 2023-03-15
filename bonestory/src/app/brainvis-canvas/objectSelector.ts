@@ -1,6 +1,6 @@
 // import { elementStart } from '@angular/core/src/render3/instructions';
 import * as THREE from 'three';
-import { MeshPhongMaterial } from 'three/src/Three';
+import { MeshPhongMaterial, MeshLambertMaterial } from 'three/src/Three';
 import { BrainvisCanvasComponent } from './brainvis-canvas.component';
 const { Object3D } = THREE;
 import { IIntersectionListener } from './intersectionManager';
@@ -165,13 +165,13 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
   setkey(event: any, keydown_coordinate_: any) {
     switch (event.key) {
       case 't':
-        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshPhongMaterial).color.getHex() == 0x0000ff){
+        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
           this.state = modes.Translation;
           this.eventdispatcher.dispatchEvent({ type: 'interactive' });
         }
         break;
       case 'r':
-        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshPhongMaterial).color.getHex() == 0x0000ff){
+        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
           this.setUpRaycaster(keydown_coordinate_);
           const intersectInfo = this.raycaster.intersectObject(this.previousSelectedObject, false)?.[0];
           if (intersectInfo) {
@@ -231,16 +231,16 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
           intersection.object instanceof THREE.Mesh) { // Intersection object != previous selected
 
           const asMesh = <THREE.Mesh>intersection.object;
-          if (asMesh.material instanceof THREE.MeshPhongMaterial) {
+          if (asMesh.material instanceof THREE.MeshLambertMaterial) {
               let previousName = '';
               let asMeshPongMaterial = null;
 
               if (this.previousSelectedObject.name != undefined) {
-                  asMeshPongMaterial = this.previousSelectedObject.material as THREE.MeshPhongMaterial;
+                  asMeshPongMaterial = this.previousSelectedObject.material as THREE.MeshLambertMaterial;
                   asMeshPongMaterial.color.setHex(this.previousColor);
                   previousName = this.previousSelectedObject.name;
               }
-              asMeshPongMaterial = asMesh.material as THREE.MeshPhongMaterial;
+              asMeshPongMaterial = asMesh.material as THREE.MeshLambertMaterial;
               this.pastColor = this.previousColor;
               this.previousColor = asMeshPongMaterial.color.getHex();
               this.pastSelectedObject = this.previousSelectedObject;
@@ -375,7 +375,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         if (this.previousSelectedObject == <THREE.Mesh>{}){
             return;
         }
-        if (this.previousSelectedObject.rotation.toVector3().equals(newrotation)) {
+        if (new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y,this.previousSelectedObject.rotation.z).equals(newrotation)) {
             return;
           }
         if (milliseconds <= 0) {
@@ -408,7 +408,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
                 done();
               }
             }
-          }, 30, this.previousSelectedObject.rotation.toVector3().clone(), newrotation.clone());
+          }, 30, new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y,this.previousSelectedObject.rotation.z), newrotation.clone());
         }
       }
     
@@ -481,9 +481,9 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         if (this.previousSelectedObject && this.previousSelectedObject.name != undefined) { // Change into BLUE color
             const asMesh = <THREE.Mesh>this.previousSelectedObject;
             const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
-            if (asMesh.material instanceof THREE.MeshPhongMaterial) {
-                const asMeshPongMaterial = <THREE.MeshPhongMaterial>asMesh.material;
-                const asMeshPongMaterial2 = <THREE.MeshPhongMaterial>asMesh2.material;
+            if (asMesh.material instanceof THREE.MeshLambertMaterial) {
+                const asMeshPongMaterial = <THREE.MeshLambertMaterial>asMesh.material;
+                const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
                 if(asMeshPongMaterial.color.getHex() != 0x0000ff )
                 {
                     if(this.pastSelectedObject.name != undefined){
@@ -514,7 +514,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
                 else
                 {
                     asMeshPongMaterial.color.setHex(0x0000ff);
-                    const asMeshPongMaterial2 = <THREE.MeshPhongMaterial>this.pastSelectedObject.material;
+                    const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>this.pastSelectedObject.material;
                     asMeshPongMaterial2.color.setHex(this.previousColor);
                 }
 
@@ -522,7 +522,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         }
         else{ // go to root node
             const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
-            const asMeshPongMaterial2 = <THREE.MeshPhongMaterial>asMesh2.material;
+            const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
             asMeshPongMaterial2.color.setHex(this.pastColor);
             this.pastSelectedObject = this.previousSelectedObject;
             this.pastColor = this.previousColor;

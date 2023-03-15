@@ -1003,7 +1003,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             updateNodes.on('click', function (d) {
                 if (d.data.wrappedNodes[0].id !== _this.traverser.graph.current.id) {
                     _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
-                    // (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
+                    window.slideDeckViz.onChange(_this.traverser.graph.current.metadata.branchnumber);
                     _this.update();
                 }
             });

@@ -46,7 +46,7 @@
     "rxjs": "^7.4.0",
     "semantic-release": "20.1.0",
     "systeminformation": "^5.17.12",
-    "three": "0.134.0",
+    "three": "^0.150.1",
     "three-css2drenderer": "^1.0.0",
     "three-dragcontrols": "^0.88.2",
     "three-stdlib": "^2.5.5",

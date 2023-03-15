@@ -7,7 +7,8 @@ import {
     IProvenanceSlidedeck,
     SlideAnnotation,
     StateNode,
-    ProvenanceNode
+    ProvenanceNode,
+    ProvenanceSlidedeck
 } from "@visualstorytelling/provenance-core";
 
 import { AnnotationDisplayContainer } from "./annotation-display/annotation-display-container";
@@ -56,7 +57,11 @@ export class SlideDeckVisualization {
 
     private _annotationContainer = new AnnotationDisplayContainer();
 
-    private selectslidedeck = (deck: IProvenanceSlidedeck) => {
+    private selectslidedeck = (bnum: number) => {
+        this._slideDeck = this._slideDocker[bnum];
+    }
+    private addslidedeck =(slideDeck: IProvenanceSlidedeck) => {
+        this._slideDocker.push(slideDeck);
     }
 
     private onDelete = (slide: IProvenanceSlide) => {
@@ -147,11 +152,16 @@ export class SlideDeckVisualization {
             this.selectSlide(null);
     }
 
-    private onChange = (bnumber: number) => {
-        let slideDeck = this._slideDeck;
-        bnumber = slideDeck.graph.current.metadata.branchnumber;
-        // this._slideDeck.slides = this._slideDeck.changeSlide(bnumber);
-
+    private onChange = (node: ProvenanceNode) => {
+        let bnumber = node.metadata.branchnumber;
+        if(this._slideDocker[bnumber] === undefined){
+            const newslideDeck = new ProvenanceSlidedeck(0,);
+            this._slideDocker[bnumber] = newslideDeck;
+            this.selectslidedeck(bnumber);
+        }
+        else{
+            this.selectslidedeck(bnumber);
+        }
     }
     private onAdd = () => {
         let slideDeck = this._slideDeck;

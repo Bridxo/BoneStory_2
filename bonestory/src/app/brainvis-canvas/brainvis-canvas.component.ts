@@ -5,6 +5,8 @@ import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import * as THREE from 'three';
 import Annotation_2D from './annotation_2D';
 import * as dat from 'dat.gui';
+import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js';
+
 
 import { IOrientation, ISlicePosition } from './types';
 
@@ -74,7 +76,7 @@ export class BrainvisCanvasComponent {
   private _showObjects = true;
   private objectSelector: ObjectSelector;
   private appcomponent: AppComponent;
-  private mm;
+  public mm;
   private mode;
   public intersection_info;
   public keydown_coordinate: THREE.Vector2;
@@ -107,7 +109,7 @@ export class BrainvisCanvasComponent {
 
   // private camera: THREE.PerspectiveCamera;
   public camera: THREE.OrthographicCamera;
-  private renderer = new THREE.WebGLRenderer();
+  private renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
 
   // private transform: TransformControls;
   private number_of_stl = 0; //incresase numbers
@@ -140,6 +142,9 @@ export class BrainvisCanvasComponent {
   public helper; // for indicating selected object surface normal
   public measure_groups = []; // Create an array to store the annotations
   public measure_counter = [];
+  private initial_zoom: number;
+  private spriteMap = new Map();
+  private firstload = true;
   // stl file information
   private stl_objs: FormData;
 
@@ -225,8 +230,8 @@ export class BrainvisCanvasComponent {
 
     //change starting position of the camera
     this.camera.position.set(0,600,0);
-    this.camera.up.set(0,1,1);
-
+    this.camera.up.set(0,0,1);
+    this.camera.frustumCulled = true;
     this.camera.updateMatrix();
     this.renderer.setSize(this.width, this.height);
     this.controls.update();
@@ -256,9 +261,8 @@ export class BrainvisCanvasComponent {
     // Setup lights
     this.scene.add(new THREE.AmbientLight(0xffffff,0.1));
     this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    // let directionallight_2 = new THREE.DirectionalLight(0xffffff, 1);
+
     this.directionalLight.position.set(1, 1, 1).normalize();
-    // directionallight_2.position.set(-1,-1,-1).normalize();
     const gridHelper = new THREE.GridHelper(500, 10);
     const AxesHelper = new THREE.AxesHelper(500);
     var instructions = document.getElementById('instructions');
@@ -309,11 +313,6 @@ export class BrainvisCanvasComponent {
       false
     );
 
-    window.addEventListener("wheel", event => {
-      const delta = Math.sign(event.deltaY);
-      console.info(delta);
-  });
-
     window.addEventListener("beforeunload", function (e) {
       var confirmationMessage = "\o/";
       console.log('user terminated');
@@ -343,7 +342,8 @@ export class BrainvisCanvasComponent {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
-      const orientation = { position, target, up };
+      const zoom = this.controls.camera.zoom;
+      const orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
         type: 'zoomStart',
         orientation
@@ -354,7 +354,8 @@ export class BrainvisCanvasComponent {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
-      const orientation = { position, target, up };
+      const zoom = this.controls.camera.zoom;
+      const orientation = { position, target, up, zoom };
       const state = event.state;
       this.eventdispatcher.dispatchEvent({
         type: 'zoomEnd',
@@ -478,13 +479,18 @@ export class BrainvisCanvasComponent {
   }
 
   CameraZoom(newOrientation: IOrientation, within: number) {
+    //monitoring the camera
+    console.log(this.camera.position);
+    console.log(this.camera.zoom);
     let cc_1 = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
     let cc_2 = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
     let cc_3 = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
-    this.controls.changeCamera(cc_1, cc_2, cc_3,within > 0 ? within : 1000);
+    this.controls.changeCamera(cc_1, cc_2, cc_3,within > 0 ? within : 1000,this.camera.zoom);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
+    console.log(this.camera.position);
+    console.log(this.camera.zoom);
     this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
@@ -521,8 +527,8 @@ export class BrainvisCanvasComponent {
     }
     if (this.measure_counter.length == Measurement.Zero) {
       this.measure_counter.push(intersect[0].point.clone());
-      const geometry = new THREE.CylinderGeometry(2, 2, 2, 32);
-      const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const geometry = new THREE.CylinderGeometry(1, 1, 1, 32);
+      const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true });
       const cylinder = new THREE.Mesh(geometry, material);
       cylinder.position.copy(this.measure_counter[0]);
       cylinder.name = 'measure';
@@ -654,7 +660,6 @@ export class BrainvisCanvasComponent {
 
   animate = () => {
     requestAnimationFrame(this.animate);
-
     // update light position
     if (this.stackHelper) {
       const lightDir = this.camera.position.clone();
@@ -850,24 +855,38 @@ export class BrainvisCanvasComponent {
         orientation
       });
       this.viewpoint_action = modes.Idle;
-    }
+    },
+    toggleAllSprites: () => {
+        this.spriteMap.forEach((value, key) => {
+          value.visible = !value.visible;
+          value.sprite.visible = value.visible;
+        });
+      }
   }
+
   load_stl_models = async(alpha) => {
         // Load STL models
         let fragment_folder
         let uis = this.ui;
-        if(uis.__folders['Fragments Opacity']==null)
+        if(this.firstload){
           fragment_folder = uis.addFolder('Fragments Opacity');
+          fragment_folder.add(this.viewpoint_button, "toggleAllSprites").name("Toggle Labels");  
+        }
         else
           fragment_folder = uis.__folders['Fragments Opacity'];
+
+        
+        
         for(var file of alpha)
         {
           let name = 'f' + this.number_of_stl.toString();
           const color = this.selectColor(this.number_of_stl);
-          let loaderSTL = new STLLoader();
-          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 50, transparent: true});
-          let geometry = loaderSTL.parse(file.result);
-          let mesh = new THREE.Mesh(geometry, material);
+          let material = new THREE.MeshLambertMaterial({ color: color, transparent: true,  depthTest: true});
+          // const SM = new SimplifyModifier();
+          const geometry = await this.loadSTL(file.result) as THREE.BufferGeometry;
+          let mesh = new THREE.Mesh(geometry , material);
+          // const SMG = await SM.modify(geometry, 0.2);
+          // mesh.geometry = SMG;
           let centroid = new THREE.Vector3();
           mesh.geometry.computeBoundingBox();
           centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
@@ -877,6 +896,9 @@ export class BrainvisCanvasComponent {
           geometry.center();
           mesh.position.copy(centroid);
           mesh.rotation.set(0,0,0);
+          const sprite = this.makeTextSprite(name, {});
+          this.spriteMap.set(name, { sprite: sprite, visible: true });
+          mesh.add(sprite);
           this.objects.add(mesh);
           // this.connect_label(mesh);
           fragment_folder.add(material, 'opacity', 0, 1).name(name)
@@ -884,13 +906,19 @@ export class BrainvisCanvasComponent {
           fragment_folder.open();
           this.number_of_stl++;
         }
+        if(this.firstload){
+          this.firstload = false;
+          this.model_centering();
+        }
+  }
+  model_centering = () => {
         //positioning all loaded meshes to the center of the scene. 
         // compute average position of child meshes
         const center = new THREE.Vector3();
         this.objects.children.forEach((child) => {
           center.add(child.position);
         });
-        center.divideScalar(alpha.length);
+        center.divideScalar(this.objects.children.length);
         const origin = new THREE.Vector3(0, 0, 0);
         const direction = center.clone().sub(origin).normalize();
         const distance = origin.distanceTo(center);
@@ -901,60 +929,100 @@ export class BrainvisCanvasComponent {
         });
 
         // set the parent object's position to the negative of the average position
-        this.objects.position.copy(center);
-        center.sub(new THREE.Vector3(0, 0, 0));
         this.objects.position.set(0,0,0);
+
+        // Calculate the bounding box that contains all objects
+        var bbox = new THREE.Box3().setFromObject(this.objects);
+
+        // Calculate the center of the bounding box
+        var center_bbox = new THREE.Vector3();
+        bbox.getCenter(center);
+
+        // Calculate the radius of the bounding box
+        const width = bbox.max.x - bbox.min.x;
+        const height = bbox.max.y - bbox.min.y;
+        const depth = bbox.max.z - bbox.min.z;  
+        const maxDim = Math.max(width, height, depth);
+        if(maxDim < 200)
+          this.initial_zoom = 200/maxDim;
+        else
+          this.initial_zoom = 50/maxDim;
+        // Set the camera position and target to view all objects
+        this.camera.lookAt(center_bbox);
+        this.camera.zoom = this.initial_zoom;
+        this.camera.updateProjectionMatrix();
   }
   load_demo = () =>{
+        if(this.firstload)
+          this.firstload = false;
+        else
+          return;
         // Load STL models  
-        const alpha = ['assets/SP_1.stl','assets/SP_2.stl','assets/SP_3.stl','assets/Clavicle Mid Shaft Bone Plate_2.stl'];      
-        const fragment_folder = this.ui.addFolder('Fragments Opecity');
+        let fragment_folder
+        let uis = this.ui;
+        const alpha = ['assets/SP_1_reduced.stl','assets/SP_2_reduced.stl','assets/SP_3_reduced.stl'];      
+        fragment_folder = uis.addFolder('Fragments Opacity');
+        fragment_folder.add(this.viewpoint_button, "toggleAllSprites").name("Toggle Labels");  
+
         for(var file of alpha)
         {
           let name = 'f' + this.number_of_stl.toString();
           const color = this.selectColor(this.number_of_stl);
           let loaderSTL = new STLLoader();
           
-          let material = new THREE.MeshPhongMaterial({ color: color, specular: 0x111111, shininess: 50, transparent: true});
-          let geometry = loaderSTL.load(file,function(geometry){          
+          let material = new THREE.MeshLambertMaterial({ color: color, transparent: true});
+          loaderSTL.load(file, function (geometry) {
             const mesh = new THREE.Mesh(geometry, material);
-            let centroid = new THREE.Vector3();
-            mesh.geometry.computeBoundingBox();
-            centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
-            centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
-            centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+            const bbox = new THREE.Box3().setFromObject(mesh);
+            const centroid = new THREE.Vector3();
+            bbox.getCenter(centroid);
+          
             mesh.name = name.toString();
             geometry.center();
             mesh.position.copy(centroid);
-            mesh.rotation.set(0,0,0);
+            mesh.position.sub(new THREE.Vector3(57.5,29.2,86.5));
+            mesh.rotation.set(0, 0, 0);
+          
+            const sprite = this.makeTextSprite(name, {});
+            this.spriteMap.set(name, { sprite: sprite, visible: true });
+            mesh.add(sprite);
             this.objects.add(mesh);
+
           }.bind(this));
+
           fragment_folder.add(material, 'opacity', 0, 1).name(name)
           .onChange((value) => {material.opacity = value;});
           fragment_folder.open();
           this.number_of_stl++;
         }
-        //positioning all loaded meshes to the center of the scene. 
-        // compute average position of child meshes
-        const center = new THREE.Vector3();
-        this.objects.children.forEach((child) => {
-          center.add(child.position);
-        });
-        center.divideScalar(alpha.length);
-        const origin = new THREE.Vector3(0, 0, 0);
-        const direction = center.clone().sub(origin).normalize();
-        const distance = origin.distanceTo(center);
-        const newVector = origin.clone().add(direction.multiplyScalar(distance));
-        // subtract the average position from each child mesh's position
-        this.objects.children.forEach((child) => {
-          child.position.sub(newVector);
-        });
-
-        // set the parent object's position to the negative of the average position
-        this.objects.position.copy(center);
-        center.sub(new THREE.Vector3(0, 0, 0));
         this.objects.position.set(0,0,0);
-  }
+        let loaderSTL = new STLLoader();
+        let name = 'f' + this.number_of_stl.toString();
+        const color = this.selectColor(this.number_of_stl);
+        let material = new THREE.MeshLambertMaterial({ color: color, transparent: true});
+        this.model_centering();
+        loaderSTL.load('assets/Clavicle Mid Shaft Bone Plate_2.stl',function(geometry){          
+          const mesh = new THREE.Mesh(geometry, material);
+          let centroid = new THREE.Vector3();
+          mesh.geometry.computeBoundingBox();
+          centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
+          centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
+          centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+          mesh.name = name.toString();
+          geometry.center();
+          mesh.position.copy(centroid);
+          mesh.position.sub(new THREE.Vector3(20,40,100));
+          mesh.rotation.set(0,0,0);
+          const sprite = this.makeTextSprite(name, {});
+          this.spriteMap.set(name, { sprite: sprite, visible: true });
+          mesh.add(sprite);
+          this.objects.add(mesh);
+        }.bind(this));
+        fragment_folder.add(material, 'opacity', 0, 1).name(name);
+        this.initial_zoom = 2.27;
+        this.number_of_stl++;
+        this.camera.zoom = this.initial_zoom;
+      }
   generateHeight( width, height ) {
 
     const size = width * height, data = new Uint8Array( size ),
@@ -996,7 +1064,7 @@ export class BrainvisCanvasComponent {
   makeTextSprite = ( message, parameters ) => {
         if ( parameters === undefined ) parameters = {};
         var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Courier New";
-        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+        var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 70;
         var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
         var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
         var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:0, g:0, b:0, a:1.0 };
@@ -1020,6 +1088,14 @@ export class BrainvisCanvasComponent {
         sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
         return sprite;  
     }
+
+  loadSTL(url) {
+    return new Promise((resolve, reject) => {
+      const loader = new STLLoader();
+      try{resolve(loader.parse(url))}
+      catch(e){reject(e)}
+    });
+  }
 }
 
 

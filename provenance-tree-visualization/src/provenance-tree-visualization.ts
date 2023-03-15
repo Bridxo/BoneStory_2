@@ -101,6 +101,7 @@ export class ProvenanceTreeVisualization {
     traverser.graph.on('currentChanged', () => {
       this.update();
       (window as any).slideDeckViz.provchanged(this.traverser.graph.current);
+      (window as any).slideDeckViz.onChange(this.traverser.graph.current);
     });
 
     traverser.graph.on('nodeChanged', () => {
@@ -404,7 +405,7 @@ export class ProvenanceTreeVisualization {
       
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
         this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
-        // (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
+        (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
         this.update();
       }
     });

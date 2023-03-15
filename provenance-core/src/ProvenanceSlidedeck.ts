@@ -33,6 +33,7 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
     this._screenShotProvider = null;
     this._autoScreenShot = true;
     this._selectedSlide = null;
+    console.log(application);
   }
 
   public get application() {
