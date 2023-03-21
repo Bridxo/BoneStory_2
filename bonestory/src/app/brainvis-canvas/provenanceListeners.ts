@@ -149,24 +149,36 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
     canvas.addEventListener('transEnd',transEndListener);
   });
   
-  canvas.addEventListener('rotationStart', (startEvent) => {
-    const rotationEndListener = debounce ((event) => {
+  async function handleRotationEnd(startEvent, endEvent) {
+    return new Promise<void>((resolve) => {
       if (
-        Math.abs(startEvent.rotation.x - event.rotation.x) > 0 ||
-        Math.abs(startEvent.rotation.y - event.rotation.y) > 0 ||
-        Math.abs(startEvent.rotation.z - event.rotation.z) > 0
+        Math.abs(startEvent.rotation.x - endEvent.rotation.x) > 0 ||
+        Math.abs(startEvent.rotation.y - endEvent.rotation.y) > 0 ||
+        Math.abs(startEvent.rotation.z - endEvent.rotation.z) > 0
       ) {
         tracker.applyAction({
-          metadata: {userIntent: 'selection'},
-          do: 'rotateObject',
-          doArguments: [(event as any).rotation,(event as any).position],
-          undo: 'rotateObject',
-          undoArguments: [(startEvent as any).rotation,(startEvent as any).position],
-          })
-        }
-        canvas.removeEventListener('rotationEnd', rotationEndListener);
-      }, 0, { trailing: true });
-  canvas.addEventListener('rotationEnd', rotationEndListener);
+          metadata: { userIntent: "selection" },
+          do: "RotateObject",
+          doArguments: [endEvent.rotation, endEvent.position, 0],
+          undo: "RotateObject",
+          undoArguments: [startEvent.rotation, startEvent.position, 0],
+        });
+      }
+      resolve();
+    });
+  }
+  
+  canvas.addEventListener("rotationStart", (startEvent) => {
+    const rotationEndListener = debounce(
+      async (endEvent) => {
+        await handleRotationEnd(startEvent, endEvent);
+        console.log("Code execution finished");
+        canvas.removeEventListener("rotationEnd", rotationEndListener);
+      },
+      0,
+      { trailing: true }
+    );
+    canvas.addEventListener("rotationEnd", rotationEndListener);
   });
 
 
@@ -207,16 +219,25 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
 
 
 
-  canvas.selectedObjectsChange.subscribe(val => {
-    tracker.applyAction({
-      metadata: {userIntent: 'configuration'},
-      do: 'SelectObject',
-      doArguments: [val[0],val[1],val[2],val[3]], //  new , old, new color, old color
-      undo: 'SelectObject',
-      undoArguments: [val[1],val[0],val[3],val[2]] // return back old, new, old color, new color
-    }, true);
+  async function handleSelectedObjectsChange(val) {
+    return new Promise<void>((resolve) => {
+      tracker.applyAction(
+        {
+          metadata: { userIntent: "configuration" },
+          do: "SelectObject",
+          doArguments: [val[0], val[1], val[2], val[3]], // new, old, new color, old color
+          undo: "SelectObject",
+          undoArguments: [val[1], val[0], val[3], val[2]], // return back old, new, old color, new color
+        },
+        true
+      );
+      resolve();
+    });
+  }
+  
+  canvas.selectedObjectsChange.subscribe(async (val) => {
+    await handleSelectedObjectsChange(val);
   });
-
 
   canvas.addEventListener('annotation', (event) => {
     tracker.applyAction({

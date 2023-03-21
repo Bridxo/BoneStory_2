@@ -3,18 +3,15 @@ import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output,
 import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 
 import * as THREE from 'three';
-import Annotation_2D from './annotation_2D';
 import * as dat from 'dat.gui';
-import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js';
 
-
-import { IOrientation, ISlicePosition } from './types';
+import { IOrientation } from './types';
 
 import Trackball from './trackball';
 // import SliceManipulatorWidget from './sliceManipulatorWidget';
 // import MeshManipulatorWidget from './meshManipulatorWidget';
 import STLLoader from './stlLoader';
-import { IntersectionManager, StaticGeometryListener } from './intersectionManager';
+import { IntersectionManager } from './intersectionManager';
 import ObjectSelector from './objectSelector';
 
 
@@ -25,7 +22,11 @@ import { registerActions } from './provenanceActions';
 import { addListeners } from './provenanceListeners';
 
 import { AppComponent } from '../app.component';
-import { add, filter } from 'lodash';
+import {updateModeDisplay} from '../util/Displaywidget';
+
+import { DragControls } from 'three/examples/jsm/controls/DragControls';
+ 
+
 
 (window as any).istyping = false;
 
@@ -39,7 +40,8 @@ enum modes {
   Translation = 0,
   Rotation = 1,
   Cammode = 2,
-  Annotationmode = 3
+  Annotationmode = 3,
+  Measurementmode = 4
 }
 
 enum modes {
@@ -51,6 +53,7 @@ enum modes {
   Front = 5,
   Back = 6
 }
+
 @Component({
   selector: 'app-brainvis-canvas',
   template: '<div id="gui"></div>',
@@ -82,6 +85,8 @@ export class BrainvisCanvasComponent {
   public keydown_coordinate: THREE.Vector2;
   public viewpoint_action = 0;
   relativePos: THREE.Vector3;
+  rotate_counter = 0;
+  rotate_prev_intersect: THREE.Vector3;
 
   @Input() set showObjects(showObjects: boolean) {
     this._showObjects = showObjects;
@@ -142,9 +147,14 @@ export class BrainvisCanvasComponent {
   public helper; // for indicating selected object surface normal
   public measure_groups = []; // Create an array to store the annotations
   public measure_counter = [];
+  public annotations = [];
   private initial_zoom: number;
   private spriteMap = new Map();
   private firstload = true;
+  private ModeText = ['Object', 'Object', 'Camera', 'Annotation'];
+  private ModeText_add = '';
+  private dragControls;
+
   // stl file information
   private stl_objs: FormData;
 
@@ -333,8 +343,13 @@ export class BrainvisCanvasComponent {
       this.mode = this.objectSelector.getmode();
       if(this.mode == modes.Cammode) // camera
         this.controls.enabled = true;
-      else
+      else{
         this.controls.enabled = false;
+        if(this.mode == modes.Translation)
+          this.ModeText_add = '\nTranslate';
+        else if(this.mode == modes.Rotation)
+          this.ModeText_add = '\nRotate';
+      }
       // this.controls.update();
       });
 
@@ -348,6 +363,7 @@ export class BrainvisCanvasComponent {
         type: 'zoomStart',
         orientation
       });
+      
     });
 
     this.controls.addEventListener('zoom_track_end', (event) => {
@@ -357,11 +373,13 @@ export class BrainvisCanvasComponent {
       const zoom = this.controls.camera.zoom;
       const orientation = { position, target, up, zoom };
       const state = event.state;
+      updateModeDisplay(this.ModeText[this.mode],'\nMove');
       this.eventdispatcher.dispatchEvent({
         type: 'zoomEnd',
         orientation,
         state
       });
+      this.ModeText_add = '\nMove';
     });
 
     this.controls.addEventListener('start', (event) => {
@@ -381,6 +399,8 @@ export class BrainvisCanvasComponent {
           orientation
         });
       }
+      this.mode = modes.Cammode;
+      this.ModeText_add = '\nMove';
     });
     
     this.controls.addEventListener('end', (event) => {
@@ -394,6 +414,8 @@ export class BrainvisCanvasComponent {
         orientation,
         state
       });
+      this.mode = modes.Cammode;
+      this.ModeText_add = '';
     });
 
     this.objectSelector.addEventListener('t_start', (event:any) => {
@@ -402,6 +424,8 @@ export class BrainvisCanvasComponent {
         type: 'transStart',
         position: event.position.toArray()
       });
+      this.mode = modes.Translation;
+      this.ModeText_add = '\nTranslate';
     });
     this.objectSelector.addEventListener('t_end', (event:any) => {
       // const position = this.objectSelector.gettranslateObject().position.toArray();
@@ -409,6 +433,8 @@ export class BrainvisCanvasComponent {
         type: 'transEnd',
         position: event.position.toArray()
       });
+      this.mode = modes.Cammode;
+      this.ModeText_add = '';
     });
 
     this.objectSelector.addEventListener('r_start', (event:any) => {
@@ -417,6 +443,8 @@ export class BrainvisCanvasComponent {
         rotation: event.rotation,
         position: event.position.add(this.pivot_group.position.clone())
       });
+      this.mode = modes.Rotation;
+      this.ModeText_add = '\nRotate';
     });
     this.objectSelector.addEventListener('r_end', (event:any) => {
 
@@ -425,6 +453,8 @@ export class BrainvisCanvasComponent {
         rotation: this.selectedobj.rotation.clone(),
         position: this.selectedobj.position.clone()
       });
+      this.mode = modes.Cammode;
+      this.ModeText_add = '';
     });
 
     this.objectSelector.addEventListener('interactive', (event: any) => {
@@ -441,19 +471,24 @@ export class BrainvisCanvasComponent {
       else if (mode == 1 && this.selectedobj!=undefined){ //Rotation
         this.mm.setMode('rotate');
         if(event.intersect!=undefined){
+          if(this.rotate_counter>0){
+            this.selectedobj.position.add(this.rotate_prev_intersect);
+          }
           this.pivot_group.position.set(0,0,0);
           this.pivot_group.rotation.set(0,0,0);
           this.pivot_group.add(this.selectedobj);
           this.pivot_group.position.copy(event.intersect);
           this.selectedobj.position.sub(event.intersect);
+          this.rotate_prev_intersect = event.intersect;
           this.mm.attach(this.pivot_group);
+          this.rotate_counter++;
         }
-
         this.controls.enabled = false;
       }
       else {
         this.mm.detach();
         this.controls.enabled = true;
+        this.mode = modes.Cammode;
       }
     });
 
@@ -480,12 +515,10 @@ export class BrainvisCanvasComponent {
 
   CameraZoom(newOrientation: IOrientation, within: number) {
     //monitoring the camera
-    console.log(this.camera.position);
-    console.log(this.camera.zoom);
     let cc_1 = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
     let cc_2 = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
     let cc_3 = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
-    this.controls.changeCamera(cc_1, cc_2, cc_3,within > 0 ? within : 1000,this.camera.zoom);
+    this.controls.changeCamera(cc_1, cc_2, cc_3,within > 0 ? within : 1000,newOrientation.zoom);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
@@ -504,16 +537,15 @@ export class BrainvisCanvasComponent {
       within > 0 ? within : 1000);
   }
 
-  ObjectTrans(newPosition: any, within: number) {
-    within = 500;
-    this.objectSelector.changecontrols(new THREE.Vector3(newPosition[0], newPosition[1], newPosition[2]), within);
+  async ObjectTrans(newPosition: any, within: number) {
+    await this.objectSelector.changecontrols(new THREE.Vector3(newPosition[0], newPosition[1], newPosition[2]), within);
   }
 
   async ObjectRotate(newargs: any, newpos:any ,within: number) {
-    within = 500;
+    this.rotate_counter = 0;
     // this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), within, undefined, new THREE.Vector3(newargs.x, newargs.y, newargs.z));
-    this.objectSelector.changecontrols_rotation(new THREE.Vector3(newargs.x, newargs.y, newargs.z), within);
-    this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), 0);
+    await this.objectSelector.changecontrols_rotation(new THREE.Vector3(newargs.x, newargs.y, newargs.z), within);
+    await this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), 0);
   }
   Measure(intersect: any, undo?: boolean) {
     if(undo === true){
@@ -600,10 +632,8 @@ export class BrainvisCanvasComponent {
       var plane = document.createElement('canvas');
 
       var context = plane.getContext('2d');
-      var metrics = context.measureText(text);
-      var planeLength = 160, textHeight = 60;
+      var planeLength = 160, textHeight = 80; // Increase textHeight to 80
       plane.width = 512;
-      
       var words = text.split(' ');
       var line = '';
       var lineCount = 0;
@@ -624,7 +654,7 @@ export class BrainvisCanvasComponent {
       plane.height = textHeight + lineCount * textHeight;
       context.fillStyle = 'white';
       context.fillRect(0, 0, 512, textHeight + (lineCount * textHeight));
-      context.font = '50px Arial';
+      context.font = '40px Arial'; // Decrease font size to 40px
       context.fillStyle = 'black';
       context.textAlign = 'left';
       context.textBaseline = 'middle';
@@ -656,6 +686,8 @@ export class BrainvisCanvasComponent {
       text: text,
       inter: intersect
     });
+    // this.mode = modes.Cammode;
+    // this.ModeText_add = "";
   }
 
   animate = () => {
@@ -673,7 +705,7 @@ export class BrainvisCanvasComponent {
       this.directionalLight.position.add(new THREE.Vector3(lightRotationTemp.x, lightRotationTemp.y, lightRotationTemp.z));
       this.directionalLight.position.normalize();
     }
-
+    updateModeDisplay(this.ModeText[this.mode],this.ModeText_add);
     this.controls.update();
     
     this.render();
@@ -1049,6 +1081,18 @@ export class BrainvisCanvasComponent {
   selectColor(number) { // color generator based on visible spectrum
     const hue = number * 137.508; // use golden angle approximation
     return `hsl(${hue},50%,75%)`;
+  }
+
+  createDragControls(annotations: THREE.Object3D[], camera: THREE.Camera, domElement: HTMLElement) {
+    this.dragControls = new DragControls(annotations, camera, domElement);
+  
+    this.dragControls.addEventListener('dragstart', () => {
+      this.controls.enabled = false; // Disable camera controls while dragging
+    });
+  
+    this.dragControls.addEventListener('dragend', () => {
+      this.controls.enabled = true; // Re-enable camera controls after dragging
+    });
   }
 
   ScreenShot = () => {

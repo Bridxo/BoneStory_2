@@ -90,6 +90,7 @@ export default class Trackball{
   private toTarget: THREE.Vector3;
   private toPosition: THREE.Vector3;
   private toUp: THREE.Vector3;
+  private toZoom: number;
 
   panCamera = (function() {
     const mouseChange = new THREE.Vector2(),
@@ -116,7 +117,7 @@ export default class Trackball{
       }
     };
   }());
-  toZoom: number;
+
   addEventListener(type, listener){
     this.eventdispatcher.addEventListener(type,listener);
   };

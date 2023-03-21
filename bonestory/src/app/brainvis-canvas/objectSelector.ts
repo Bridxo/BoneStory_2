@@ -1,6 +1,7 @@
 // import { elementStart } from '@angular/core/src/render3/instructions';
 import * as THREE from 'three';
 import { MeshPhongMaterial, MeshLambertMaterial } from 'three/src/Three';
+import { updateModeDisplay } from '../util/Displaywidget';
 import { BrainvisCanvasComponent } from './brainvis-canvas.component';
 const { Object3D } = THREE;
 import { IIntersectionListener } from './intersectionManager';
@@ -190,6 +191,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
           const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
           const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
           if(annotation_intersect.length != 0){
+            updateModeDisplay('Annotation','');
             var annotationText = prompt("Enter the text for the annotation:");
             this.canvas.Annotation(annotationText, annotation_intersect, false);
           }
@@ -372,7 +374,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
       }
 
     changecontrols_rotation(newrotation: THREE.Vector3, milliseconds: number, done?: () => void) {
-        if (this.previousSelectedObject == <THREE.Mesh>{}){
+        if (this.previousSelectedObject.rotation == undefined){
             return;
         }
         if (new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y,this.previousSelectedObject.rotation.z).equals(newrotation)) {

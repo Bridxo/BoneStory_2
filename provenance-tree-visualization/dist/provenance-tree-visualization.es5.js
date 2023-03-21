@@ -1002,7 +1002,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .attr('visibility', function (d) { return (d.x === 0 ? 'visible' : 'hidden'); });
             updateNodes.on('click', function (d) {
                 if (d.data.wrappedNodes[0].id !== _this.traverser.graph.current.id) {
-                    _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
+                    _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
                     window.slideDeckViz.onChange(_this.traverser.graph.current.metadata.branchnumber);
                     _this.update();
                 }
@@ -1065,6 +1065,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         traverser.graph.on('currentChanged', function () {
             _this.update();
             window.slideDeckViz.provchanged(_this.traverser.graph.current);
+            window.slideDeckViz.onChange(_this.traverser.graph.current);
         });
         traverser.graph.on('nodeChanged', function () {
             _this.update();

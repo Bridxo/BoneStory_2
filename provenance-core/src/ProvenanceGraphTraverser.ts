@@ -90,26 +90,54 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
     this._mitt = mitt();
   }
 
-  async executeFunctions(
-    functionsToDo: ActionFunctionWithThis[],
-    argumentsToDo: any[],
-    transitionTimes: number[]
-  ): Promise<StateNode> {
+  async executeFunctions(functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], transitionTimes: number[]) {
     let result;
     for (let i = 0; i < functionsToDo.length; i++) {
       const funcWithThis = functionsToDo[i];
-      let promise: any;
+      let promise;
       if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
         this.tracker.acceptActions = false;
-        promise = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]);
+        if(funcWithThis.func.name == 'TranslateObject' || funcWithThis.func.name == 'RotateObject' || funcWithThis.func.name == 'TranslateObject') {
+          const argwithThis  = argumentsToDo[i];
+          const duration_index = argwithThis.length - 1;
+          argumentsToDo[i][duration_index] = transitionTimes[i];
+          promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
+        } 
+        else 
+          promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
         this.tracker.acceptActions = true;
       } else {
-        promise = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]);
+        promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
       }
       result = await promise;
     }
     return result;
-  }
+  } 
+  
+  
+  
+  
+
+  // async executeFunctions(
+  //   functionsToDo: ActionFunctionWithThis[],
+  //   argumentsToDo: any[],
+  //   transitionTimes: number[]
+  // ): Promise<StateNode> {
+  //   let result;
+  //   for (let i = 0; i < functionsToDo.length; i++) {
+  //     const funcWithThis = functionsToDo[i];
+  //     let promise: any;
+  //     if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
+  //       this.tracker.acceptActions = false;
+  //       promise = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]);
+  //       this.tracker.acceptActions = true;
+  //     } else {
+  //       promise = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]);
+  //     }
+  //     result = await promise;
+  //   }
+  //   return result;
+  // }
 
   /**
    * Finds shortest path between current node and node with request identifer.
@@ -139,6 +167,11 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
 
     let functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[];
     const transitionTimes: number[] = [];
+
+    interface CustomError extends Error {
+      invalidTraversal?: boolean;
+    }
+
     try {
       const arg = this.getFunctionsAndArgsFromTrack(trackToTarget);
       functionsToDo = arg.functionsToDo;
@@ -147,12 +180,13 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
         transitionTimes.push(transtionTime || 0);
       });
     } catch (error) {
-      if (error.invalidTraversal) {
+      const customError = error as CustomError;
+      if (customError.invalidTraversal) {
         this._mitt.emit('invalidTraversal', targetNode);
         return undefined;
       } else {
         /* istanbul ignore next */
-        throw error; // should never happen
+        throw customError; // should never happen
       }
     }
     const result = await this.executeFunctions(functionsToDo, argumentsToDo, transitionTimes);

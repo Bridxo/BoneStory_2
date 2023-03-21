@@ -108,18 +108,22 @@ export class AppComponent implements OnInit {
     const slide = document.getElementById('bottom-container');
     const prov = document.getElementById('side-container');
     const slideDisplay = window.getComputedStyle(slide).getPropertyValue("display");
+    const actionDisplay = document.getElementById('modewidget');
     
     
     if (slideDisplay === 'block') {
       button.style.right = '0%';
+      actionDisplay.style.right = '1%';
       button2.style.right = `2%`;
       button3.style.right = `4.5%`;
       button4.style.right = `7%`;
       slide.style.display = 'none';
       prov.style.display = 'none';
+      
 
     } else {
       button.style.right = `20%`;
+      actionDisplay.style.right = '21%';
       button2.style.right = `22%`;
       button3.style.right = `24.5%`;
       button4.style.right = `27%`;

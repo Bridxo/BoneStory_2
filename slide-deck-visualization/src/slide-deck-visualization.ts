@@ -98,7 +98,7 @@ export class SlideDeckVisualization {
                 slide.transitionTime -
                 (this._currentTime - this._slideDeck.startTime(slide));
         } else {
-            artificialTransitionTime = 250;
+            artificialTransitionTime = 0;
         }
 
         slide.transitionTime =
@@ -138,30 +138,32 @@ export class SlideDeckVisualization {
     // this.selectSlide(slide);
     // this._slidesInDeck += 1;
 
-    private provchanged = (node: ProvenanceNode) => {
+    private provchanged = (node: ProvenanceNode) => { // annotation 구분을 위해서 쓴다
         let slideDeck = this._slideDeck;
-        let match = false;
-        slideDeck.slides.forEach(slide => {
-            if(slide.node != null && slide.node.id === node.id){
-                this.selectSlide(slide);
-                match = true;
-                return;
-            }
-        });
-        if(match === false)
-            this.selectSlide(null);
+        if(slideDeck != undefined){
+            let match = false;
+            slideDeck.slides.forEach((slide) => {
+                if(slide.node != null && slide.node.id === node.id){
+                    this.selectSlide(slide);
+                    match = true;
+                    return;
+                }
+            });
+            if(match === false)
+                this.selectSlide(null);
+        }
     }
 
     private onChange = (node: ProvenanceNode) => {
-        let bnumber = node.metadata.branchnumber;
-        if(this._slideDocker[bnumber] === undefined){
-            const newslideDeck = new ProvenanceSlidedeck(0,);
-            this._slideDocker[bnumber] = newslideDeck;
-            this.selectslidedeck(bnumber);
-        }
-        else{
-            this.selectslidedeck(bnumber);
-        }
+        // let bnumber = node.metadata.branchnumber;
+        // if(this._slideDocker[bnumber] === undefined){
+        //     // const newslideDeck = new ProvenanceSlidedeck(0,);
+        //     // this._slideDocker[bnumber] = newslideDeck;
+        //     this.selectslidedeck(bnumber);
+        // }
+        // else{
+        //     this.selectslidedeck(bnumber);
+        // }
     }
     private onAdd = () => {
         let slideDeck = this._slideDeck;
@@ -339,7 +341,7 @@ export class SlideDeckVisualization {
     private updateTimeIndices(slideDeck: IProvenanceSlidedeck) {
         this._timeIndexedSlides = [];
         let timeIndex = 0;
-        slideDeck.slides.forEach(slide => {
+        slideDeck.slides.forEach((slide) => {
             this._timeIndexedSlides.push({
                 slide: slide,
                 startTime: timeIndex

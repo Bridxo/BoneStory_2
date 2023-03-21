@@ -404,7 +404,7 @@ export class ProvenanceTreeVisualization {
     updateNodes.on('click', d => {
       
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
-        this.traverser.toStateNode(d.data.wrappedNodes[0].id, 250);
+        this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
         (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
         this.update();
       }
