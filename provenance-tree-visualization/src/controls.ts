@@ -6,23 +6,23 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
     var graph = provenanceTreeVisualization.traverser.graph;
     var traverser = provenanceTreeVisualization.traverser;
 
-    document.onkeydown = keyPress;
+    window.onkeydown = keyPress;
 
 
     function keyPress(e: any) {
         var evtobj = window.event ? event : e;
 
         // ctrl + Z  / undo
-        if (evtobj.keyCode === 38 && evtobj.altKey && (graph.current as StateNode).parent) {
+        if (evtobj.ctrlKey && evtobj.key === 'z' && (graph.current as StateNode).parent) {
             traverser.toStateNode((graph.current as StateNode).parent.id, 250);
             provenanceTreeVisualization.update();
         }
         // ctrl + X  / go to the root
-        else if (evtobj.keyCode === 88 && evtobj.altKey) {
+        else if (evtobj.ctrlKey && evtobj.key === 'x') {
             traverser.toStateNode(graph.root.id, 250);
         }
         // ctrl + A  / redo
-        else if (evtobj.keyCode === 40 && evtobj.altKey && graph.current.children[0]) {
+        else if (evtobj.ctrlKey && evtobj.key === 'a' && graph.current.children[0]) {
             for (const child of graph.current.children) {
                 if (child.metadata.mainbranch) {
                     traverser.toStateNode(graph.current.children[0].id, 250);

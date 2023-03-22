@@ -119,20 +119,20 @@ function GratzlLayout(_root, _current) {
 function provGraphControls(provenanceTreeVisualization) {
     var graph = provenanceTreeVisualization.traverser.graph;
     var traverser = provenanceTreeVisualization.traverser;
-    document.onkeydown = keyPress;
+    window.onkeydown = keyPress;
     function keyPress(e) {
         var evtobj = window.event ? event : e;
         // ctrl + Z  / undo
-        if (evtobj.keyCode === 38 && evtobj.altKey && graph.current.parent) {
+        if (evtobj.ctrlKey && evtobj.key === 'z' && graph.current.parent) {
             traverser.toStateNode(graph.current.parent.id, 250);
             provenanceTreeVisualization.update();
         }
         // ctrl + X  / go to the root
-        else if (evtobj.keyCode === 88 && evtobj.altKey) {
+        else if (evtobj.ctrlKey && evtobj.key === 'x') {
             traverser.toStateNode(graph.root.id, 250);
         }
         // ctrl + A  / redo
-        else if (evtobj.keyCode === 40 && evtobj.altKey && graph.current.children[0]) {
+        else if (evtobj.ctrlKey && evtobj.key === 'a' && graph.current.children[0]) {
             for (var _i = 0, _a = graph.current.children; _i < _a.length; _i++) {
                 var child = _a[_i];
                 if (child.metadata.mainbranch) {
