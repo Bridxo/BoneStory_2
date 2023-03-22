@@ -42,9 +42,8 @@ app-brainvis-canvas {
 #instructions {
   color: white;
   position: absolute;
-  left: 50%;
+  left: calc(180px + 2%);
   top: 10px;
-  margin-left: -120px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
   background-color: rgba(0, 0, 0, 0.1);
@@ -53,15 +52,6 @@ app-brainvis-canvas {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   line-height: 1.5;
   max-width: 400px;
-}
-
-
-#instructions {
-  color: white;
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  margin-left: -420px;
   font-family: monospace;
   -moz-user-select: none; /* For Firefox */
   -webkit-user-select: none; /* For Safari */
@@ -174,8 +164,8 @@ app-brainvis-canvas {
 
 .mode-widget {
   position: absolute;
-  width: 50px;
-  height: 40px;
+  width: 90px;
+  height: 80px;
   top: 40px;
   right: 21%;
   background-color: #60aa85;
@@ -186,7 +176,7 @@ app-brainvis-canvas {
   align-items: center;
   justify-content: center;
   font-family: sans-serif;
-  font-size: 10px;
+  font-size: 18px;
   z-index: 9999;
   word-wrap: break-word;
   padding: 2px;
@@ -196,4 +186,5 @@ app-brainvis-canvas {
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+  text-align: center;
 }

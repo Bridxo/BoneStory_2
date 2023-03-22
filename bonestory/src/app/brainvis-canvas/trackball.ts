@@ -117,6 +117,8 @@ export default class Trackball{
       }
     };
   }());
+  lastzoom: number;
+  zoom0: number;
 
   addEventListener(type, listener){
     this.eventdispatcher.addEventListener(type,listener);
@@ -320,13 +322,54 @@ export default class Trackball{
     if (this.changeTimeout !== undefined) {
       clearInterval(this.changeTimeout);
       this.changeTimeout = undefined;
-      this.changeCamera(this.toPosition, this.toTarget, this.toUp, 0);
+      this.changeCamera(this.toPosition, this.toTarget, this.toUp, this.toZoom, 0);
+    }
+  }
+  changeCamerazoom(newzoom: number, milliseconds: number,done?: () => void) {
+    
+    if (this.camera.zoom == newzoom) {
+      return;
+    }
+    if (milliseconds <= 0) {
+      this.state = STATE.NONE;
+      this.previousState = STATE.NONE;
+      this.camera.zoom = newzoom;
+    } else {
+      // cancel previous animation
+      if (this.changeTimeout !== undefined) {
+        clearInterval(this.changeTimeout);
+        this.changeTimeout = undefined;
+      }
+      this.toZoom = newzoom;
+      let changeTime = 0;
+      const delta = 30 / milliseconds;
+      this.changeTimeout = setInterval((fromZoom, toZoom) => {
+        this.enabled = false;
+        const t = changeTime;
+        const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
+
+        let nextZoom = fromZoom;
+        const distanceZoom = toZoom - fromZoom;
+        nextZoom = nextZoom + distanceZoom * interPolateTime;
+
+        this.changeCamerazoom(nextZoom, 0);
+        changeTime += delta;
+        if (changeTime > 1.0) {
+          this.changeCamerazoom(toZoom, 0);
+          clearInterval(this.changeTimeout);
+          this.changeTimeout = undefined;
+          this.enabled = true;
+          if (done) {
+            done();
+          }
+        }
+      }, 30, this.camera.zoom, newzoom);
     }
   }
 
-  changeCamera(newPosition: THREE.Vector3, newTarget: THREE.Vector3, newUp: THREE.Vector3, milliseconds: number, newzoom?: number ,done?: () => void) {
+  changeCamera(newPosition: THREE.Vector3, newTarget: THREE.Vector3, newUp: THREE.Vector3, newZoom: number, milliseconds: number, done?: () => void) {
     
-    if (this.target.equals(newTarget) && this.camera.position.equals(newPosition) && this.camera.up.equals(newUp)) {
+    if (this.target.equals(newTarget) && this.camera.position.equals(newPosition) && this.camera.up.equals(newUp) && this.camera.zoom==newZoom) {
       return;
     }
     if (milliseconds <= 0) {
@@ -336,14 +379,16 @@ export default class Trackball{
       this.target.copy(newTarget);
       this.camera.position.copy(newPosition);
       this.camera.up.copy(newUp);
-      if (newzoom !== undefined)
-       this.camera.zoom = newzoom;
+      this.camera.zoom = newZoom;
 
       this.eye.subVectors(this.camera.position, this.target);
 
       this.camera.lookAt(this.target);
 
       this.lastPosition.copy(this.camera.position);
+
+      this.lastzoom = this.camera.zoom;
+
     } else {
       // cancel previous animation
       if (this.changeTimeout !== undefined) {
@@ -353,8 +398,7 @@ export default class Trackball{
       this.toTarget = newTarget;
       this.toPosition = newPosition;
       this.toUp = newUp;
-      if (newzoom !== undefined)
-        this.toZoom = newzoom;
+      this.toZoom = newZoom;
       let changeTime = 0;
       const delta = 30 / milliseconds;
       this.changeTimeout = setInterval((fromTarget, fromPosition, fromUp, fromZoom, toTarget, toPosition, toUp, toZoom) => {
@@ -381,10 +425,10 @@ export default class Trackball{
         const distanceZoom = toZoom - fromZoom;
         nextZoom = nextZoom + distanceZoom * interPolateTime;
 
-        this.changeCamera(nextPosition, nextTarget, nextUp, 0, toZoom);
+        this.changeCamera(nextPosition, nextTarget, nextUp, nextZoom, 0);
         changeTime += delta;
         if (changeTime > 1.0) {
-          this.changeCamera(toPosition, toTarget, toUp, 0, toZoom);
+          this.changeCamera(toPosition, toTarget, toUp, toZoom, 0);
           clearInterval(this.changeTimeout);
           this.changeTimeout = undefined;
           this.enabled = true;
@@ -392,12 +436,12 @@ export default class Trackball{
             done();
           }
         }
-      }, 30, this.target.clone(), this.camera.position.clone(), this.camera.up.clone(), this.camera.zoom, newTarget, newPosition, newUp, newzoom);
+      }, 30, this.target.clone(), this.camera.position.clone(), this.camera.up.clone(), this.camera.zoom, newTarget, newPosition, newUp, newZoom);
     }
   }
 
   reset() {
-    this.changeCamera(this.target0, this.position0, this.up0, 0);
+    this.changeCamera(this.target0, this.position0, this.up0, this.zoom0, 0);
     this.eventdispatcher.dispatchEvent({ type: 'change' });
   }
 

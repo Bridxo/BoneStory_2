@@ -148,7 +148,7 @@ export class BrainvisCanvasComponent {
   public measure_groups = []; // Create an array to store the annotations
   public measure_counter = [];
   public annotations = [];
-  private initial_zoom: number;
+  private initial_zoom = 1;
   private spriteMap = new Map();
   private firstload = true;
   private ModeText = ['Object', 'Object', 'Camera', 'Annotation'];
@@ -386,7 +386,8 @@ export class BrainvisCanvasComponent {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
-      const orientation = { position, target, up };
+      const zoom = this.controls.camera.zoom;
+      const orientation = { position, target, up, zoom };
       if(event.state == 0){
         this.eventdispatcher.dispatchEvent({
           type: 'cameraStart',
@@ -407,7 +408,8 @@ export class BrainvisCanvasComponent {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
-      const orientation = { position, target, up };
+      const zoom = this.controls.camera.zoom;
+      const orientation = { position, target, up, zoom };
       const state = event.state;
       this.eventdispatcher.dispatchEvent({
         type: 'cameraEnd',
@@ -518,23 +520,23 @@ export class BrainvisCanvasComponent {
     let cc_1 = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
     let cc_2 = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
     let cc_3 = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
-    this.controls.changeCamera(cc_1, cc_2, cc_3,within > 0 ? within : 1000,newOrientation.zoom);
+    this.controls.changeCamera(cc_1,cc_2,cc_3,newOrientation.zoom,within);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
-    console.log(this.camera.position);
-    console.log(this.camera.zoom);
     this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
-      within > 0 ? within : 1000);
+      newOrientation.zoom,
+      within);
   }
 
   CameraPan(newOrientation: IOrientation, within: number) {
       this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
-      within > 0 ? within : 1000);
+      newOrientation.zoom,
+      within);
   }
 
   async ObjectTrans(newPosition: any, within: number) {
@@ -580,7 +582,7 @@ export class BrainvisCanvasComponent {
       // Change the height of the cylinder
       const newHeight = distance; // New height in units
       const radius = cylinder.geometry.parameters.radiusTop; // Get the radius of the cylinder
-      cylinder.scale.setY(newHeight / 2); // Set the scale along the y-axis to twice the new height divided by the radius
+      cylinder.scale.setY(newHeight); // Set the scale along the y-axis to twice the new height divided by the radius
       cylinder.lookAt(intersect[0].point);
       cylinder.rotateX(Math.PI / 2);
 
@@ -750,7 +752,7 @@ export class BrainvisCanvasComponent {
       let cc_2 = new THREE.Vector3(0,0,0);
       let cc_3 = new THREE.Vector3(0,-1,1);
   
-      this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
       position = cc_1.toArray();
       target =  cc_2.toArray();
       up = cc_3.toArray();
@@ -775,7 +777,7 @@ export class BrainvisCanvasComponent {
       let cc_2 = new THREE.Vector3(0,0,0);
       let cc_3 = new THREE.Vector3(0,1,0);
   
-      this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
       position = cc_1.toArray();
       target =  cc_2.toArray();
       up = cc_3.toArray();
@@ -799,7 +801,7 @@ export class BrainvisCanvasComponent {
       let cc_1 = new THREE.Vector3(700,0,0);
       let cc_2 = new THREE.Vector3(0,0,0);
       let cc_3 = new THREE.Vector3(-1,0,0);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
   
       position = cc_1.toArray();
       target =  cc_2.toArray();
@@ -824,7 +826,7 @@ export class BrainvisCanvasComponent {
       let cc_1 = new THREE.Vector3(-700,0,0);
       let cc_2 = new THREE.Vector3(0,0,0);
       let cc_3 = new THREE.Vector3(1,0,0);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
   
       position = cc_1.toArray();
       target =  cc_2.toArray();
@@ -850,7 +852,7 @@ export class BrainvisCanvasComponent {
       let cc_1 = new THREE.Vector3(0,700,0);
       let cc_2 = new THREE.Vector3(0,0,0);
       let cc_3 = new THREE.Vector3(0,1,1);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
   
       position = cc_1.toArray();
       target =  cc_2.toArray();
@@ -876,7 +878,7 @@ export class BrainvisCanvasComponent {
       let cc_1 = new THREE.Vector3(0,-700,0);
       let cc_2 = new THREE.Vector3(0,0,0);
       let cc_3 = new THREE.Vector3(0,1,1);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,1000);
+      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
   
       position = cc_1.toArray();
       target =  cc_2.toArray();
@@ -914,6 +916,9 @@ export class BrainvisCanvasComponent {
           let name = 'f' + this.number_of_stl.toString();
           const color = this.selectColor(this.number_of_stl);
           let material = new THREE.MeshLambertMaterial({ color: color, transparent: true,  depthTest: true});
+          material.polygonOffset = true;
+          material.polygonOffsetFactor = 1;
+          material.polygonOffsetUnits = 1;
           // const SM = new SimplifyModifier();
           const geometry = await this.loadSTL(file.result) as THREE.BufferGeometry;
           let mesh = new THREE.Mesh(geometry , material);
@@ -1003,6 +1008,9 @@ export class BrainvisCanvasComponent {
           let loaderSTL = new STLLoader();
           
           let material = new THREE.MeshLambertMaterial({ color: color, transparent: true});
+          material.polygonOffset = true;
+          material.polygonOffsetFactor = 1;
+          material.polygonOffsetUnits = 1;
           loaderSTL.load(file, function (geometry) {
             const mesh = new THREE.Mesh(geometry, material);
             const bbox = new THREE.Box3().setFromObject(mesh);

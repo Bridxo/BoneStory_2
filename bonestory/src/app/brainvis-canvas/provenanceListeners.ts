@@ -33,18 +33,18 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
               tracker.applyAction({
                 metadata: {userIntent: 'exploration'},
                 do: 'CameraMove',
-                doArguments: [(event as any).orientation],
+                doArguments: [(event as any).orientation, 500],
                 undo: 'CameraMove',
-                undoArguments: [(startEvent as any).orientation],
+                undoArguments: [(startEvent as any).orientation, 500],
               });
             }
             else {
               tracker.applyAction({
                 metadata: {userIntent: 'exploration'},
                 do: 'CameraPan',
-                doArguments: [(event as any).orientation],
+                doArguments: [(event as any).orientation, 500],
                 undo: 'CameraPan',
-                undoArguments: [(startEvent as any).orientation],
+                undoArguments: [(startEvent as any).orientation, 500],
               });
             }
             break;
@@ -52,54 +52,54 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
             tracker.applyAction({
               metadata: {userIntent: 'exploration'},
               do: 'ViewpointTop',
-              doArguments: [(event as any).orientation],
+              doArguments: [(event as any).orientation, 500],
               undo: 'ViewpointTop',
-              undoArguments: [(startEvent as any).orientation],
+              undoArguments: [(startEvent as any).orientation, 500],
             });
             break;
           case 2:
             tracker.applyAction({
               metadata: {userIntent: 'exploration'},
               do: 'ViewpointBottom',
-              doArguments: [(event as any).orientation],
+              doArguments: [(event as any).orientation, 500],
               undo: 'ViewpointBottom',
-              undoArguments: [(startEvent as any).orientation],
+              undoArguments: [(startEvent as any).orientation, 500],
             });
             break;
           case 3:
             tracker.applyAction({
               metadata: {userIntent: 'exploration'},
               do: 'ViewpointLeft',
-              doArguments: [(event as any).orientation],
+              doArguments: [(event as any).orientation, 500],
               undo: 'ViewpointLeft',
-              undoArguments: [(startEvent as any).orientation],
+              undoArguments: [(startEvent as any).orientation, 500],
             });
             break;
           case 4:
             tracker.applyAction({
               metadata: {userIntent: 'exploration'},
               do: 'ViewpointRight',
-              doArguments: [(event as any).orientation],
+              doArguments: [(event as any).orientation, 500],
               undo: 'ViewpointRight',
-              undoArguments: [(startEvent as any).orientation],
+              undoArguments: [(startEvent as any).orientation, 500],
             });
             break;
           case 5:
             tracker.applyAction({
               metadata: {userIntent: 'exploration'},
               do: 'ViewpointFront',
-              doArguments: [(event as any).orientation],
+              doArguments: [(event as any).orientation, 500],
               undo: 'ViewpointFront',
-              undoArguments: [(startEvent as any).orientation],
+              undoArguments: [(startEvent as any).orientation, 500],
             });
             break;
           case 6:
             tracker.applyAction({
               metadata: {userIntent: 'exploration'},
               do: 'ViewpointBack',
-              doArguments: [(event as any).orientation],
+              doArguments: [(event as any).orientation, 500],
               undo: 'ViewpointBack',
-              undoArguments: [(startEvent as any).orientation],
+              undoArguments: [(startEvent as any).orientation, 500],
             });
             break;
 
@@ -121,9 +121,9 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
           value: (event as any).orientation
         },
         do: 'CameraZoom',
-        doArguments: [(event as any).orientation],
+        doArguments: [(event as any).orientation, 500],
         undo: 'CameraZoom',
-        undoArguments: [(startEvent as any).orientation],
+        undoArguments: [(startEvent as any).orientation, 500],
       }, true);
     }, 500, { trailing: true });
     canvas.addEventListener('zoomEnd', zoomEndListener);

@@ -97,14 +97,11 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
       let promise;
       if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
         this.tracker.acceptActions = false;
-        if(funcWithThis.func.name == 'TranslateObject' || funcWithThis.func.name == 'RotateObject' || funcWithThis.func.name == 'TranslateObject') {
-          const argwithThis  = argumentsToDo[i];
-          const duration_index = argwithThis.length - 1;
-          argumentsToDo[i][duration_index] = transitionTimes[i];
-          promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
-        } 
-        else 
-          promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
+        //Fix problem with go back to node (time correction)
+        const argwithThis  = argumentsToDo[i];
+        const duration_index = argwithThis.length - 1;
+        argumentsToDo[i][duration_index] = transitionTimes[i];
+        promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
         this.tracker.acceptActions = true;
       } else {
         promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));

@@ -687,40 +687,58 @@ export class SlideDeckVisualization {
             .on("click", this.onDelete)
             .html('<i class="fa fa-trash-o"></i>');
 
+        // toolbar
+        //     .append("svg:foreignObject")
+        //     .attr("class", "slides_clone_icon")
+        //     .attr("cursor", "pointer")
+        //     .attr("width", 20)
+        //     .attr("height", 20)
+        //     .append("xhtml:body")
+        //     .on("click", this.onClone)
+        //     .html('<i class="fa fa-copy"></i>');
+
         toolbar
             .append("svg:foreignObject")
-            .attr("class", "slides_clone_icon")
+            .attr("class", "slides_annotation_icon")
             .attr("cursor", "pointer")
             .attr("width", 20)
             .attr("height", 20)
             .append("xhtml:body")
-            .on("click", this.onClone)
-            .html('<i class="fa fa-copy"></i>');
-
-        function addAnnotationButton(
-            toolBar: d3.Selection<any, IProvenanceSlide, any, any>,
-            y: number,
-            x: number
-        ) {
-            toolBar
-                .append("svg:foreignObject")
-                .attr("cursor", "pointer")
-                .attr("width", 20)
-                .attr("height", 20)
-                .attr("y", slide => y)
-                .attr("x", slide => x)
-                .append("xhtml:body")
-                .html('<i class="fa fa-font"></i>')
-                .on("click", slide => {
-                    const newAnnotation = new SlideAnnotation<PositionedString>(
-                        { x: 0, y: 0, value: "" }
-                    );
-                    slide.addAnnotation(newAnnotation);
-                    that._annotationContainer.add(newAnnotation, true);
-                } );
-        }
+            .html('<i class="fa fa-font"></i>')
+            .on("click", slide => {
+                const newAnnotation = new SlideAnnotation<PositionedString>(
+                    { x: 0, y: 0, value: "" }
+                );
+                slide.addAnnotation(newAnnotation);
+                that._annotationContainer.add(newAnnotation, true);
+            } );
         // annotation button
-        addAnnotationButton(toolbar, this._toolbarY, 50);
+        // addAnnotationButton(toolbar, this._toolbarY, this._toolbarX );
+
+        // function addAnnotationButton(
+        //     toolBar: d3.Selection<any, IProvenanceSlide, any, any>,
+        //     y: number,
+        //     x: number
+        // ) {
+        //     toolBar
+        //         .append("svg:foreignObject")
+        //         .attr("cursor", "pointer")
+        //         .attr("width", 20)
+        //         .attr("height", 20)
+        //         .attr("y", slide => y)
+        //         .attr("x", slide => x)
+        //         .append("xhtml:body")
+        //         .html('<i class="fa fa-font"></i>')
+        //         .on("click", slide => {
+        //             const newAnnotation = new SlideAnnotation<PositionedString>(
+        //                 { x: 0, y: 0, value: "" }
+        //             );
+        //             slide.addAnnotation(newAnnotation);
+        //             that._annotationContainer.add(newAnnotation, true);
+        //         } );
+        // }
+        // // annotation button
+        // addAnnotationButton(toolbar, this._toolbarY, this._toolbarX );
 
         const placeholder = this._slideTable.select("rect.slides_placeholder");
 
@@ -861,7 +879,7 @@ export class SlideDeckVisualization {
             });
 
         toolbar
-            .select("foreignObject.slides_clone_icon")
+            .select("foreignObject.slides_annotation_icon")
             .attr("y", (slide: IProvenanceSlide) => {
                 return this._toolbarY;
             })
