@@ -98,9 +98,11 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
       if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
         this.tracker.acceptActions = false;
         //Fix problem with go back to node (time correction)
-        const argwithThis  = argumentsToDo[i];
-        const duration_index = argwithThis.length - 1;
-        argumentsToDo[i][duration_index] = transitionTimes[i];
+        if(funcWithThis.func.name != "SelectObject" && funcWithThis.func.name != "Annotation" && funcWithThis.func.name != "Measurement"){
+          const argwithThis  = argumentsToDo[i];
+          const duration_index = argwithThis.length - 1;
+          argumentsToDo[i][duration_index] = transitionTimes[i];
+        }
         promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
         this.tracker.acceptActions = true;
       } else {
@@ -110,31 +112,6 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
     }
     return result;
   } 
-  
-  
-  
-  
-
-  // async executeFunctions(
-  //   functionsToDo: ActionFunctionWithThis[],
-  //   argumentsToDo: any[],
-  //   transitionTimes: number[]
-  // ): Promise<StateNode> {
-  //   let result;
-  //   for (let i = 0; i < functionsToDo.length; i++) {
-  //     const funcWithThis = functionsToDo[i];
-  //     let promise: any;
-  //     if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
-  //       this.tracker.acceptActions = false;
-  //       promise = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]);
-  //       this.tracker.acceptActions = true;
-  //     } else {
-  //       promise = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]);
-  //     }
-  //     result = await promise;
-  //   }
-  //   return result;
-  // }
 
   /**
    * Finds shortest path between current node and node with request identifer.

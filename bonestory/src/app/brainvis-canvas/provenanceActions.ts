@@ -16,8 +16,8 @@ const getActions = (canvas: BrainvisCanvasComponent): {[key: string]: ActionFunc
   SelectObject: (value: any[], valueb: any[], valuec: any[], valued: any[]) => Promise.resolve(canvas.selectObject = [value,valueb,valuec,valued]),
   TranslateObject: (value:any,within:number) => Promise.resolve(canvas.ObjectTrans(value,within)),
   RotateObject: (value: any, valueb: any,within:number) => Promise.resolve(canvas.ObjectRotate(value, valueb, within)),
-  Annotation: (value: any, inter: any, undo: any) => Promise.resolve(canvas.Annotation(value, inter, undo)),
-  Measurement: (value: any, undo: any) => Promise.resolve(canvas.Measurement(value, undo)),
+  Annotation: (value: any, inter: any, undo: boolean) => Promise.resolve(canvas.Annotation(value, inter, undo)),
+  Measurement: (value: any, undo: boolean) => Promise.resolve(canvas.Measurement(value, undo)),
 });
 
 export const registerActions = (registry: ActionFunctionRegistry, canvas: BrainvisCanvasComponent) => {

@@ -323,6 +323,9 @@ export class BrainvisCanvasComponent {
       this.onWindowResize,
       false
     );
+    this.addEventListener('wheel', (event) => {
+      console.log('wheel');
+    });
 
     window.addEventListener("beforeunload", function (e) {
       var confirmationMessage = "\o/";
@@ -364,7 +367,7 @@ export class BrainvisCanvasComponent {
         type: 'zoomStart',
         orientation
       });
-      
+      this.ModeText_add = '\nMove';
     });
 
     this.controls.addEventListener('zoom_track_end', (event) => {
