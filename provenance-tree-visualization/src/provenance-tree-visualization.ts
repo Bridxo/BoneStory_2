@@ -253,12 +253,12 @@ export class ProvenanceTreeVisualization {
     );
     this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode).length;
     const tree = gratzl(hierarchyRoot, currentHierarchyNode);
+    // const tree = currentHierarchyNode;
     //I want to modify the tree -> for hide camera and view
     // const tree = tree_original.copy();
     this.hierarchyRoot = tree;
     var treeNodes;
     const searchpattern = /Camera|View/;
-    // console.log(tree);
      if (this.camera_show == false)
     {
       tree.each(function(node) {

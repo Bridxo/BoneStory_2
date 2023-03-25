@@ -37,6 +37,9 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
                 undo: 'CameraMove',
                 undoArguments: [(startEvent as any).orientation, 500],
               });
+              const a = new Vector3().fromArray((event as any).orientation.position);
+              const b = new Vector3().fromArray((startEvent as any).orientation.position);
+              console.log(a.distanceTo(b));
             }
             else {
               tracker.applyAction({

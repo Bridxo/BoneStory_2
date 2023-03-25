@@ -40,8 +40,10 @@
   "devDependencies": {
     "@types/d3": "^5.16.4",
     "@types/d3-hierarchy": "^1.1.6",
+    "@types/jest": "^29.5.0",
     "@types/node": "^12.7.2",
     "husky": "^3.0.4",
+    "jest": "^29.5.0",
     "lint-staged": "^9.2.3",
     "lodash.camelcase": "^4.3.0",
     "prettier": "^1.18.2",
@@ -52,17 +54,19 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-typescript2": "^0.22.1",
+    "ts-jest": "^29.0.5",
     "ts-loader": "^6.0.4",
     "tslint": "^5.18.0",
     "tslint-config-prettier": "^1.12.0",
     "tslint-config-standard": "^8.0.1",
-    "typescript": "^3.4.5",
+    "typescript": "^5.0.2",
     "v": "^0.3.0"
   },
   "peerDependencies": {
     "@visualstorytelling/provenance-core": "^1.1.7"
   },
   "dependencies": {
+    "@types/d3": "^7.4.0",
     "@types/d3.slider": "^0.0.5",
     "@types/jest": "^26.0.15",
     "codelyzer": "0.0.28",

@@ -40,7 +40,8 @@ export class ProvenanceGraph implements IProvenanceGraph {
         metadata: {
           createdBy: userid,
           createdOn: generateTimestamp(),
-          branchnumber: 0
+          branchnumber: 0,
+          H_value: 0
         },
         children: [],
         artifacts: {}

@@ -73,7 +73,8 @@ export class ProvenanceTracker implements IProvenanceTracker {
         bookmarked: false,
         createdBy: this.username,
         createdOn: generateTimestamp(),
-        branchnumber: 0
+        branchnumber: 0,
+        H_value: 0
       },
       action,
       actionResult,
@@ -99,19 +100,20 @@ export class ProvenanceTracker implements IProvenanceTracker {
 
       newNode = createNewStateNode(currentNode, actionResult);
     }
-
-    if (this.autoScreenShot && this.screenShotProvider) {
-      try {
-        newNode.metadata.screenShot = this.screenShotProvider();
-      } catch (e) {
-        console.warn('Error while getting screenshot', e);
-      }
-    }
+    //screen-shot part
+    // if (this.autoScreenShot && this.screenShotProvider) {
+    //   try {
+    //     newNode.metadata.screenShot = this.screenShotProvider();
+    //   } catch (e) {
+    //     console.warn('Error while getting screenshot', e);
+    //   }
+    // }
 
     // When the node is created, we need to update the graph.
     currentNode.children.push(newNode);
     this.graph.addNode(newNode);
-    if(currentNode.children.length>1)//multiple story
+    //multiple story part
+    if(currentNode.children.length>1)
     {
       bnum = bnum + 1;
       newNode.metadata.branchnumber = bnum;
@@ -119,9 +121,84 @@ export class ProvenanceTracker implements IProvenanceTracker {
     else 
       newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
     this.graph.current = newNode;
-
+    //H-value calculation part
+    this.H_value(newNode);
     return newNode;
   }
+
+  normalizeValue(value: number, minValue: number, maxValue: number, newMinValue: number, newMaxValue: number): number {
+    return (value - minValue) / (maxValue - minValue) * (newMaxValue - newMinValue) + newMinValue;
+  }
+  
+  calculateDifference(pos1: number[], pos2: number[]): number {
+    const xDiff = pos1[0] - pos2[0];
+    const yDiff = pos1[1] - pos2[1];
+    const zDiff = pos1[2] - pos2[2];
+    return Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
+  }
+
+  H_value(NewNode: StateNode): number {
+    let H_val = 0;
+    type ActionLabels = keyof typeof onehot_action;
+    const onehot_action = {
+      'CameraMove': 0b0000000000000,
+      'CameraPan': 0b0000000000000,
+      'CameraZoom': 0b0010000000000,
+      'Viewpoint': 0b0100000000000,
+      'SelectObject': 0b0110000000000,
+      'TranslateObject': 0b1000000000000,
+      'RotateObject': 0b1010000000000,
+      'Measurement': 0b1100000000000,
+      'Annotation': 0b1110000000000,
+    };
+    const onehot_general = {
+      'idle': 0b0000000000000000,
+      'f0': 0b0010000000000000,
+      'f1': 0b0100000000000000,
+      'f2': 0b0110000000000000,
+      'f3': 0b1000000000000000,
+      'f4': 0b1010000000000000,
+      'f5': 0b1100000000000000,
+      'f6': 0b1110000000000000,
+      'f7': 0b10000000000000000,
+      'f8': 0b10010000000000000,
+      'f9': 0b10100000000000000,
+      'f10': 0b10110000000000000,
+      'f11': 0b11000000000000000,
+      'f12': 0b11010000000000000
+    };
+
+  // Find general value of the node.
+  H_val += onehot_general['idle'];
+
+  // Find action value of the node.
+  H_val += onehot_action[NewNode.label as ActionLabels];
+
+  // Calculate difference value of the node (parent comparison)
+  try {
+    const doArgs = NewNode.action.doArguments[0];
+    const undoArgs = NewNode.action.undoArguments[0];
+    const do_position = doArgs.position || doArgs.zoom || doArgs.rotation;
+    const undo_position = undoArgs.position || undoArgs.zoom || undoArgs.rotation;
+
+    if (do_position && undo_position) {
+      const diff = this.calculateDifference(do_position, undo_position);
+      const maxValue = NewNode.label === 'TranslateObject' ? 2000 : 5000;
+      const normalizedValue = this.normalizeValue(diff, 0, maxValue, 0, 1023);
+      H_val += normalizedValue;
+    } else if (NewNode.label === 'RotateObject') {
+      const diff = Math.abs(do_position[0] - undo_position[0]) + Math.abs(do_position[1] - undo_position[1]) + Math.abs(do_position[2] - undo_position[2]);
+      const normalizedValue = this.normalizeValue(diff, 0, 1077, 0, 1023);
+      H_val += normalizedValue;
+    } else {
+      H_val += 1023;
+    }
+  } catch (e) {
+    console.log(e);
+  }
+
+  return H_val;
+}
 
   get screenShotProvider() {
     return this._screenShotProvider;

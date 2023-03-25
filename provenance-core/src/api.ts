@@ -9,7 +9,8 @@ export type NodeIdentifier = string;
 /**
  * Action can be either reversible or irreversible
  */
-export type Action = IrreversibleAction | ReversibleAction;
+// export type Action = ReversibleAction | IrreversibleAction;
+export type Action = ReversibleAction;
 
 /**
  * ActionMetadata
@@ -49,6 +50,14 @@ export interface NodeMetadata {
    * Enable custom properties
    */
   [key: string]: any;
+
+
+  /**
+   * HLEE added 1. Branch number (get branch number for slide conversion)
+   * HLEE added 2. H_value (for Heirarchical Clustering tree value)
+   */
+  branchnumber: number;
+  H_value: number;
 }
 
 /**
