@@ -30,6 +30,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             arg: 1
         };
         this.caterpillarActivated = false;
+        this.alt = true;
         this.currentHierarchyNodelength = 0;
         this.TreeLength = 0;
         this.TreeWidth = 0.1;
@@ -42,18 +43,18 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
          * @description Update the tree layout.
          */
         this.update = function () {
-            var wrappedRoot = aggregation_objects_1.wrapNode(_this.traverser.graph.root);
+            var wrappedRoot = (0, aggregation_objects_1.wrapNode)(_this.traverser.graph.root);
             // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-            var hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated de treeRoot
-            var currentHierarchyNode = aggregation_1.findHierarchyNodeFromProvenanceNode(hierarchyRoot, _this.traverser.graph.current);
+            var hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated the treeRoot
+            var currentHierarchyNode = (0, aggregation_1.findHierarchyNodeFromProvenanceNode)(hierarchyRoot, _this.traverser.graph.current);
             _this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode).length;
-            var tree = gratzl_1.default(hierarchyRoot, currentHierarchyNode);
+            var tree = (0, gratzl_1.default)(hierarchyRoot, currentHierarchyNode);
+            // const tree = currentHierarchyNode;
             //I want to modify the tree -> for hide camera and view
             // const tree = tree_original.copy();
             _this.hierarchyRoot = tree;
             var treeNodes;
             var searchpattern = /Camera|View/;
-            // console.log(tree);
             if (_this.camera_show == false) {
                 tree.each(function (node) {
                     if (searchpattern.test(node.data.wrappedNodes[0].label))
@@ -76,12 +77,12 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .enter()
                 .append('g')
                 .attr('class', 'node')
-                .attr('transform', function (d) { return "translate(" + d.x * xScale + ", " + d.y * yScale + ")"; });
+                .attr('transform', function (d) { return "translate(".concat(d.x * xScale, ", ").concat(d.y * yScale, ")"); });
             // node label
             newNodes
                 .append('text')
                 .attr('class', 'circle-label')
-                .text(function (d) { return aggregation_objects_1.groupNodeLabel(d.data); }) // .text(d => d.data.neighbour.toString())
+                .text(function (d) { return (0, aggregation_objects_1.groupNodeLabel)(d.data); }) // .text(d => d.data.neighbour.toString())
                 .attr('x', 7)
                 .attr('alignment-baseline', 'central');
             // .call(this.wrap, 70);
@@ -102,6 +103,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             updateNodes.on('contextmenu', function (d) {
                 _this.traverser.graph.current = _this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
                 _this.update();
+                // (window as any).slideDeckViz.onChange();
                 d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
                 if (!d.data.wrappedNodes[0].metadata.bookmarked) {
                     window.slideDeckViz.onDelete(null, _this.traverser.graph.current);
@@ -116,6 +118,9 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .filter(function (d) {
                 if (d.x === 0) {
                     d.data.wrappedNodes[0].metadata.mainbranch = true;
+                }
+                else {
+                    d.data.wrappedNodes[0].metadata.mainbranch = false;
                 }
                 return d.x === 0;
             })
@@ -153,10 +158,10 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 else if (d.data.wrappedNodes[0].metadata.loaded === true) {
                     classString += ' loaded';
                 }
-                if (aggregation_objects_1.isKeyNode(d.data.wrappedNodes[0])) {
+                if ((0, aggregation_objects_1.isKeyNode)(d.data.wrappedNodes[0])) {
                     classString += ' keynode';
                 }
-                classString += ' intent_' + aggregation_objects_1.getNodeIntent(d.data.wrappedNodes[0]);
+                classString += ' intent_' + (0, aggregation_objects_1.getNodeIntent)(d.data.wrappedNodes[0]);
                 return classString;
             })
                 .attr('r', function (d) {
@@ -172,13 +177,11 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             // hide labels not in branch
             updateNodes
                 .select('text.circle-label')
-                .attr('class', function (d) { return 'circle-label renderer_' + aggregation_objects_1.getNodeRenderer(d.data.wrappedNodes[0]); })
+                .attr('class', function (d) { return 'circle-label renderer_' + (0, aggregation_objects_1.getNodeRenderer)(d.data.wrappedNodes[0]); })
                 .attr('visibility', function (d) { return (d.x === 0 ? 'visible' : 'hidden'); });
             updateNodes.on('click', function (d) {
                 if (d.data.wrappedNodes[0].id !== _this.traverser.graph.current.id) {
                     _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
-                    window.slideDeckViz.onChange(_this.traverser.graph.current.metadata.branchnumber);
-                    _this.update();
                 }
             });
             updateNodes
@@ -187,13 +190,13 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .duration(500)
                 .attr('transform', function (d) {
                 if (d.x > treeWidth && treeWidth <= maxtreeWidth) {
-                    var classString = "translate(" + d.x * xScale + ", " + d.y * yScale + ")";
+                    var classString = "translate(".concat(d.x * xScale, ", ").concat(d.y * yScale, ")");
                     treeWidth = d.x;
                     if (treeWidth % p) {
                     }
                 }
                 else {
-                    var classString = "translate(" + d.x * xScale + ", " + d.y * yScale + ")";
+                    var classString = "translate(".concat(d.x * xScale, ", ").concat(d.y * yScale, ")");
                 }
                 return classString;
             });
@@ -218,7 +221,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .attr('d', function (d) { return _this.linkPath(d); });
             var updatedLinks = oldLinks.merge(newLinks);
             if (_this.caterpillarActivated) {
-                caterpillar_1.caterpillar(updateNodes, treeNodes, updatedLinks, _this);
+                (0, caterpillar_1.caterpillar)(updateNodes, treeNodes, updatedLinks, _this);
             }
             // this.scaleToFit();
         }; // end update
@@ -227,21 +230,21 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         this.container = d3.select(elm)
             .append('div')
             .attr('class', 'visualizationContainer')
-            .attr('style', 'height:' + ("" + (window.innerHeight - 178)) + 'px');
-        controls_1.provGraphControls(this);
+            .attr('style', 'height:' + "".concat(window.innerHeight - 178) + 'px');
+        (0, controls_1.provGraphControls)(this);
         // Append svg element
         this.svg = this.container
             .append('div')
             .attr('style', ' width: 95%; margin-left:5px;flex: 4')
             .append('svg')
-            .attr('style', "overflow: visible; width: 100%; height: 100%; font-size: " + fontSize + "px; line-height: " + fontSize + "px");
+            .attr('style', "overflow: visible; width: 100%; height: 100%; font-size: ".concat(fontSize, "px; line-height: ").concat(fontSize, "px"));
         this.g = this.svg.append('g');
         // Append grouping buttons
-        components_1.addAggregationButtons(this.container, this);
+        (0, components_1.addAggregationButtons)(this.container, this);
         traverser.graph.on('currentChanged', function () {
             _this.update();
-            window.slideDeckViz.provchanged(_this.traverser.graph.current);
-            window.slideDeckViz.onChange(_this.traverser.graph.current);
+            window.slideDeckViz.onChange(traverser.graph.current);
+            window.slideDeckViz.provchanged(traverser.graph.current);
         });
         traverser.graph.on('nodeChanged', function () {
             _this.update();
@@ -285,9 +288,9 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         var source = _a.source, target = _a.target;
         var _b = [source, target], s = _b[0], t = _b[1];
         // tslint:disable-next-line
-        return "M" + s.x * xScale + "," + s.y * yScale + "\n              C" + s.x * xScale + ",  " + (s.y * yScale + t.y * yScale) / 2 + " " + t.x *
-            xScale + ",  " + (s.y * yScale + t.y * yScale) / 2 + " " + t.x * xScale + ",  " + t.y *
-            yScale;
+        return "M".concat(s.x * xScale, ",").concat(s.y * yScale, "\n              C").concat(s.x * xScale, ",  ").concat((s.y * yScale + t.y * yScale) / 2, " ").concat(t.x *
+            xScale, ",  ").concat((s.y * yScale + t.y * yScale) / 2, " ").concat(t.x * xScale, ",  ").concat(t.y *
+            yScale);
     };
     /**
      * @descriptionWrap text labels

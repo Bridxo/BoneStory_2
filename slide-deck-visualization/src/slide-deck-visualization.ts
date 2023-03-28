@@ -13,6 +13,7 @@ import {
 
 import { AnnotationDisplayContainer } from "./annotation-display/annotation-display-container";
 import { PositionedString } from "./annotation-display/annotation-display";
+import { RootNode } from "@visualstorytelling/provenance-core";
 (window as any).global = window;
 
 function firstArgThis(f: (...args: any[]) => any) {
@@ -24,8 +25,8 @@ function firstArgThis(f: (...args: any[]) => any) {
 type IndexedSlide = { slide: IProvenanceSlide; startTime: number };
 
 export class SlideDeckVisualization {
-    private _slideDocker: IProvenanceSlidedeck[] = [];
     private _slideDeck: IProvenanceSlidedeck; // possible to extend HLEE
+    private _slideDocker: IProvenanceSlidedeck[] = [];
     private _root: d3.Selection<HTMLDivElement, undefined, null, undefined>;
     private _slideTable: d3.Selection<SVGElement, undefined, null, undefined>;
     private _tableHeight = 125;
@@ -58,23 +59,36 @@ export class SlideDeckVisualization {
     private _annotationContainer = new AnnotationDisplayContainer();
 
     private selectslidedeck = (bnum: number) => {
-        this._slideDeck = this._slideDocker[bnum];
-    }
-    private addslidedeck =(slideDeck: IProvenanceSlidedeck) => {
-        this._slideDocker.push(slideDeck);
-    }
+        if(this._slideDeck !== this._slideDocker[bnum]){
+            this._slideDeck = this._slideDocker[bnum];
+            (window as any).slideDeck = this._slideDeck;
+            this._currentTime = 0;
+            this._placeholderX = 0;
 
+        }
+    }
     private onDelete = (slide: IProvenanceSlide) => {
         const node = this._slideDeck.graph.current;
         node.metadata.isSlideAdded = false;
         node.metadata.bookmarked = false;
-        if(slide){
-            this._slideDeck.removeSlide(slide);
-        } else if (node) {
-            this._slideDeck.slides.filter((slide: any) => slide.node === node);
-            this._slideDeck.removeSlide(this._slideDeck.slides[0]);      
+        for(const slidedecks of this._slideDocker){
+            if(slide){
+                slidedecks.removeSlide(slide);
+            } else if (node) {
+                if(slidedecks.slides.filter((slide: any) => slide.node === node))
+                    slidedecks.removeSlide(slidedecks.slides[0]);      
+            }
+            this.selectSlide(null);
+            this.update();
         }
-        this.selectSlide(null);
+        
+        // if(slide){
+        //     this._slideDeck.removeSlide(slide);
+        // } else if (node) {
+        //     this._slideDeck.slides.filter((slide: any) => slide.node === node);
+        //     this._slideDeck.removeSlide(this._slideDeck.slides[0]);      
+        // }
+        // this.selectSlide(null);
     }
 
     private onSelect = (slide: IProvenanceSlide) => {
@@ -142,7 +156,7 @@ export class SlideDeckVisualization {
         let slideDeck = this._slideDeck;
         if(slideDeck != undefined){
             let match = false;
-            slideDeck.slides.forEach((slide) => {
+            slideDeck.slides.forEach((slide: any) => {
                 if(slide.node != null && slide.node.id === node.id){
                     this.selectSlide(slide);
                     match = true;
@@ -155,26 +169,96 @@ export class SlideDeckVisualization {
     }
 
     private onChange = (node: ProvenanceNode) => {
-        // let bnumber = node.metadata.branchnumber;
-        // if(this._slideDocker[bnumber] === undefined){
-        //     // const newslideDeck = new ProvenanceSlidedeck(0,);
-        //     // this._slideDocker[bnumber] = newslideDeck;
-        //     this.selectslidedeck(bnumber);
-        // }
-        // else{
-        //     this.selectslidedeck(bnumber);
-        // }
-    }
-    private onAdd = () => {
-        let slideDeck = this._slideDeck;
-        const node = slideDeck.graph.current;
-        const slide = new ProvenanceSlide(node.label, 1500, 0, [], node);
-        slideDeck.addSlide(slide, slideDeck.slides.length);
-        node.metadata.bookmarked = true;
-        (slideDeck.graph.current as StateNode).metadata.bookmarked = true;
-        slideDeck.graph.emitNodeChangedEvent(node);
+        let alpha: any[] = [];
+        if(node.metadata != undefined){
+            let temp_node = node;
+            do{
+                for (const child of temp_node.children) {
+                    if (child.metadata.mainbranch){
+                        temp_node = child;
+                        break;
+                    }       
+                }
+                console.log(temp_node);
+            }while(temp_node.children.length != 0)
 
-        this.selectSlide(slide);
+            let bnumber = temp_node.metadata.branchnumber;
+            console.log(node);
+            console.log(bnumber);
+            if(this._slideDocker[bnumber] === undefined){
+            const newslideDeck = new ProvenanceSlidedeck({ name: 'bonestory', version: '1.0.0' },(window as any).traverser);
+            this._slideDocker[bnumber] = newslideDeck;
+            this.selectslidedeck(bnumber);
+            
+            }
+            else
+                this.selectslidedeck(bnumber);
+            temp_node = node;
+            if ((temp_node as StateNode).label === "Root"){
+                if((temp_node as StateNode).metadata.bookmarked)
+                    alpha.push(temp_node);
+            }
+            else{
+                do {
+                    if((temp_node as StateNode).parent.metadata.bookmarked){
+                        alpha.push((temp_node as StateNode).parent);
+                        console.log(alpha);
+                    }
+                    temp_node = (temp_node as StateNode).parent;
+                    console.log(temp_node);
+                } while ((temp_node as StateNode).label != "Root");
+            }
+            
+
+            for (let i = alpha.length-1; i >=0; i--) {
+                this.onAdd_2(alpha[i]);
+                
+            }
+            this.update();
+        }
+  
+    }
+    private onAdd = (al?: ProvenanceNode) => {
+        let slideDeck = this._slideDeck;
+        let node: ProvenanceNode;
+        if(al === undefined)
+            node = slideDeck.graph.current;
+        else
+            node = al;
+        
+            
+        // Check if there is an existing slide with the same node
+        const existingSlide = slideDeck.slides.find(slide => slide.node === node);
+
+        if (!existingSlide) {
+            // If there is no existing slide with the same node, create and add a new slide
+            const slide = new ProvenanceSlide(node.label, 1500, 0, [], node);
+            slideDeck.addSlide(slide, slideDeck.slides.length);
+            node.metadata.bookmarked = true;
+            slideDeck.graph.emitNodeChangedEvent(node);
+
+            this.selectSlide(slide);
+        }
+    }
+    private onAdd_2 = (al?: ProvenanceNode) => {
+        let slideDeck = this._slideDeck;
+        let node: ProvenanceNode;
+        if(al === undefined)
+            node = slideDeck.graph.current;
+        else
+            node = al;
+        
+            
+        // Check if there is an existing slide with the same node
+        const existingSlide = slideDeck.slides.find(slide => slide.node === node);
+
+        if (!existingSlide) {
+            // If there is no existing slide with the same node, create and add a new slide
+            const slide = new ProvenanceSlide(node.label, 1500, 0, [], node);
+            slideDeck.addSlide(slide, slideDeck.slides.length);
+            node.metadata.bookmarked = true;
+            this.selectSlide(null);
+        }
     }
     private onClone = (slide: IProvenanceSlide) => {
         let slideDeck = this._slideDeck;
@@ -341,7 +425,7 @@ export class SlideDeckVisualization {
     private updateTimeIndices(slideDeck: IProvenanceSlidedeck) {
         this._timeIndexedSlides = [];
         let timeIndex = 0;
-        slideDeck.slides.forEach((slide) => {
+        slideDeck.slides.forEach((slide: any) => {
             this._timeIndexedSlides.push({
                 slide: slide,
                 startTime: timeIndex
@@ -521,21 +605,6 @@ export class SlideDeckVisualization {
         this._slideTable.select("line.horizontal-line").lower();
     }
 
-    private updateGridSnap = () => {
-        if (d3.event.y === 540 || d3.event.y === 539) {
-            // By far the biggest workaround in the history of code. If the mouse clicks here,
-            // this event still fires, but the checkbox does not get checked. As a result, the gridsnap should
-            // not be updated. This could all be avoided if I could check the checkbox property itself, but
-            // for some reason, all my attempts at accessing the checkbox through d3 is turning up a null value.
-            return;
-        }
-        if (this._gridSnap) {
-            this._gridSnap = false;
-        } else {
-            this._gridSnap = true;
-        }
-    }
-
     private fixDrawingPriorities = () => {
         this._slideTable
             .select("rect.seek-dragger")
@@ -687,16 +756,6 @@ export class SlideDeckVisualization {
             .on("click", this.onDelete)
             .html('<i class="fa fa-trash-o"></i>');
 
-        // toolbar
-        //     .append("svg:foreignObject")
-        //     .attr("class", "slides_clone_icon")
-        //     .attr("cursor", "pointer")
-        //     .attr("width", 20)
-        //     .attr("height", 20)
-        //     .append("xhtml:body")
-        //     .on("click", this.onClone)
-        //     .html('<i class="fa fa-copy"></i>');
-
         toolbar
             .append("svg:foreignObject")
             .attr("class", "slides_annotation_icon")
@@ -712,33 +771,6 @@ export class SlideDeckVisualization {
                 slide.addAnnotation(newAnnotation);
                 that._annotationContainer.add(newAnnotation, true);
             } );
-        // annotation button
-        // addAnnotationButton(toolbar, this._toolbarY, this._toolbarX );
-
-        // function addAnnotationButton(
-        //     toolBar: d3.Selection<any, IProvenanceSlide, any, any>,
-        //     y: number,
-        //     x: number
-        // ) {
-        //     toolBar
-        //         .append("svg:foreignObject")
-        //         .attr("cursor", "pointer")
-        //         .attr("width", 20)
-        //         .attr("height", 20)
-        //         .attr("y", slide => y)
-        //         .attr("x", slide => x)
-        //         .append("xhtml:body")
-        //         .html('<i class="fa fa-font"></i>')
-        //         .on("click", slide => {
-        //             const newAnnotation = new SlideAnnotation<PositionedString>(
-        //                 { x: 0, y: 0, value: "" }
-        //             );
-        //             slide.addAnnotation(newAnnotation);
-        //             that._annotationContainer.add(newAnnotation, true);
-        //         } );
-        // }
-        // // annotation button
-        // addAnnotationButton(toolbar, this._toolbarY, this._toolbarX );
 
         const placeholder = this._slideTable.select("rect.slides_placeholder");
 
@@ -969,8 +1001,6 @@ export class SlideDeckVisualization {
 
         this.fixDrawingPriorities();
 
-        // this.displayGridLevel();
-
         allExistingNodes.exit().remove();
     }
 
@@ -978,6 +1008,7 @@ export class SlideDeckVisualization {
         this._tableWidth = window.innerWidth - 400;
         window.addEventListener("resize", this.resizeTable);
         this._slideDeck = slideDeck;
+        this._slideDocker.push(slideDeck);
         this._root = d3.select(elm);
 
         this._slideTable = this._root
@@ -1136,55 +1167,6 @@ export class SlideDeckVisualization {
             .attr("class", "grid_display")
             .attr("x", this._originPosition + 10)
             .attr("y", 110);
-
-        // this._slideTable
-        //     .append("text")
-        //     .attr("class", "checkBox_text")
-        //     .attr("x", this._originPosition + 195)
-        //     .attr("y", 110)
-        //     .text("Grid Snap");
-
-        // this._slideTable
-        //     .append("foreignObject")
-        //     .attr("width", 13)
-        //     .attr("height", 15)
-        //     .attr("x", this._originPosition + 175)
-        //     .attr("y", 96)
-        //     .append("xhtml:body")
-        //     .html("<form><input type=checkbox class=gridSnap/></form>")
-        //     .on("click", this.updateGridSnap);
-
-        // let area = this._root
-        //     .append<SVGElement>("svg")
-        //     .attr("class", "annotation-area")
-        //     .attr("x", this._tableWidth + 5)
-        //     .attr("y", 0)
-        //     .attr("width", 350)
-        //     .attr("height", 150);
-        // area
-        //     .append("rect")
-        //     .attr("class", "slides_placeholder")
-        //     .attr("id", "annotation-box")
-        //     .attr("x", 0)
-        //     .attr("y", 0)
-        //     .attr("width", 350)
-        //     .attr("height", 100);
-        // area
-        //     .append("text")
-        //     .attr("x", 10)
-        //     .attr("y", 120)
-        //     .attr("font-size", 18)
-        //     .text("Edit slide story");
-        // area
-        //     .append("rect")
-        //     .attr("class", "add_annotation")
-        //     .attr("x", 0)
-        //     .attr("y", 100)
-        //     .attr("width", 150)
-        //     .attr("height", 30)
-        //     .attr("cursor", "pointer")
-        //     .attr("fill", "transparent")
-        //     .on("click", this.addAnnotation);
 
         slideDeck.on("slideAdded", () => this.update());
         slideDeck.on("slideRemoved", () => this.update());

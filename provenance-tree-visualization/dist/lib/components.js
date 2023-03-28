@@ -25,7 +25,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
         .attr("class", "holder")
         .attr("id", "groupingContainer")
         .attr("style", "position: absolute; bottom: 25%; display:none;");
-    // const holder = container.append('div');
+    // holder = container.append('div');
     // addLegend(container);
     // addCommandsList(container);
     // addTasksList(container);

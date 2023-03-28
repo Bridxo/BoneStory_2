@@ -382,7 +382,6 @@ export class BrainvisCanvasComponent {
         state
       });
       this.ModeText_add = '\nMove';
-      console.log(orientation.zoom);
     });
 
     this.controls.addEventListener('start', (event) => {

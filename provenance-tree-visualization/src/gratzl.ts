@@ -24,6 +24,7 @@ export interface IGratzlLayout<Datum> {
 export interface IHierarchyPointNodeWithMaxDepth<T>
   extends HierarchyPointNode<T> {
   maxDescendantDepth: number;
+  data: any;
   // xOffset: number;
   // x, y, links()
 }
@@ -44,7 +45,6 @@ export default function GratzlLayout<T>(
     if (node.children) {
       node
         .leaves()
-        .sort(depthSort)
         .forEach(leaf => {
           if (typeof leaf.x === "undefined") {
             const width = Math.max.apply(
@@ -75,78 +75,15 @@ export default function GratzlLayout<T>(
   /* start at the deepest (active) leaf of activeNode. */
   let deepestLeaf = current;
   deepestLeaf.leaves().forEach(leaf => {
-    if (deepestLeaf.depth < leaf.depth) {
+    if (leaf.data.wrappedNodes[0].metadata.mainbranch) {
+      deepestLeaf = leaf;
+    }
+    else if (leaf.depth > deepestLeaf.depth && !deepestLeaf.data.wrappedNodes[0].metadata.mainbranch) {
       deepestLeaf = leaf;
     }
   });
 
   setTreeX(deepestLeaf,0 );
 
-  //
-  // const maxX = Math.max.apply(null, widths);
-  // const maxY = Math.max.apply(null, root.leaves().map((leaf) => leaf.depth));
-  // root.each((node) => {
-  //   sizeNode(node, maxX, maxY);
-  // });
-
   return root;
-
-  //
-  // const tree: IGratzlLayout<Datum> = Object.assign(
-  //   (_root: HierarchyNode<Datum>, _activeNode: HierarchyNode<Datum>) => {
-  //     /*
-  //   * set maxDescendantDepth on each node,
-  //   * which is the depth of its deepest child
-  //   *
-  //   * */
-  //
-  //     const root = _root as IHierarchyPointNodeWithMaxDepth<Datum>;
-  //     const activeNode = _activeNode as IHierarchyPointNodeWithMaxDepth<Datum>;
-  //
-  //     root.leaves().forEach((leaf) => {
-  //       leaf.ancestors().forEach((leafAncestor) => {
-  //         if (
-  //           !leafAncestor.maxDescendantDepth ||
-  //           leaf.depth > leafAncestor.maxDescendantDepth
-  //         ) {
-  //           leafAncestor.maxDescendantDepth = leaf.depth;
-  //         }
-  //       });
-  //     });
-  //
-  //     /* rendering should start at the deepest leaf of activeNode. */
-  //     let deepestLeaf = activeNode;
-  //     activeNode.leaves().forEach((leaf) => {
-  //       if (deepestLeaf.depth < leaf.depth) {
-  //         deepestLeaf = leaf;
-  //       }
-  //     });
-  //
-  //     setTreeX(deepestLeaf, 0);
-  //
-  //     const maxX = Math.max.apply(null, widths);
-  //     const maxY = Math.max.apply(null, root.leaves().map((leaf) => leaf.depth));
-  //     root.each((node) => {
-  //       sizeNode(node, maxX, maxY);
-  //     });
-  //
-  //     return root;
-  //   },
-  //   {
-  //     size: ((x: [number, number] | undefined) => {
-  //       return x ? ((dx = +x[0]), (dy = +x[1]), tree) : [dx, dy];
-  //     }) as any,
-  //   },
-  // );
-  //
-  // function sizeNode(
-  //   node: IHierarchyPointNodeWithMaxDepth<any>,
-  //   maxX: number,
-  //   maxY: number,
-  // ): void {
-  //   node.x = maxX === 0 ? dx : dx - (dx / maxX) * node.xOffset;
-  //   node.y = maxY === 0 ? dy : (dy / maxY) * node.depth;
-  // }
-
-  // return tree;
 }

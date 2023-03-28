@@ -115,11 +115,11 @@ function distanceToMainBranch(node, mainBranch) {
     if (mainBranch === undefined) {
         result = 0;
     }
-    else if (provenance_core_1.isStateNode(node) && mainBranch.includes(node.id)) {
+    else if ((0, provenance_core_1.isStateNode)(node) && mainBranch.includes(node.id)) {
         result = 0;
     }
     else {
-        if (provenance_core_1.isStateNode(node)) {
+        if ((0, provenance_core_1.isStateNode)(node)) {
             result = 1 + distanceToMainBranch(node.parent, mainBranch);
         }
     }
@@ -131,51 +131,55 @@ exports.distanceToMainBranch = distanceToMainBranch;
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  * @returns Number of nodes you have to cross to go to the deepest leaf from the node selected.
  */
-exports.minDepth = function (node) {
+var minDepth = function (node) {
     if (node.children.length === 0) {
         return 0;
     }
     return Math.min.apply(Math, node.children.map(exports.minDepth)) + 1;
 };
+exports.minDepth = minDepth;
 /**
  * @description Returns the maximum depth possible from the node selected.
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  * @returns Number of nodes you have to cross to go to the deepest leaf from the node selected.
  */
-exports.maxDepth = function (node) {
+var maxDepth = function (node) {
     if (node.children.length === 0) {
         return 1;
     }
     return Math.max.apply(Math, node.children.map(exports.maxDepth)) + 1;
 };
+exports.maxDepth = maxDepth;
 /**
  * @description Returns the distance to the subroot from the node selected.
  * @param provNode {ProvenanceNode} - Selected node
  * @returns Number of nodes you have to cross to go to the subroot up from the node selected.
  */
-exports.subrootDist = function (provNode) {
+var subrootDist = function (provNode) {
     var value = 0;
-    if (!provenance_core_1.isStateNode(provNode)) {
+    if (!(0, provenance_core_1.isStateNode)(provNode)) {
         value = 0;
     }
-    else if (provenance_core_1.isStateNode(provNode)) {
+    else if ((0, provenance_core_1.isStateNode)(provNode)) {
         if (provNode.parent.children.length > 1) {
             value = 1;
         }
         else {
-            value = 1 + exports.subrootDist(provNode.parent);
+            value = 1 + (0, exports.subrootDist)(provNode.parent);
         }
     }
     return value;
 };
+exports.subrootDist = subrootDist;
 /**
  * @description Returns the number of conexions with the node selected.
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  * @returns Number of nodes you have to cross to go to the deepest leaf from the node selected.
  */
-exports.connectivity = function (node) {
+var connectivity = function (node) {
     return 1 + node.children.length;
 };
+exports.connectivity = connectivity;
 /**
  * @description Return the first node found in nodes that also belongs to the main branch of the tree.
  * @param  mainBranch  {Array<string>} - List of node ids which belong to the master branch.
@@ -198,10 +202,10 @@ var mainNode = function (mainBranch, nodes) {
  * @param  node2  {IGroupedTreeNode<ProvenanceNode>} - Selected node #2
  */
 var nodeDepthComparison = function (node1, node2) {
-    if (exports.maxDepth(node1) > exports.maxDepth(node2)) {
+    if ((0, exports.maxDepth)(node1) > (0, exports.maxDepth)(node2)) {
         return 1;
     }
-    else if (exports.maxDepth(node1) < exports.maxDepth(node2)) {
+    else if ((0, exports.maxDepth)(node1) < (0, exports.maxDepth)(node2)) {
         return -1;
     }
     return 0;
@@ -246,12 +250,13 @@ var testAll = function (tests, node1, node2) {
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Test to be checked during execution.
  * @param  currentNode  {IGroupedTreeNode<ProvenanceNode>} -
  */
-exports.doNothing = function (currentNode, node, tests) { };
+var doNothing = function (currentNode, node, tests) { };
+exports.doNothing = doNothing;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Tests to be checked during execution.
  */
-exports.group = function (currentNode, node, tests) {
+var group = function (currentNode, node, tests) {
     var merged = false;
     do {
         merged = false;
@@ -272,13 +277,14 @@ exports.group = function (currentNode, node, tests) {
             }
         }
     } while (merged);
-    node.children.map(function (child) { return exports.group(currentNode, child, tests); });
+    node.children.map(function (child) { return (0, exports.group)(currentNode, child, tests); });
 };
+exports.group = group;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Tests to be checked during execution.
  */
-exports.compress = function (currentNode, node, tests) {
+var compress = function (currentNode, node, tests) {
     var merged = false;
     do {
         merged = false;
@@ -293,15 +299,16 @@ exports.compress = function (currentNode, node, tests) {
             }
         }
     } while (merged);
-    node.children.map(function (child) { return exports.compress(currentNode, child, tests); });
+    node.children.map(function (child) { return (0, exports.compress)(currentNode, child, tests); });
 };
+exports.compress = compress;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Tests to be checked during execution.
  * @param mainBranch {Array<string>} - List of node's id which belong to the master branch.
  * @param arg {any} - Optinal parameter
  */
-exports.prune = function (currentNode, node, tests, mainBranch, arg) {
+var prune = function (currentNode, node, tests, mainBranch, arg) {
     var parameter = +arg;
     var merged = false;
     do {
@@ -322,7 +329,7 @@ exports.prune = function (currentNode, node, tests, mainBranch, arg) {
                         var grandChild = _c[_b];
                         if (!shouldConstrain(grandChild, currentNode) &&
                             distanceToMainBranch(child.wrappedNodes[0], mainBranch) > 0) {
-                            var childDepth = exports.maxDepth(child);
+                            var childDepth = (0, exports.maxDepth)(child);
                             if (dist + childDepth <= p) {
                                 transferChildren(node, child, grandChild);
                                 merged = true;
@@ -334,43 +341,46 @@ exports.prune = function (currentNode, node, tests, mainBranch, arg) {
         }
     } while (merged);
     node.children.map(function (child) {
-        return exports.prune(currentNode, child, tests, mainBranch, parameter);
+        return (0, exports.prune)(currentNode, child, tests, mainBranch, parameter);
     });
 };
+exports.prune = prune;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-exports.plotTrimmerFunc = function (currentNode, node, tests, mainBranch, arg) {
+var plotTrimmerFunc = function (currentNode, node, tests, mainBranch, arg) {
     trimmer(currentNode, node, tests, mainBranch, arg);
 };
-exports.trimmerAssignValues = function (node) {
+exports.plotTrimmerFunc = plotTrimmerFunc;
+var trimmerAssignValues = function (node) {
     // Leaf value = subroot distance * 2
     // Interval nodes value = 1
     // Subroots value = Minimum subroot distance of children * 2 + 1
     var value = 0;
-    if (!provenance_core_1.isStateNode(node.wrappedNodes[0]) === null) {
+    if (!(0, provenance_core_1.isStateNode)(node.wrappedNodes[0]) === null) {
         value = Number.MAX_VALUE;
     }
-    else if (exports.connectivity(node) === 1) {
+    else if ((0, exports.connectivity)(node) === 1) {
         // Leaf node
-        value = exports.subrootDist(node.wrappedNodes[0]) * 2;
+        value = (0, exports.subrootDist)(node.wrappedNodes[0]) * 2;
     }
-    else if (exports.connectivity(node) === 2) {
+    else if ((0, exports.connectivity)(node) === 2) {
         // Interval node
         value = 1;
     }
     else {
         // Subroot
-        value = exports.minDepth(node) * 2 + 1;
+        value = (0, exports.minDepth)(node) * 2 + 1;
     }
     node.plotTrimmerValue = value;
     for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
         var child = _a[_i];
-        exports.trimmerAssignValues(child);
+        (0, exports.trimmerAssignValues)(child);
     }
 };
+exports.trimmerAssignValues = trimmerAssignValues;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Test to be checked during execution.
@@ -379,7 +389,7 @@ exports.trimmerAssignValues = function (node) {
 var trimmer = function (currentNode, node, tests, mainBranch, arg) {
     var parameter = +arg;
     var merged;
-    exports.trimmerAssignValues(node);
+    (0, exports.trimmerAssignValues)(node);
     do {
         merged = false;
         for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
@@ -401,35 +411,37 @@ var trimmer = function (currentNode, node, tests, mainBranch, arg) {
  * @param  test  {IGroupedTreeNode<ProvenanceNode>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-exports.plotTrimmerFuncG = function (currentNode, node, tests, mainBranch, arg) {
+var plotTrimmerFuncG = function (currentNode, node, tests, mainBranch, arg) {
     var parameter = +arg;
     var prunePar = 0;
     for (var i = 0; i <= parameter; i++) {
         if (i % 2 === 0 && i !== 0) {
             prunePar = prunePar + 1;
-            exports.prune(currentNode, node, tests, mainBranch, prunePar);
+            (0, exports.prune)(currentNode, node, tests, mainBranch, prunePar);
         }
         else {
-            exports.group(currentNode, node, tests);
+            (0, exports.group)(currentNode, node, tests);
         }
     }
 };
+exports.plotTrimmerFuncG = plotTrimmerFuncG;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  test  {IGroupedTreeNode<ProvenanceNode>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-exports.plotTrimmerFuncC = function (currentNode, node, tests, mainBranch, arg) {
+var plotTrimmerFuncC = function (currentNode, node, tests, mainBranch, arg) {
     var parameter = +arg;
     var prunePar = 0;
     for (var i = 0; i <= parameter; i++) {
         if (i % 2 === 0 && i !== 0) {
             prunePar = prunePar + 1;
-            exports.prune(currentNode, node, tests, mainBranch, prunePar);
+            (0, exports.prune)(currentNode, node, tests, mainBranch, prunePar);
         }
         else {
-            exports.compress(currentNode, node, tests);
+            (0, exports.compress)(currentNode, node, tests);
         }
     }
 };
+exports.plotTrimmerFuncC = plotTrimmerFuncC;
 //# sourceMappingURL=aggregation-implementations.js.map

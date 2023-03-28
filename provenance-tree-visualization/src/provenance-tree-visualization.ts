@@ -56,6 +56,9 @@ export class ProvenanceTreeVisualization {
     arg: 1
   };
   public caterpillarActivated = false;
+  public alt = true;
+
+
   private hierarchyRoot:
     | IHierarchyPointNodeWithMaxDepth<IGroupedTreeNode<ProvenanceNode>>
     | undefined;
@@ -100,8 +103,10 @@ export class ProvenanceTreeVisualization {
 
     traverser.graph.on('currentChanged', () => {
       this.update();
-      (window as any).slideDeckViz.provchanged(this.traverser.graph.current);
-      (window as any).slideDeckViz.onChange(this.traverser.graph.current);
+      (window as any).slideDeckViz.onChange(traverser.graph.current);
+      (window as any).slideDeckViz.provchanged(traverser.graph.current);
+
+
     });
 
     traverser.graph.on('nodeChanged', () => {
@@ -245,7 +250,7 @@ export class ProvenanceTreeVisualization {
   public update = ()  =>  {
     const wrappedRoot = wrapNode(this.traverser.graph.root);
     // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-    const hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated de treeRoot
+    const hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated the treeRoot
     
     const currentHierarchyNode = findHierarchyNodeFromProvenanceNode(
       hierarchyRoot,
@@ -322,6 +327,7 @@ export class ProvenanceTreeVisualization {
     updateNodes.on('contextmenu', (d: any) => {
       this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
       this.update();
+      // (window as any).slideDeckViz.onChange();
       d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
       if (!d.data.wrappedNodes[0].metadata.bookmarked) {
         (window as any).slideDeckViz.onDelete(null, this.traverser.graph.current);
@@ -337,6 +343,9 @@ export class ProvenanceTreeVisualization {
         .filter((d: any) => {
         if (d.x === 0) {
           d.data.wrappedNodes[0].metadata.mainbranch = true;
+        }
+        else {
+          d.data.wrappedNodes[0].metadata.mainbranch = false;
         }
         return d.x === 0; 
       })
@@ -405,8 +414,6 @@ export class ProvenanceTreeVisualization {
       
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
         this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
-        (window as any).slideDeckViz.onChange(this.traverser.graph.current.metadata.branchnumber);
-        this.update();
       }
     });
 

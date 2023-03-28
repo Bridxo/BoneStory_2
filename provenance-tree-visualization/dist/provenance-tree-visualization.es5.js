@@ -1,15 +1,6 @@
 import { selectAll, event as event$1, zoomIdentity, hierarchy, scaleOrdinal, schemeAccent, select, zoom } from 'd3';
 import { isStateNode } from '@visualstorytelling/provenance-core';
 
-function depthSort(a, b) {
-    if (a.maxDescendantDepth > b.maxDescendantDepth) {
-        return -1;
-    }
-    else if (a.maxDescendantDepth < b.maxDescendantDepth) {
-        return 1;
-    }
-    return 0;
-}
 function GratzlLayout(_root, _current) {
     var root = _root;
     var current = _current;
@@ -22,7 +13,6 @@ function GratzlLayout(_root, _current) {
         if (node.children) {
             node
                 .leaves()
-                .sort(depthSort)
                 .forEach(function (leaf) {
                 if (typeof leaf.x === "undefined") {
                     var width = Math.max.apply(null, widths.slice(node.depth, leaf.depth + 1));
@@ -45,75 +35,15 @@ function GratzlLayout(_root, _current) {
     /* start at the deepest (active) leaf of activeNode. */
     var deepestLeaf = current;
     deepestLeaf.leaves().forEach(function (leaf) {
-        if (deepestLeaf.depth < leaf.depth) {
+        if (leaf.data.wrappedNodes[0].metadata.mainbranch) {
+            deepestLeaf = leaf;
+        }
+        else if (leaf.depth > deepestLeaf.depth && !deepestLeaf.data.wrappedNodes[0].metadata.mainbranch) {
             deepestLeaf = leaf;
         }
     });
     setTreeX(deepestLeaf, 0);
-    //
-    // const maxX = Math.max.apply(null, widths);
-    // const maxY = Math.max.apply(null, root.leaves().map((leaf) => leaf.depth));
-    // root.each((node) => {
-    //   sizeNode(node, maxX, maxY);
-    // });
     return root;
-    //
-    // const tree: IGratzlLayout<Datum> = Object.assign(
-    //   (_root: HierarchyNode<Datum>, _activeNode: HierarchyNode<Datum>) => {
-    //     /*
-    //   * set maxDescendantDepth on each node,
-    //   * which is the depth of its deepest child
-    //   *
-    //   * */
-    //
-    //     const root = _root as IHierarchyPointNodeWithMaxDepth<Datum>;
-    //     const activeNode = _activeNode as IHierarchyPointNodeWithMaxDepth<Datum>;
-    //
-    //     root.leaves().forEach((leaf) => {
-    //       leaf.ancestors().forEach((leafAncestor) => {
-    //         if (
-    //           !leafAncestor.maxDescendantDepth ||
-    //           leaf.depth > leafAncestor.maxDescendantDepth
-    //         ) {
-    //           leafAncestor.maxDescendantDepth = leaf.depth;
-    //         }
-    //       });
-    //     });
-    //
-    //     /* rendering should start at the deepest leaf of activeNode. */
-    //     let deepestLeaf = activeNode;
-    //     activeNode.leaves().forEach((leaf) => {
-    //       if (deepestLeaf.depth < leaf.depth) {
-    //         deepestLeaf = leaf;
-    //       }
-    //     });
-    //
-    //     setTreeX(deepestLeaf, 0);
-    //
-    //     const maxX = Math.max.apply(null, widths);
-    //     const maxY = Math.max.apply(null, root.leaves().map((leaf) => leaf.depth));
-    //     root.each((node) => {
-    //       sizeNode(node, maxX, maxY);
-    //     });
-    //
-    //     return root;
-    //   },
-    //   {
-    //     size: ((x: [number, number] | undefined) => {
-    //       return x ? ((dx = +x[0]), (dy = +x[1]), tree) : [dx, dy];
-    //     }) as any,
-    //   },
-    // );
-    //
-    // function sizeNode(
-    //   node: IHierarchyPointNodeWithMaxDepth<any>,
-    //   maxX: number,
-    //   maxY: number,
-    // ): void {
-    //   node.x = maxX === 0 ? dx : dx - (dx / maxX) * node.xOffset;
-    //   node.y = maxY === 0 ? dy : (dy / maxY) * node.depth;
-    // }
-    // return tree;
 }
 
 function provGraphControls(provenanceTreeVisualization) {
@@ -131,12 +61,12 @@ function provGraphControls(provenanceTreeVisualization) {
         else if (evtobj.ctrlKey && evtobj.key === 'x') {
             traverser.toStateNode(graph.root.id, 250);
         }
-        // ctrl + A  / redo
-        else if (evtobj.ctrlKey && evtobj.key === 'a' && graph.current.children[0]) {
+        // ctrl + y  / redo
+        else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
             for (var _i = 0, _a = graph.current.children; _i < _a.length; _i++) {
                 var child = _a[_i];
                 if (child.metadata.mainbranch) {
-                    traverser.toStateNode(graph.current.children[0].id, 250);
+                    traverser.toStateNode(child.id, 250);
                     provenanceTreeVisualization.update();
                 }
             }
@@ -306,7 +236,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
         .attr("class", "holder")
         .attr("id", "groupingContainer")
         .attr("style", "position: absolute; bottom: 25%; display:none;");
-    // const holder = container.append('div');
+    // holder = container.append('div');
     // addLegend(container);
     // addCommandsList(container);
     // addTasksList(container);
@@ -594,7 +524,7 @@ function findHierarchyNodeFromProvenanceNode(hierarchyNode, currentNode) {
     return currentHierarchyNode;
 }
 
-function depthSort$1(a, b) {
+function depthSort(a, b) {
     if (a.maxDescendantDepth > b.maxDescendantDepth) {
         return -1;
     }
@@ -613,7 +543,7 @@ function GratzlLayoutOld() {
         if (node.children) {
             node
                 .leaves()
-                .sort(depthSort$1)
+                .sort(depthSort)
                 .forEach(function (leaf) {
                 if (typeof leaf.xOffset === "undefined") {
                     var width = Math.max.apply(null, widths.slice(node.depth, leaf.depth + 1));
@@ -856,6 +786,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             arg: 1
         };
         this.caterpillarActivated = false;
+        this.alt = true;
         this.currentHierarchyNodelength = 0;
         this.TreeLength = 0;
         this.TreeWidth = 0.1;
@@ -870,16 +801,16 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         this.update = function () {
             var wrappedRoot = wrapNode(_this.traverser.graph.root);
             // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-            var hierarchyRoot = hierarchy(wrappedRoot); // Updated de treeRoot
+            var hierarchyRoot = hierarchy(wrappedRoot); // Updated the treeRoot
             var currentHierarchyNode = findHierarchyNodeFromProvenanceNode(hierarchyRoot, _this.traverser.graph.current);
             _this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode).length;
             var tree = GratzlLayout(hierarchyRoot, currentHierarchyNode);
+            // const tree = currentHierarchyNode;
             //I want to modify the tree -> for hide camera and view
             // const tree = tree_original.copy();
             _this.hierarchyRoot = tree;
             var treeNodes;
             var searchpattern = /Camera|View/;
-            // console.log(tree);
             if (_this.camera_show == false) {
                 tree.each(function (node) {
                     if (searchpattern.test(node.data.wrappedNodes[0].label))
@@ -928,6 +859,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             updateNodes.on('contextmenu', function (d) {
                 _this.traverser.graph.current = _this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
                 _this.update();
+                // (window as any).slideDeckViz.onChange();
                 d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
                 if (!d.data.wrappedNodes[0].metadata.bookmarked) {
                     window.slideDeckViz.onDelete(null, _this.traverser.graph.current);
@@ -942,6 +874,9 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .filter(function (d) {
                 if (d.x === 0) {
                     d.data.wrappedNodes[0].metadata.mainbranch = true;
+                }
+                else {
+                    d.data.wrappedNodes[0].metadata.mainbranch = false;
                 }
                 return d.x === 0;
             })
@@ -1003,8 +938,6 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             updateNodes.on('click', function (d) {
                 if (d.data.wrappedNodes[0].id !== _this.traverser.graph.current.id) {
                     _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
-                    window.slideDeckViz.onChange(_this.traverser.graph.current.metadata.branchnumber);
-                    _this.update();
                 }
             });
             updateNodes
@@ -1064,8 +997,8 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         addAggregationButtons(this.container, this);
         traverser.graph.on('currentChanged', function () {
             _this.update();
-            window.slideDeckViz.provchanged(_this.traverser.graph.current);
-            window.slideDeckViz.onChange(_this.traverser.graph.current);
+            window.slideDeckViz.onChange(traverser.graph.current);
+            window.slideDeckViz.provchanged(traverser.graph.current);
         });
         traverser.graph.on('nodeChanged', function () {
             _this.update();

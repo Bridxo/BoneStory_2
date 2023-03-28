@@ -12,14 +12,16 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.group = exports.preOrderTraversal = exports.copyTree = void 0;
-exports.copyTree = function (node) {
+var copyTree = function (node) {
     return __assign(__assign({}, node), { children: node.children.map(exports.copyTree) });
 };
-exports.preOrderTraversal = function (node, cb) {
+exports.copyTree = copyTree;
+var preOrderTraversal = function (node, cb) {
     cb(node);
-    node.children.map(function (child) { return exports.preOrderTraversal(child, cb); });
+    node.children.map(function (child) { return (0, exports.preOrderTraversal)(child, cb); });
 };
-exports.group = function (node, test) {
+exports.preOrderTraversal = preOrderTraversal;
+var group = function (node, test) {
     var _a, _b;
     var merged = false;
     do {
@@ -35,6 +37,7 @@ exports.group = function (node, test) {
             }
         }
     } while (merged);
-    node.children.map(function (child) { return exports.group(child, test); });
+    node.children.map(function (child) { return (0, exports.group)(child, test); });
 };
+exports.group = group;
 //# sourceMappingURL=utils.js.map

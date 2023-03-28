@@ -21,11 +21,11 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
         else if (evtobj.ctrlKey && evtobj.key === 'x') {
             traverser.toStateNode(graph.root.id, 250);
         }
-        // ctrl + A  / redo
-        else if (evtobj.ctrlKey && evtobj.key === 'a' && graph.current.children[0]) {
+        // ctrl + y  / redo
+        else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
             for (const child of graph.current.children) {
                 if (child.metadata.mainbranch) {
-                    traverser.toStateNode(graph.current.children[0].id, 250);
+                    traverser.toStateNode(child.id, 250);
                     provenanceTreeVisualization.update();
                 }
             }

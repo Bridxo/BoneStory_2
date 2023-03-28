@@ -25,6 +25,7 @@ export declare class ProvenanceTreeVisualization {
     container: any;
     aggregation: IAggregation;
     caterpillarActivated: boolean;
+    alt: boolean;
     private hierarchyRoot;
     private zoomer;
     private currentHierarchyNodelength;

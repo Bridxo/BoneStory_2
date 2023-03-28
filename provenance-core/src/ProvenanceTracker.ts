@@ -69,7 +69,7 @@ export class ProvenanceTracker implements IProvenanceTracker {
       label: label,
       metadata: {
         loaded: false,
-        mainbranch: false,
+        mainbranch: true,
         bookmarked: false,
         createdBy: this.username,
         createdOn: generateTimestamp(),
@@ -122,7 +122,9 @@ export class ProvenanceTracker implements IProvenanceTracker {
       newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
     this.graph.current = newNode;
     //H-value calculation part
-    this.H_value(newNode);
+    newNode.metadata.H_value = this.H_value(newNode);
+    console.log('bnum: ', bnum);
+    console.log('H_value: ', newNode.metadata.H_value);
     return newNode;
   }
 

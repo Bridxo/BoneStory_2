@@ -89,7 +89,7 @@ function addLegend(elm) {
             return 'circle';
         }
     })
-        .attr('style', function (d) { return "background-color:" + d.color; });
+        .attr('style', function (d) { return "background-color:".concat(d.color); });
     listItem.append('span').text(function (d) {
         return d.name;
     });

@@ -6,5 +6,6 @@ export interface IGratzlLayout<Datum> {
 }
 export interface IHierarchyPointNodeWithMaxDepth<T> extends HierarchyPointNode<T> {
     maxDescendantDepth: number;
+    data: any;
 }
 export default function GratzlLayout<T>(_root: HierarchyNode<T>, _current: HierarchyNode<T>): IHierarchyPointNodeWithMaxDepth<T>;

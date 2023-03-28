@@ -98,8 +98,10 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
 
   public removeSlide(slide: IProvenanceSlide) {
     this.removeSlideAtIndex(this._slides.indexOf(slide));
-    for(let i = 0; i < slide.annotations.length; i++)
-    slide.removeAnnotation(slide.annotations[i]);
+    if(slide != undefined){
+      for(let i = 0; i < slide.annotations.length; i++)
+        slide.removeAnnotation(slide.annotations[i]);
+    }
   }
 
   public get selectedSlide(): IProvenanceSlide | null {

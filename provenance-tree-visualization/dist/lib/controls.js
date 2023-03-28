@@ -16,12 +16,12 @@ function provGraphControls(provenanceTreeVisualization) {
         else if (evtobj.ctrlKey && evtobj.key === 'x') {
             traverser.toStateNode(graph.root.id, 250);
         }
-        // ctrl + A  / redo
-        else if (evtobj.ctrlKey && evtobj.key === 'a' && graph.current.children[0]) {
+        // ctrl + y  / redo
+        else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
             for (var _i = 0, _a = graph.current.children; _i < _a.length; _i++) {
                 var child = _a[_i];
                 if (child.metadata.mainbranch) {
-                    traverser.toStateNode(graph.current.children[0].id, 250);
+                    traverser.toStateNode(child.id, 250);
                     provenanceTreeVisualization.update();
                 }
             }

@@ -82,7 +82,7 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
                 treeCopy.children = treeCopy.children.filter(function (e, i, arr) {
                     return !mainNodesData_1.includes(e.data.wrappedNodes[0].id);
                 });
-                var treeLayoutCat = gratzl_old_1.default().size([35, 120]);
+                var treeLayoutCat = (0, gratzl_old_1.default)().size([35, 120]);
                 var treeCat = treeLayoutCat(treeCopy, treeCopy);
                 var excatNodes = provenanceTreeVisualization.g
                     .selectAll("g.classCat")
@@ -97,8 +97,8 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
                     .data(treeNodes)
                     .attr("transform", function (datum) {
                     return datum.data.wrappedNodes[0].metadata.isSlideAdded
-                        ? "translate(" + (d.x - 3) + ", " + d.y + ")"
-                        : "translate(" + d.x + ", " + d.y + ")";
+                        ? "translate(".concat(d.x - 3, ", ").concat(d.y, ")")
+                        : "translate(".concat(d.x, ", ").concat(d.y, ")");
                 });
                 // .append('g')
                 // .attr('class', 'classCat node branch-active ')
@@ -122,10 +122,10 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
                     if (d.data.wrappedNodes[0].metadata.bookmarked === true) {
                         classString += ' bookmarked';
                     }
-                    if (aggregation_objects_1.isKeyNode(datum.data.wrappedNodes[0])) {
+                    if ((0, aggregation_objects_1.isKeyNode)(datum.data.wrappedNodes[0])) {
                         classString += " keynode";
                     }
-                    classString += " intent_" + aggregation_objects_1.getNodeIntent(d.data.wrappedNodes[0]);
+                    classString += " intent_" + (0, aggregation_objects_1.getNodeIntent)(d.data.wrappedNodes[0]);
                     return classString;
                 });
                 catNodes.on("click", function (datum) {

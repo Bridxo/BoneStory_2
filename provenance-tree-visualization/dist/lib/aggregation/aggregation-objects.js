@@ -9,7 +9,7 @@ var provenance_core_1 = require("@visualstorytelling/provenance-core");
  * @returns Returns the Intent of the user for the node selected.
  */
 function getNodeIntent(node) {
-    if (provenance_core_1.isStateNode(node) &&
+    if ((0, provenance_core_1.isStateNode)(node) &&
         node.action &&
         node.action.metadata &&
         node.action.metadata.userIntent) {
@@ -19,7 +19,7 @@ function getNodeIntent(node) {
 }
 exports.getNodeIntent = getNodeIntent;
 function getNodeRenderer(node) {
-    if (provenance_core_1.isStateNode(node) &&
+    if ((0, provenance_core_1.isStateNode)(node) &&
         node.action &&
         node.action.metadata &&
         node.action.metadata.renderer) {
@@ -33,7 +33,7 @@ exports.getNodeRenderer = getNodeRenderer;
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
 function isKeyNode(node) {
-    if (!provenance_core_1.isStateNode(node) ||
+    if (!(0, provenance_core_1.isStateNode)(node) ||
         node.children.length === 0 ||
         node.children.length > 1 ||
         node.parent.children.length > 1 ||
@@ -48,7 +48,7 @@ exports.isKeyNode = isKeyNode;
  * @description Returns a label for grouped nodes.
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
-exports.groupNodeLabel = function (node) {
+var groupNodeLabel = function (node) {
     if (node.wrappedNodes.length === 1) {
         return node.wrappedNodes[0].label;
     }
@@ -56,13 +56,14 @@ exports.groupNodeLabel = function (node) {
         return node.wrappedNodes[0].label;
     }
 };
+exports.groupNodeLabel = groupNodeLabel;
 /**
  * @description Wraps a node and its children recursively
  * in an extra IGroupedTreeNode; which can be manipulated for grouping etc,
  * without modifying the (provenance) node.
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
-exports.wrapNode = function (node) {
+var wrapNode = function (node) {
     return {
         wrappedNodes: [node],
         children: node.children.map(exports.wrapNode),
@@ -71,30 +72,35 @@ exports.wrapNode = function (node) {
         bookmarked: false
     };
 };
+exports.wrapNode = wrapNode;
 /**
  * @description Test placeholder.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Node #1 to be tested.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node #2 to be tested.
  */
-exports.testNothing = function (a, b) { return false; };
+var testNothing = function (a, b) { return false; };
+exports.testNothing = testNothing;
 /**
  * @description Test if two nodes share the same userIntent.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Node #1 to be tested.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node #2 to be tested.
  */
-exports.testUserIntent = function (a, b) { return getNodeIntent(a.wrappedNodes[0]) === getNodeIntent(b.wrappedNodes[0]); };
+var testUserIntent = function (a, b) { return getNodeIntent(a.wrappedNodes[0]) === getNodeIntent(b.wrappedNodes[0]); };
+exports.testUserIntent = testUserIntent;
 /**
  * @description Test if b is an interval node.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Not used.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node to be tested.
  */
-exports.testIsIntervalNode = function (a, b) { return b.children.length === 1; };
+var testIsIntervalNode = function (a, b) { return b.children.length === 1; };
+exports.testIsIntervalNode = testIsIntervalNode;
 /**
  * @description Test if a and b are neighbours.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Node #1 to be tested.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node #2 to be tested.
  */
-exports.testNeighbours = function (a, b) { return aggregation_implementations_1.areNeighbours(a, b); };
+var testNeighbours = function (a, b) { return (0, aggregation_implementations_1.areNeighbours)(a, b); };
+exports.testNeighbours = testNeighbours;
 //////// Objects that represent the different data aggregation algorithms///////////
 /**Default Option as Raw Data */
 exports.defaultData = {

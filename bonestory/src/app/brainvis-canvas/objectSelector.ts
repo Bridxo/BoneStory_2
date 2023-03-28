@@ -186,7 +186,6 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.state = modes.Cammode;
         break;
       case 'a':
-        event.preventDefault();
         if(!(window as any).istyping && !event.ctrlKey){
           this.state = modes.Annotationmode;
           const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
