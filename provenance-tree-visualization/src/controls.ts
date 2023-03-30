@@ -15,6 +15,7 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
         // ctrl + Z  / undo
         if (evtobj.ctrlKey && evtobj.key === 'z' && (graph.current as StateNode).parent) {
             traverser.toStateNode((graph.current as StateNode).parent.id, 250);
+            provenanceTreeVisualization.getFullsizeview();
             provenanceTreeVisualization.update();
         }
         // ctrl + X  / go to the root
@@ -26,6 +27,7 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
             for (const child of graph.current.children) {
                 if (child.metadata.mainbranch) {
                     traverser.toStateNode(child.id, 250);
+                    provenanceTreeVisualization.getFullsizeview();
                     provenanceTreeVisualization.update();
                 }
             }

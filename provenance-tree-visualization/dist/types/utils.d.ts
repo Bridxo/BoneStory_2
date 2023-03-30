@@ -2,6 +2,7 @@ export interface IGroupedTreeNode<T> {
     children: Array<IGroupedTreeNode<T>>;
     wrappedNodes: T[];
     plotTrimmerValue: number;
+    camera: boolean;
     neighbour: boolean;
     bookmarked: boolean;
 }

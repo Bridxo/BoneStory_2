@@ -94,14 +94,14 @@ export class BrainvisCanvasComponent {
   @Output() showObjectsChange = new EventEmitter<boolean>();
   get showObjects() { return this._showObjects; }
 
-  //TODO--need to change get fragment name and as MESH
-  @Input() set selectObject(newSelectedObjects: Object[]) {
-    this.objectSelector.setSelection(newSelectedObjects); // [0] new [1] old
-    this.selectedObjectsChange.emit(newSelectedObjects);
-  }
-  @Output() selectedObjectsChange = new EventEmitter<any>();
-  get selectObject() 
-  { return this.objectSelector.getpastcurrentobject(); }
+  // //TODO--need to change get fragment name and as MESH
+  // @Input() set selectObject(newSelectedObjects: Object[]) {
+  //   this.objectSelector.setSelection(newSelectedObjects); // [0] new [1] old
+  //   this.selectedObjectsChange.emit(newSelectedObjects);
+  // }
+  // @Output() selectedObjectsChange = new EventEmitter<any>();
+  // get selectObject() 
+  // { return this.objectSelector.getpastcurrentobject(); }
 
   private width: number;
   private height: number;
@@ -499,12 +499,20 @@ export class BrainvisCanvasComponent {
     this.objectSelector.addEventListener('objectSelection', (event: any) => {
 
       this.selectedobj = event.newObject[0];
-      this.selectObject = [event.newObject[0], event.newObject[1], event.newObject[2], event.newObject[3]];
+      let temp = [event.newObject[0], event.newObject[1], event.newObject[2], event.newObject[3]];
+      this.objectSelector.setSelection(temp);
+      this.eventdispatcher.dispatchEvent({
+        type: 'objsel',
+        val: temp
+      });
       const inter = this.objectSelector.getinteractive();
       this.setInteractive(inter);
       this.mm.detach();
     });
     
+  }
+  selectedObjectsChange (value) {
+    this.objectSelector.setSelection(value);
   }
 
   setSize(width: number, height: number) {

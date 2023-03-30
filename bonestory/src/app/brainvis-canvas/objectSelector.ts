@@ -466,10 +466,10 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.previousColor = newSelection[2]; // color
         this.pastColor = newSelection[3]; //color past
 
-        // console.log(this.previousSelectedObject);
-        // console.log(this.pastSelectedObject);
-        // console.log(this.previousColor);
-        // console.log(this.pastColor);
+        console.log(this.previousSelectedObject);
+        console.log(this.pastSelectedObject);
+        console.log(this.previousColor);
+        console.log(this.pastColor);
 
         // if (this.pastSelectedObject && this.pastSelectedObject.name != undefined) { // original one into original color object
             

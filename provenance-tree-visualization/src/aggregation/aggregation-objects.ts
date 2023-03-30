@@ -84,13 +84,25 @@ export const groupNodeLabel = (node: IGroupedTreeNode<ProvenanceNode>) => {
 export const wrapNode = (
   node: ProvenanceNode
 ): IGroupedTreeNode<ProvenanceNode> => {
-  return {
-    wrappedNodes: [node],
-    children: node.children.map(wrapNode),
-    plotTrimmerValue: -1,
-    neighbour: false,
-    bookmarked: false
-  };
+  const searchpattern = /Camera|View/;
+  if(searchpattern.test(node.label))
+    return {
+      wrappedNodes: [node],
+      children: node.children.map(wrapNode),
+      plotTrimmerValue: -1,
+      neighbour: false,
+      bookmarked: false,
+      camera: true
+    };
+  else
+    return {
+      wrappedNodes: [node],
+      children: node.children.map(wrapNode),
+      plotTrimmerValue: -1,
+      neighbour: false,
+      bookmarked: false,
+      camera: false
+    };
 };
 
 /**

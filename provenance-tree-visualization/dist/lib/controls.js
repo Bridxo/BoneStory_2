@@ -10,6 +10,7 @@ function provGraphControls(provenanceTreeVisualization) {
         // ctrl + Z  / undo
         if (evtobj.ctrlKey && evtobj.key === 'z' && graph.current.parent) {
             traverser.toStateNode(graph.current.parent.id, 250);
+            provenanceTreeVisualization.getFullsizeview();
             provenanceTreeVisualization.update();
         }
         // ctrl + X  / go to the root
@@ -22,6 +23,7 @@ function provGraphControls(provenanceTreeVisualization) {
                 var child = _a[_i];
                 if (child.metadata.mainbranch) {
                     traverser.toStateNode(child.id, 250);
+                    provenanceTreeVisualization.getFullsizeview();
                     provenanceTreeVisualization.update();
                 }
             }

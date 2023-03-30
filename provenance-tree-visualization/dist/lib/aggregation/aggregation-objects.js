@@ -64,13 +64,25 @@ exports.groupNodeLabel = groupNodeLabel;
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
 var wrapNode = function (node) {
-    return {
-        wrappedNodes: [node],
-        children: node.children.map(exports.wrapNode),
-        plotTrimmerValue: -1,
-        neighbour: false,
-        bookmarked: false
-    };
+    var searchpattern = /Camera|View/;
+    if (searchpattern.test(node.label))
+        return {
+            wrappedNodes: [node],
+            children: node.children.map(exports.wrapNode),
+            plotTrimmerValue: -1,
+            neighbour: false,
+            bookmarked: false,
+            camera: true
+        };
+    else
+        return {
+            wrappedNodes: [node],
+            children: node.children.map(exports.wrapNode),
+            plotTrimmerValue: -1,
+            neighbour: false,
+            bookmarked: false,
+            camera: false
+        };
 };
 exports.wrapNode = wrapNode;
 /**

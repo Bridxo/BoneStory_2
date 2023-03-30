@@ -212,7 +212,22 @@ export class ProvenanceTreeVisualization {
     });
   }
 
+
   public camerahide(): void {
+    function find_noncameranode(c_trav : any) {
+      let traverser = c_trav.graph.current;
+      if(traverser.label === "root")
+        return traverser;
+      do{        
+        const searchpattern = /Camera|View/;
+        if(!searchpattern.test(traverser.label))
+          return traverser;
+        traverser = traverser.parent;
+        } while(traverser.parent.label !== "root");
+      return traverser;
+    }
+    const closenode = find_noncameranode(this.traverser);
+    this.traverser.toStateNode(closenode.id, 0);
     this.camera_show = this.camera_show ? false : true;
     this.update();
   }
@@ -244,14 +259,48 @@ export class ProvenanceTreeVisualization {
     this.traverser = traverser;
   }
 
+  public removeNodesAndLinkChildren<T>(tree: IGroupedTreeNode<T>, condition: (node: IGroupedTreeNode<T>) => boolean): IGroupedTreeNode<T> {
+    const removeNodes = (node: IGroupedTreeNode<T>) => {
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+  
+        if (condition(child)) {
+          // Remove the node from the children array
+          node.children.splice(i, 1);
+  
+          // Append the children of the removed node to the parent
+          node.children.push(...child.children);
+  
+          // Decrement the index to recheck the same position after the update
+          i--;
+        } else {
+          // Recursively call removeNodes for the child
+          removeNodes(child);
+        }
+      }
+    };
+  
+    // Create a shallow copy of the tree
+  
+    // Call the removeNodes function on the copied tree
+    removeNodes(tree);
+  
+    return tree;
+  }
   /**
    * @description Update the tree layout.
    */
   public update = ()  =>  {
     const wrappedRoot = wrapNode(this.traverser.graph.root);
+    const clonedWrappedRoot = wrapNode(this.traverser.graph.root);
+    const camhideNodes = this.removeNodesAndLinkChildren(clonedWrappedRoot, node => node.camera === true); 
+    let hierarchyRoot;
     // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-    const hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated the treeRoot
-    
+    if (this.camera_show == true)
+      hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated the treeRoot
+    else
+      hierarchyRoot = d3.hierarchy(camhideNodes);
+      
     const currentHierarchyNode = findHierarchyNodeFromProvenanceNode(
       hierarchyRoot,
       this.traverser.graph.current
@@ -262,18 +311,7 @@ export class ProvenanceTreeVisualization {
     //I want to modify the tree -> for hide camera and view
     // const tree = tree_original.copy();
     this.hierarchyRoot = tree;
-    var treeNodes;
-    const searchpattern = /Camera|View/;
-     if (this.camera_show == false)
-    {
-      tree.each(function(node) {
-        if(searchpattern.test(node.data.wrappedNodes[0].label))
-          node.data.wrappedNodes[0].metadata.option = 'merged';
-      })
-    }
-    treeNodes = tree.descendants().filter((d: any) => d.data.wrappedNodes[0].metadata.option !== 'merged');
-      
-    
+    const treeNodes = tree.descendants().filter((d: any) => d.data.wrappedNodes[0].metadata.option !== 'merged');
     const treemaxwidth = tree.descendants().map(function (item) {return item.x}).reduce(function(prev, current) {return (prev > current) ? prev : current});
     const treemaxlength = tree.descendants().map(function (item) {return item.y}).reduce(function(prev, current) {return (prev > current) ? prev : current});
     const oldNodes = this.g.selectAll('g.node').data(treeNodes, (d: any) => {
@@ -325,6 +363,7 @@ export class ProvenanceTreeVisualization {
 
 
     updateNodes.on('contextmenu', (d: any) => {
+      this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
       this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
       this.update();
       // (window as any).slideDeckViz.onChange();
@@ -410,6 +449,8 @@ export class ProvenanceTreeVisualization {
       .attr('class', (d: any) => 'circle-label renderer_' + getNodeRenderer(d.data.wrappedNodes[0]))
       .attr('visibility', (d: any) => (d.x === 0 ? 'visible' : 'hidden'));
 
+
+    
     updateNodes.on('click', d => {
       
       if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){

@@ -170,6 +170,8 @@ export class SlideDeckVisualization {
 
     private onChange = (node: ProvenanceNode) => {
         let alpha: any[] = [];
+        let counter = 0;
+        const maxIterations = 1000;
         if(node.metadata != undefined){
             let temp_node = node;
             do{
@@ -179,7 +181,10 @@ export class SlideDeckVisualization {
                         break;
                     }       
                 }
-                console.log(temp_node);
+                counter++;
+                if (counter > maxIterations) {
+                throw new Error("Endless loop detected in onChange function");
+                }
             }while(temp_node.children.length != 0)
 
             let bnumber = temp_node.metadata.branchnumber;
@@ -199,13 +204,17 @@ export class SlideDeckVisualization {
                     alpha.push(temp_node);
             }
             else{
+                counter = 0;
                 do {
                     if((temp_node as StateNode).parent.metadata.bookmarked){
                         alpha.push((temp_node as StateNode).parent);
                         console.log(alpha);
                     }
                     temp_node = (temp_node as StateNode).parent;
-                    console.log(temp_node);
+                    counter++;
+                    if (counter > maxIterations) {
+                      throw new Error("Endless loop detected in onChange_2 function");
+                    }
                 } while ((temp_node as StateNode).label != "Root");
             }
             

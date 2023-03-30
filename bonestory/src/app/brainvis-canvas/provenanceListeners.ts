@@ -219,27 +219,17 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
       undoArguments: [!val],
     }, true);
   });
-
-
-
-  async function handleSelectedObjectsChange(val) {
-    return new Promise<void>((resolve) => {
-      tracker.applyAction(
-        {
-          metadata: { userIntent: "configuration" },
-          do: "SelectObject",
-          doArguments: [val[0], val[1], val[2], val[3]], // new, old, new color, old color
-          undo: "SelectObject",
-          undoArguments: [val[1], val[0], val[3], val[2]], // return back old, new, old color, new color
-        },
-        true
-      );
-      resolve();
-    });
-  }
   
-  canvas.selectedObjectsChange.subscribe(async (val) => {
-    await handleSelectedObjectsChange(val);
+  canvas.addEventListener('objsel', (event) => {
+    tracker.applyAction(
+      {
+        metadata: { userIntent: "configuration" },
+        do: "SelectObject",
+        doArguments: [[event.val[0], event.val[1], event.val[2], event.val[3]]], // new, old, new color, old color
+        undo: "SelectObject",
+        undoArguments: [[event.val[1], event.val[0], event.val[3], event.val[2]]], // return back old, new, old color, new color
+      },
+      true);
   });
 
   canvas.addEventListener('annotation', (event) => {

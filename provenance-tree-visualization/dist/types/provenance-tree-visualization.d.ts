@@ -50,6 +50,7 @@ export declare class ProvenanceTreeVisualization {
     camerahide(): void;
     getFullsizeview(): void;
     setTraverser(traverser: ProvenanceGraphTraverser): void;
+    removeNodesAndLinkChildren<T>(tree: IGroupedTreeNode<T>, condition: (node: IGroupedTreeNode<T>) => boolean): IGroupedTreeNode<T>;
     /**
      * @description Update the tree layout.
      */

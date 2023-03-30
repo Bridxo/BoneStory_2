@@ -457,7 +457,6 @@ export const plotTrimmerFunc: NodeAggregationAlgorithm = (
 ) => {
   trimmer(currentNode, node, tests, mainBranch, arg);
 };
-
 export const trimmerAssignValues = (node: IGroupedTreeNode<ProvenanceNode>) => {
   // Leaf value = subroot distance * 2
   // Interval nodes value = 1

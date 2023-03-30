@@ -55,6 +55,7 @@ function provGraphControls(provenanceTreeVisualization) {
         // ctrl + Z  / undo
         if (evtobj.ctrlKey && evtobj.key === 'z' && graph.current.parent) {
             traverser.toStateNode(graph.current.parent.id, 250);
+            provenanceTreeVisualization.getFullsizeview();
             provenanceTreeVisualization.update();
         }
         // ctrl + X  / go to the root
@@ -67,6 +68,7 @@ function provGraphControls(provenanceTreeVisualization) {
                 var child = _a[_i];
                 if (child.metadata.mainbranch) {
                     traverser.toStateNode(child.id, 250);
+                    provenanceTreeVisualization.getFullsizeview();
                     provenanceTreeVisualization.update();
                 }
             }
@@ -201,13 +203,25 @@ var groupNodeLabel = function (node) {
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
 var wrapNode = function (node) {
-    return {
-        wrappedNodes: [node],
-        children: node.children.map(wrapNode),
-        plotTrimmerValue: -1,
-        neighbour: false,
-        bookmarked: false
-    };
+    var searchpattern = /Camera|View/;
+    if (searchpattern.test(node.label))
+        return {
+            wrappedNodes: [node],
+            children: node.children.map(wrapNode),
+            plotTrimmerValue: -1,
+            neighbour: false,
+            bookmarked: false,
+            camera: true
+        };
+    else
+        return {
+            wrappedNodes: [node],
+            children: node.children.map(wrapNode),
+            plotTrimmerValue: -1,
+            neighbour: false,
+            bookmarked: false,
+            camera: false
+        };
 };
 /**
  * @description Test placeholder.
@@ -800,8 +814,14 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
          */
         this.update = function () {
             var wrappedRoot = wrapNode(_this.traverser.graph.root);
+            var clonedWrappedRoot = wrapNode(_this.traverser.graph.root);
+            var camhideNodes = _this.removeNodesAndLinkChildren(clonedWrappedRoot, function (node) { return node.camera === true; });
+            var hierarchyRoot;
             // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-            var hierarchyRoot = hierarchy(wrappedRoot); // Updated the treeRoot
+            if (_this.camera_show == true)
+                hierarchyRoot = hierarchy(wrappedRoot); // Updated the treeRoot
+            else
+                hierarchyRoot = hierarchy(camhideNodes);
             var currentHierarchyNode = findHierarchyNodeFromProvenanceNode(hierarchyRoot, _this.traverser.graph.current);
             _this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode).length;
             var tree = GratzlLayout(hierarchyRoot, currentHierarchyNode);
@@ -809,15 +829,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
             //I want to modify the tree -> for hide camera and view
             // const tree = tree_original.copy();
             _this.hierarchyRoot = tree;
-            var treeNodes;
-            var searchpattern = /Camera|View/;
-            if (_this.camera_show == false) {
-                tree.each(function (node) {
-                    if (searchpattern.test(node.data.wrappedNodes[0].label))
-                        node.data.wrappedNodes[0].metadata.option = 'merged';
-                });
-            }
-            treeNodes = tree.descendants().filter(function (d) { return d.data.wrappedNodes[0].metadata.option !== 'merged'; });
+            var treeNodes = tree.descendants().filter(function (d) { return d.data.wrappedNodes[0].metadata.option !== 'merged'; });
             var treemaxwidth = tree.descendants().map(function (item) { return item.x; }).reduce(function (prev, current) { return (prev > current) ? prev : current; });
             var treemaxlength = tree.descendants().map(function (item) { return item.y; }).reduce(function (prev, current) { return (prev > current) ? prev : current; });
             var oldNodes = _this.g.selectAll('g.node').data(treeNodes, function (d) {
@@ -857,6 +869,7 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
                 .append('g')
                 .attr('class', 'normal');
             updateNodes.on('contextmenu', function (d) {
+                _this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
                 _this.traverser.graph.current = _this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
                 _this.update();
                 // (window as any).slideDeckViz.onChange();
@@ -1082,6 +1095,20 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
         });
     };
     ProvenanceTreeVisualization.prototype.camerahide = function () {
+        function find_noncameranode(c_trav) {
+            var traverser = c_trav.graph.current;
+            if (traverser.label === "root")
+                return traverser;
+            do {
+                var searchpattern = /Camera|View/;
+                if (!searchpattern.test(traverser.label))
+                    return traverser;
+                traverser = traverser.parent;
+            } while (traverser.parent.label !== "root");
+            return traverser;
+        }
+        var closenode = find_noncameranode(this.traverser);
+        this.traverser.toStateNode(closenode.id, 0);
         this.camera_show = this.camera_show ? false : true;
         this.update();
     };
@@ -1105,6 +1132,30 @@ var ProvenanceTreeVisualization = /** @class */ (function () {
     };
     ProvenanceTreeVisualization.prototype.setTraverser = function (traverser) {
         this.traverser = traverser;
+    };
+    ProvenanceTreeVisualization.prototype.removeNodesAndLinkChildren = function (tree, condition) {
+        var removeNodes = function (node) {
+            var _a;
+            for (var i = 0; i < node.children.length; i++) {
+                var child = node.children[i];
+                if (condition(child)) {
+                    // Remove the node from the children array
+                    node.children.splice(i, 1);
+                    // Append the children of the removed node to the parent
+                    (_a = node.children).push.apply(_a, child.children);
+                    // Decrement the index to recheck the same position after the update
+                    i--;
+                }
+                else {
+                    // Recursively call removeNodes for the child
+                    removeNodes(child);
+                }
+            }
+        };
+        // Create a shallow copy of the tree
+        // Call the removeNodes function on the copied tree
+        removeNodes(tree);
+        return tree;
     };
     ProvenanceTreeVisualization.prototype.getTraverser = function () {
         return this.traverser;
