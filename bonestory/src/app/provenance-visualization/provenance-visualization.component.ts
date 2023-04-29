@@ -11,6 +11,7 @@ import {addVisualizationListeners} from './visualizationListeners';
 })
 export class ProvenanceVisualizationComponent implements OnInit {
   private _viz: ProvenanceTreeVisualization;
+  public slider_value = 0;
   constructor(private elementRef: ElementRef, private provenance: ProvenanceService) {
   }
 
@@ -27,6 +28,14 @@ export class ProvenanceVisualizationComponent implements OnInit {
     this._viz.update();
   }
 
+  getnodenumber() {
+    return this._viz.numberofnodes - this._viz.numberOfUniqueValues - 1;
+  }
+  setgroupnumber() {
+    console.log(this.slider_value);
+    this._viz.groupnumber = this.slider_value;
+    this.update();
+  }
 
 }
 (function () {

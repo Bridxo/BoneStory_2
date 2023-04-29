@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addLegend = void 0;
-var legendData = {
+const legendData = {
     legends: [
         {
             name: 'bookmarked',
@@ -66,16 +66,16 @@ var legendData = {
     ]
 };
 function addLegend(elm) {
-    var legendContainer = elm.append('div').attr('class', 'legend').attr('id', 'legendContainer').attr('style', 'margin-bottom: 15%; display: none;');
-    var legendList = legendContainer.append('ul');
-    var listItem = legendList
+    const legendContainer = elm.append('div').attr('class', 'legend').attr('id', 'legendContainer').attr('style', 'margin-bottom: 15%; display: none;');
+    const legendList = legendContainer.append('ul');
+    const listItem = legendList
         .selectAll('li')
         .data(legendData.legends)
         .enter()
         .append('li');
     listItem
         .append('div')
-        .attr('class', function (d) {
+        .attr('class', (d) => {
         if (d.name === 'bookmarked') {
             return 'bookmarked';
         }
@@ -89,8 +89,8 @@ function addLegend(elm) {
             return 'circle';
         }
     })
-        .attr('style', function (d) { return "background-color:".concat(d.color); });
-    listItem.append('span').text(function (d) {
+        .attr('style', (d) => `background-color:${d.color}`);
+    listItem.append('span').text((d) => {
         return d.name;
     });
 }

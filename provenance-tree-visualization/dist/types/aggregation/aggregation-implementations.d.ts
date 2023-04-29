@@ -32,6 +32,20 @@ export interface NodeAggregator<T> {
     description?: String;
 }
 /**
+ * @description Child removed, child's children go to the parent.
+ * @param node {IGroupedTreeNode<ProvenanceNode>} - Parent node
+ * @param child {IGroupedTreeNode<ProvenanceNode>} - Child node
+ */
+export declare function transferToParent(node: IGroupedTreeNode<ProvenanceNode>, child: IGroupedTreeNode<ProvenanceNode>): void;
+/**
+ * @description Child removed, child's children go to grandChild. GrandChild becomes node's child.
+ * @param node {IGroupedTreeNode<ProvenanceNode>} - Parent node
+ * @param child {IGroupedTreeNode<ProvenanceNode>} - Child node
+ * @param grandChild {IGroupedTreeNode<ProvenanceNode>} - Child of the child node
+ */
+export declare function transferChildren(node: any, child: any, grandChild: any): void;
+export declare function transferChildren_2(Startparentnode: any, Startnode: any, Endnode: any): void;
+/**
  * @description Pointed node wraps ALL children recursively
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  */

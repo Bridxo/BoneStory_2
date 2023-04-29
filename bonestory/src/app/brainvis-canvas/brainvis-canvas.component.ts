@@ -2,6 +2,8 @@ import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output,
 import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import * as THREE from 'three';
 import * as dat from 'dat.gui';
+import html2canvas from 'html2canvas';
+
 
 import { IOrientation } from './types';
 
@@ -62,6 +64,7 @@ enum modes {
 })
 
 export class BrainvisCanvasComponent {
+  @ViewChild('canvas_', { static: true }) canvas_: ElementRef;
   //check user offline, online
   onlineEvent: Observable<Event>;
   offlineEvent: Observable<Event>;
@@ -93,15 +96,6 @@ export class BrainvisCanvasComponent {
   }
   @Output() showObjectsChange = new EventEmitter<boolean>();
   get showObjects() { return this._showObjects; }
-
-  // //TODO--need to change get fragment name and as MESH
-  // @Input() set selectObject(newSelectedObjects: Object[]) {
-  //   this.objectSelector.setSelection(newSelectedObjects); // [0] new [1] old
-  //   this.selectedObjectsChange.emit(newSelectedObjects);
-  // }
-  // @Output() selectedObjectsChange = new EventEmitter<any>();
-  // get selectObject() 
-  // { return this.objectSelector.getpastcurrentobject(); }
 
   private width: number;
   private height: number;
@@ -152,6 +146,8 @@ export class BrainvisCanvasComponent {
   private ModeText = ['Object', 'Object', 'Camera', 'Annotation'];
   private ModeText_add = '';
   private dragControls;
+  private gridHelper;
+  private AxesHelper;
 
   // stl file information
   private stl_objs: FormData;
@@ -226,7 +222,7 @@ export class BrainvisCanvasComponent {
 
     this.scene.background = new THREE.Color('#a5a29a');
     
-    this.camera = new THREE.OrthographicCamera(this.width / -2, this.width / 2, this.height / 2, this.height / - 2,0.1,3000);
+    this.camera = new THREE.OrthographicCamera(this.width / -2, this.width / 2, this.height / 2, this.height / - 2,0.1,5000);
     // this.camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.01, 3000);
 
     const canvasElm = this.renderer.domElement;
@@ -272,22 +268,22 @@ export class BrainvisCanvasComponent {
     this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
 
     this.directionalLight.position.set(1, 1, 1).normalize();
-    const gridHelper = new THREE.GridHelper(500, 10);
-    const AxesHelper = new THREE.AxesHelper(500);
+    this.gridHelper = new THREE.GridHelper(500, 10);
+    this.AxesHelper = new THREE.AxesHelper(500);
     var instructions = document.getElementById('instructions');
 
     
     this.scene.add(this.directionalLight);
     // this.scene.add(directionallight_2);
     this.scene.add(this.mm);
-    this.scene.add(gridHelper);
-    this.scene.add(AxesHelper);
+    this.scene.add(this.gridHelper);
+    this.scene.add(this.AxesHelper);
     this.scene.add(this.pivot_group);
 
     this.ui = new dat.GUI({autoPlace: false, width: 200});
     const vis_helper = this.ui.addFolder('Helpers');
-    vis_helper.add(gridHelper,'visible').name('Grid');
-    vis_helper.add(AxesHelper,'visible').name('Axes');
+    vis_helper.add(this.gridHelper,'visible').name('Grid');
+    vis_helper.add(this.AxesHelper,'visible').name('Axes');
     vis_helper.add({ instructions: true }, 'instructions').name('Instructions').onChange((value: boolean) => {
       instructions.style.display = value ? 'block' : 'none';
     });
@@ -423,7 +419,6 @@ export class BrainvisCanvasComponent {
     });
 
     this.objectSelector.addEventListener('t_start', (event:any) => {
-      // const position = this.objectSelector.gettranslateObject().position.toArray();
       this.eventdispatcher.dispatchEvent({
         type: 'transStart',
         position: event.position.toArray()
@@ -432,7 +427,6 @@ export class BrainvisCanvasComponent {
       this.ModeText_add = '\nTranslate';
     });
     this.objectSelector.addEventListener('t_end', (event:any) => {
-      // const position = this.objectSelector.gettranslateObject().position.toArray();
       this.eventdispatcher.dispatchEvent({
         type: 'transEnd',
         position: event.position.toArray()
@@ -497,8 +491,10 @@ export class BrainvisCanvasComponent {
     });
 
     this.objectSelector.addEventListener('objectSelection', (event: any) => {
-
-      this.selectedobj = event.newObject[0];
+      if(this.selectedobj != event.newObject[0])
+        this.selectedobj = event.newObject[0];
+      else
+        this.selectedobj = undefined;
       let temp = [event.newObject[0], event.newObject[1], event.newObject[2], event.newObject[3]];
       this.objectSelector.setSelection(temp);
       this.eventdispatcher.dispatchEvent({
@@ -535,7 +531,6 @@ export class BrainvisCanvasComponent {
 
   CameraMove(newOrientation: IOrientation, within: number) {
     // console.log(this.camera);
-    // this.ScreenShot();
     this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
       new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
@@ -557,7 +552,6 @@ export class BrainvisCanvasComponent {
 
   async ObjectRotate(newargs: any, newpos:any ,within: number) {
     this.rotate_counter = 0;
-    // this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), within, undefined, new THREE.Vector3(newargs.x, newargs.y, newargs.z));
     await this.objectSelector.changecontrols_rotation(new THREE.Vector3(newargs.x, newargs.y, newargs.z), within);
     await this.objectSelector.changecontrols(new THREE.Vector3(newpos.x,newpos.y,newpos.z), 0);
   }
@@ -616,7 +610,7 @@ export class BrainvisCanvasComponent {
     }
   }
   Measurement(measuregroup: any, undo?: boolean) {
-    console.log(measuregroup[0]);
+    // console.log(measuregroup[0]);
     if(undo === true){
       measuregroup[0].material.visible = false;
       measuregroup[1].material.visible = false;
@@ -700,8 +694,8 @@ export class BrainvisCanvasComponent {
       text: text,
       inter: intersect
     });
-    // this.mode = modes.Cammode;
-    // this.ModeText_add = "";
+    this.mode = modes.Cammode;
+    this.ModeText_add = "";
   }
 
   animate = () => {
@@ -816,7 +810,7 @@ export class BrainvisCanvasComponent {
       });
       let cc_1 = new THREE.Vector3(700,0,0);
       let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(-1,0,0);
+      let cc_3 = new THREE.Vector3(-1,0,1);
       this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
   
       position = cc_1.toArray();
@@ -842,7 +836,7 @@ export class BrainvisCanvasComponent {
       });
       let cc_1 = new THREE.Vector3(-700,0,0);
       let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(1,0,0);
+      let cc_3 = new THREE.Vector3(1,0,1);
       this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
   
       position = cc_1.toArray();
@@ -999,10 +993,22 @@ export class BrainvisCanvasComponent {
         const height = bbox.max.y - bbox.min.y;
         const depth = bbox.max.z - bbox.min.z;  
         const maxDim = Math.max(width, height, depth);
-        if(maxDim < 200)
-          this.initial_zoom = 200/maxDim;
-        else
-          this.initial_zoom = 50/maxDim;
+
+        // //type 1
+        // if(maxDim > 200)
+        //   this.initial_zoom = maxDim / 200;
+        // else
+        //   this.initial_zoom = maxDim;
+
+        //type 2
+        const w_size =this.width/width;
+        const h_size =this.height/height;
+
+        const min_size = Math.min(w_size,h_size);
+
+        this.initial_zoom = min_size / 4;
+
+
         // Set the camera position and target to view all objects
         this.camera.lookAt(center_bbox);
         this.camera.zoom = this.initial_zoom;
@@ -1078,7 +1084,7 @@ export class BrainvisCanvasComponent {
           this.objects.add(mesh);
         }.bind(this));
         fragment_folder.add(material, 'opacity', 0, 1).name(name);
-        this.initial_zoom = 2.27;
+        this.initial_zoom = 3.5;
         this.number_of_stl++;
         this.camera.zoom = this.initial_zoom;
       }
@@ -1121,23 +1127,6 @@ export class BrainvisCanvasComponent {
       this.controls.enabled = true; // Re-enable camera controls after dragging
     });
   }
-
-  ScreenShot = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = this.width;
-    canvas.height = this.height;
-    const ctx = canvas.getContext('2d');
-    const gl = this.renderer.getContext();
-    const width = this.renderer.domElement.clientWidth;
-    const height = this.renderer.domElement.clientHeight;
-    const data = new Uint8Array(width * height * 4);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, data);
-    const imageData = new ImageData(new Uint8ClampedArray(data), this.width, this.height);
-    ctx.putImageData(imageData, 0, 0);
-    const dataURL = canvas.toDataURL();
-    return dataURL;
-  }
-
   makeTextSprite = ( message, parameters ) => {
         if ( parameters === undefined ) parameters = {};
         var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Courier New";

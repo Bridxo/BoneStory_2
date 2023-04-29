@@ -1,18 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.plotTrimmerFuncC = exports.plotTrimmerFuncG = exports.trimmerAssignValues = exports.plotTrimmerFunc = exports.prune = exports.compress = exports.group = exports.doNothing = exports.connectivity = exports.subrootDist = exports.maxDepth = exports.minDepth = exports.distanceToMainBranch = exports.areNeighbours = exports.isIntervalNode = exports.isLeafNode = exports.shouldConstrain = exports.transferAll = void 0;
-var provenance_core_1 = require("@visualstorytelling/provenance-core");
+exports.plotTrimmerFuncC = exports.plotTrimmerFuncG = exports.trimmerAssignValues = exports.plotTrimmerFunc = exports.prune = exports.compress = exports.group = exports.doNothing = exports.connectivity = exports.subrootDist = exports.maxDepth = exports.minDepth = exports.distanceToMainBranch = exports.areNeighbours = exports.isIntervalNode = exports.isLeafNode = exports.shouldConstrain = exports.transferAll = exports.transferChildren_2 = exports.transferChildren = exports.transferToParent = void 0;
+const provenance_core_1 = require("@visualstorytelling/provenance-core");
 /**
  * @description Child removed, child's children go to the parent.
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Parent node
  * @param child {IGroupedTreeNode<ProvenanceNode>} - Child node
  */
 function transferToParent(node, child) {
-    var _a, _b;
-    node.children.splice(node.children.indexOf(child), 1);
-    (_a = node.children).push.apply(_a, child.children);
-    (_b = node.wrappedNodes).push.apply(_b, child.wrappedNodes);
+    const index = node.children.indexOf(child);
+    node.children.splice(index, 1);
+    node.children.push(...child.children);
+    node.wrappedNodes.unshift(...child.wrappedNodes);
 }
+exports.transferToParent = transferToParent;
 /**
  * @description Child removed, child's children go to grandChild. GrandChild becomes node's child.
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Parent node
@@ -20,24 +21,38 @@ function transferToParent(node, child) {
  * @param grandChild {IGroupedTreeNode<ProvenanceNode>} - Child of the child node
  */
 function transferChildren(node, child, grandChild) {
-    var _a, _b;
+    //data part
     node.children.splice(node.children.indexOf(child), 1);
     child.children.splice(child.children.indexOf(grandChild), 1);
-    (_a = grandChild.wrappedNodes).push.apply(_a, child.wrappedNodes);
-    (_b = grandChild.children).push.apply(_b, child.children);
+    grandChild.wrappedNodes.push(...child.wrappedNodes);
     node.children.push(grandChild);
 }
+exports.transferChildren = transferChildren;
+function transferChildren_2(Startparentnode, Startnode, Endnode) {
+    //data part
+    let tempNode = Endnode.parent;
+    let superParent = Startparentnode.parent;
+    do {
+        tempNode.data.children.splice(tempNode.children[0]);
+        Endnode.data.wrappedNodes.push(...tempNode.data.wrappedNodes);
+        tempNode = tempNode.parent;
+    } while (tempNode.data != Startparentnode.data);
+    Startparentnode.data.children.splice(Startparentnode.children.indexOf(Startnode), 1);
+    Endnode.data.wrappedNodes.push(...Startparentnode.data.wrappedNodes);
+    superParent.data.children.splice(superParent.children.indexOf(Startparentnode), 1);
+    superParent.data.children.push(Endnode.data);
+}
+exports.transferChildren_2 = transferChildren_2;
 /**
  * @description Pointed node wraps ALL children recursively
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  */
 function transferAll(node) {
-    var done;
+    let done;
     do {
         done = false;
         if (node.children) {
-            for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-                var child = _a[_i];
+            for (const child of node.children) {
                 transferToParent(node, child);
                 done = true;
             }
@@ -51,8 +66,8 @@ exports.transferAll = transferAll;
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Currently selected node.
  */
 function shouldConstrain(node, selectedNode) {
-    var result = false;
-    var rawNode = node.wrappedNodes[0];
+    let result = false;
+    const rawNode = node.wrappedNodes[0];
     if (node === selectedNode || rawNode.metadata.bookmarked) {
         result = true;
     }
@@ -70,7 +85,7 @@ exports.shouldConstrain = shouldConstrain;
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - The node to test.
  */
 function isLeafNode(node) {
-    var result = false;
+    let result = false;
     if (node.children.length === 0) {
         result = true;
     }
@@ -82,7 +97,7 @@ exports.isLeafNode = isLeafNode;
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - The node to test.
  */
 function isIntervalNode(node) {
-    var result = false;
+    let result = false;
     if (node.children.length === 1) {
         result = true;
     }
@@ -95,7 +110,7 @@ exports.isIntervalNode = isIntervalNode;
  * @param  b  {IGroupedTreeNode<ProvenanceNode>} - The second node to test.
  */
 function areNeighbours(a, b) {
-    var result = false;
+    let result = false;
     if (b.children.includes(a)) {
         result = true;
     }
@@ -111,7 +126,7 @@ exports.areNeighbours = areNeighbours;
  * @param  mainBranch  {Array<string>} - List of node ids which belong to the master branch.
  */
 function distanceToMainBranch(node, mainBranch) {
-    var result = 0;
+    let result = 0;
     if (mainBranch === undefined) {
         result = 0;
     }
@@ -131,11 +146,11 @@ exports.distanceToMainBranch = distanceToMainBranch;
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  * @returns Number of nodes you have to cross to go to the deepest leaf from the node selected.
  */
-var minDepth = function (node) {
+const minDepth = (node) => {
     if (node.children.length === 0) {
         return 0;
     }
-    return Math.min.apply(Math, node.children.map(exports.minDepth)) + 1;
+    return Math.min(...node.children.map(exports.minDepth)) + 1;
 };
 exports.minDepth = minDepth;
 /**
@@ -143,11 +158,11 @@ exports.minDepth = minDepth;
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  * @returns Number of nodes you have to cross to go to the deepest leaf from the node selected.
  */
-var maxDepth = function (node) {
+const maxDepth = (node) => {
     if (node.children.length === 0) {
         return 1;
     }
-    return Math.max.apply(Math, node.children.map(exports.maxDepth)) + 1;
+    return Math.max(...node.children.map(exports.maxDepth)) + 1;
 };
 exports.maxDepth = maxDepth;
 /**
@@ -155,8 +170,8 @@ exports.maxDepth = maxDepth;
  * @param provNode {ProvenanceNode} - Selected node
  * @returns Number of nodes you have to cross to go to the subroot up from the node selected.
  */
-var subrootDist = function (provNode) {
-    var value = 0;
+const subrootDist = (provNode) => {
+    let value = 0;
     if (!(0, provenance_core_1.isStateNode)(provNode)) {
         value = 0;
     }
@@ -176,7 +191,7 @@ exports.subrootDist = subrootDist;
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Selected node
  * @returns Number of nodes you have to cross to go to the deepest leaf from the node selected.
  */
-var connectivity = function (node) {
+const connectivity = (node) => {
     return 1 + node.children.length;
 };
 exports.connectivity = connectivity;
@@ -185,10 +200,9 @@ exports.connectivity = connectivity;
  * @param  mainBranch  {Array<string>} - List of node ids which belong to the master branch.
  * @param  nodes  {Array<IGroupedTreeNode<ProvenanceNode>>} - List of nodes to test.
  */
-var mainNode = function (mainBranch, nodes) {
-    var mNode;
-    for (var _i = 0, nodes_1 = nodes; _i < nodes_1.length; _i++) {
-        var node = nodes_1[_i];
+const mainNode = (mainBranch, nodes) => {
+    let mNode;
+    for (const node of nodes) {
         if (mainBranch.includes(node.wrappedNodes[0].id)) {
             mNode = node;
             break;
@@ -201,7 +215,7 @@ var mainNode = function (mainBranch, nodes) {
  * @param  node1  {IGroupedTreeNode<ProvenanceNode>} - Selected node #1
  * @param  node2  {IGroupedTreeNode<ProvenanceNode>} - Selected node #2
  */
-var nodeDepthComparison = function (node1, node2) {
+const nodeDepthComparison = (node1, node2) => {
     if ((0, exports.maxDepth)(node1) > (0, exports.maxDepth)(node2)) {
         return 1;
     }
@@ -210,6 +224,8 @@ var nodeDepthComparison = function (node1, node2) {
     }
     return 0;
 };
+const mergemarking = () => {
+};
 /**
  * @description Test everything.
  * @param tests {Array<NodeGroupTest<ProvenanceNode>>} - The tests to run
@@ -217,11 +233,10 @@ var nodeDepthComparison = function (node1, node2) {
  * @param  node2  {IGroupedTreeNode<ProvenanceNode>} - Selected node #2
  * @returns true only if all tests return true
  */
-var testAll = function (tests, node1, node2) {
-    var result = true;
-    for (var _i = 0, tests_1 = tests; _i < tests_1.length; _i++) {
-        var test_1 = tests_1[_i];
-        result = test_1(node1, node2);
+const testAll = (tests, node1, node2) => {
+    let result = true;
+    for (const test of tests) {
+        result = test(node1, node2);
         if (!result) {
             break;
         }
@@ -250,21 +265,19 @@ var testAll = function (tests, node1, node2) {
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Test to be checked during execution.
  * @param  currentNode  {IGroupedTreeNode<ProvenanceNode>} -
  */
-var doNothing = function (currentNode, node, tests) { };
+const doNothing = (currentNode, node, tests) => { };
 exports.doNothing = doNothing;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Tests to be checked during execution.
  */
-var group = function (currentNode, node, tests) {
-    var merged = false;
+const group = (currentNode, node, tests) => {
+    let merged = false;
     do {
         merged = false;
-        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-            var child = _a[_i];
+        for (const child of node.children) {
             if (!shouldConstrain(child, currentNode)) {
-                for (var _b = 0, _c = child.children; _b < _c.length; _b++) {
-                    var grandChild = _c[_b];
+                for (const grandChild of child.children) {
                     if (testAll(tests, child, grandChild)) {
                         transferChildren(node, child, grandChild);
                         merged = true;
@@ -277,19 +290,18 @@ var group = function (currentNode, node, tests) {
             }
         }
     } while (merged);
-    node.children.map(function (child) { return (0, exports.group)(currentNode, child, tests); });
+    node.children.map(child => (0, exports.group)(currentNode, child, tests));
 };
 exports.group = group;
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Tests to be checked during execution.
  */
-var compress = function (currentNode, node, tests) {
-    var merged = false;
+const compress = (currentNode, node, tests) => {
+    let merged = false;
     do {
         merged = false;
-        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-            var child = _a[_i];
+        for (const child of node.children) {
             if (!shouldConstrain(child, currentNode)) {
                 if (testAll(tests, node, child)) {
                     transferToParent(node, child);
@@ -299,7 +311,7 @@ var compress = function (currentNode, node, tests) {
             }
         }
     } while (merged);
-    node.children.map(function (child) { return (0, exports.compress)(currentNode, child, tests); });
+    node.children.map(child => (0, exports.compress)(currentNode, child, tests));
 };
 exports.compress = compress;
 /**
@@ -308,16 +320,15 @@ exports.compress = compress;
  * @param mainBranch {Array<string>} - List of node's id which belong to the master branch.
  * @param arg {any} - Optinal parameter
  */
-var prune = function (currentNode, node, tests, mainBranch, arg) {
-    var parameter = +arg;
-    var merged = false;
+const prune = (currentNode, node, tests, mainBranch, arg) => {
+    const parameter = +arg;
+    let merged = false;
     do {
         merged = false;
-        var p = arg;
-        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-            var child = _a[_i];
+        const p = arg;
+        for (const child of node.children) {
             if (!shouldConstrain(child, currentNode)) {
-                var dist = distanceToMainBranch(child.wrappedNodes[0], mainBranch);
+                const dist = distanceToMainBranch(child.wrappedNodes[0], mainBranch);
                 if (isLeafNode(child)) {
                     if (dist <= p) {
                         transferToParent(node, child);
@@ -325,11 +336,10 @@ var prune = function (currentNode, node, tests, mainBranch, arg) {
                     }
                 }
                 else {
-                    for (var _b = 0, _c = child.children; _b < _c.length; _b++) {
-                        var grandChild = _c[_b];
+                    for (const grandChild of child.children) {
                         if (!shouldConstrain(grandChild, currentNode) &&
                             distanceToMainBranch(child.wrappedNodes[0], mainBranch) > 0) {
-                            var childDepth = (0, exports.maxDepth)(child);
+                            const childDepth = (0, exports.maxDepth)(child);
                             if (dist + childDepth <= p) {
                                 transferChildren(node, child, grandChild);
                                 merged = true;
@@ -340,9 +350,7 @@ var prune = function (currentNode, node, tests, mainBranch, arg) {
             }
         }
     } while (merged);
-    node.children.map(function (child) {
-        return (0, exports.prune)(currentNode, child, tests, mainBranch, parameter);
-    });
+    node.children.map(child => (0, exports.prune)(currentNode, child, tests, mainBranch, parameter));
 };
 exports.prune = prune;
 /**
@@ -350,15 +358,15 @@ exports.prune = prune;
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-var plotTrimmerFunc = function (currentNode, node, tests, mainBranch, arg) {
+const plotTrimmerFunc = (currentNode, node, tests, mainBranch, arg) => {
     trimmer(currentNode, node, tests, mainBranch, arg);
 };
 exports.plotTrimmerFunc = plotTrimmerFunc;
-var trimmerAssignValues = function (node) {
+const trimmerAssignValues = (node) => {
     // Leaf value = subroot distance * 2
     // Interval nodes value = 1
     // Subroots value = Minimum subroot distance of children * 2 + 1
-    var value = 0;
+    let value = 0;
     if (!(0, provenance_core_1.isStateNode)(node.wrappedNodes[0]) === null) {
         value = Number.MAX_VALUE;
     }
@@ -375,8 +383,7 @@ var trimmerAssignValues = function (node) {
         value = (0, exports.minDepth)(node) * 2 + 1;
     }
     node.plotTrimmerValue = value;
-    for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-        var child = _a[_i];
+    for (const child of node.children) {
         (0, exports.trimmerAssignValues)(child);
     }
 };
@@ -386,14 +393,13 @@ exports.trimmerAssignValues = trimmerAssignValues;
  * @param  tests  {Array<NodeGroupTest<ProvenanceNode>>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-var trimmer = function (currentNode, node, tests, mainBranch, arg) {
-    var parameter = +arg;
-    var merged;
+const trimmer = (currentNode, node, tests, mainBranch, arg) => {
+    const parameter = +arg;
+    let merged;
     (0, exports.trimmerAssignValues)(node);
     do {
         merged = false;
-        for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
-            var child = _a[_i];
+        for (const child of node.children) {
             if (!shouldConstrain(child, currentNode)) {
                 if (parameter >= child.plotTrimmerValue) {
                     transferToParent(node, child);
@@ -402,19 +408,17 @@ var trimmer = function (currentNode, node, tests, mainBranch, arg) {
             }
         }
     } while (merged);
-    node.children.map(function (child) {
-        return trimmer(currentNode, child, tests, mainBranch, parameter);
-    });
+    node.children.map(child => trimmer(currentNode, child, tests, mainBranch, parameter));
 };
 /**
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Root of the graph
  * @param  test  {IGroupedTreeNode<ProvenanceNode>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-var plotTrimmerFuncG = function (currentNode, node, tests, mainBranch, arg) {
-    var parameter = +arg;
-    var prunePar = 0;
-    for (var i = 0; i <= parameter; i++) {
+const plotTrimmerFuncG = (currentNode, node, tests, mainBranch, arg) => {
+    const parameter = +arg;
+    let prunePar = 0;
+    for (let i = 0; i <= parameter; i++) {
         if (i % 2 === 0 && i !== 0) {
             prunePar = prunePar + 1;
             (0, exports.prune)(currentNode, node, tests, mainBranch, prunePar);
@@ -430,10 +434,10 @@ exports.plotTrimmerFuncG = plotTrimmerFuncG;
  * @param  test  {IGroupedTreeNode<ProvenanceNode>} - Test to be checked during execution.
  * @param arg {any} - Optinal parameter
  */
-var plotTrimmerFuncC = function (currentNode, node, tests, mainBranch, arg) {
-    var parameter = +arg;
-    var prunePar = 0;
-    for (var i = 0; i <= parameter; i++) {
+const plotTrimmerFuncC = (currentNode, node, tests, mainBranch, arg) => {
+    const parameter = +arg;
+    let prunePar = 0;
+    for (let i = 0; i <= parameter; i++) {
         if (i % 2 === 0 && i !== 0) {
             prunePar = prunePar + 1;
             (0, exports.prune)(currentNode, node, tests, mainBranch, prunePar);

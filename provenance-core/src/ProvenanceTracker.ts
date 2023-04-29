@@ -74,7 +74,9 @@ export class ProvenanceTracker implements IProvenanceTracker {
         createdBy: this.username,
         createdOn: generateTimestamp(),
         branchnumber: 0,
-        H_value: 0
+        O_group: 'Idle',
+        H_value: 0,
+        screenshot: ''
       },
       action,
       actionResult,
@@ -101,35 +103,46 @@ export class ProvenanceTracker implements IProvenanceTracker {
       newNode = createNewStateNode(currentNode, actionResult);
     }
     //screen-shot part
-    // if (this.autoScreenShot && this.screenShotProvider) {
-    //   try {
-    //     newNode.metadata.screenShot = this.screenShotProvider();
-    //   } catch (e) {
-    //     console.warn('Error while getting screenshot', e);
-    //   }
-    // }
+    newNode.metadata.screenshot = await this.ScreenShot();
 
+    //Object group part
+    if((window as any).canvas.selectedobj == undefined)
+      newNode.metadata.O_group = 'Idle';
+    else
+      newNode.metadata.O_group = (window as any).canvas.selectedobj.name;
+    //H-value calculation part
+    newNode.metadata.H_value = this.H_value(newNode);
+
+     //multiple story part
+     if(currentNode.children.length>=1)
+     {
+       bnum = bnum + 1;
+       newNode.metadata.branchnumber = bnum;
+     }
+     else 
+       newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
     // When the node is created, we need to update the graph.
     currentNode.children.push(newNode);
     this.graph.addNode(newNode);
-    //multiple story part
-    if(currentNode.children.length>1)
-    {
-      bnum = bnum + 1;
-      newNode.metadata.branchnumber = bnum;
-    }
-    else 
-      newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
+   
     this.graph.current = newNode;
-    //H-value calculation part
-    newNode.metadata.H_value = this.H_value(newNode);
-    console.log('bnum: ', bnum);
-    console.log('H_value: ', newNode.metadata.H_value);
+
     return newNode;
   }
 
   normalizeValue(value: number, minValue: number, maxValue: number, newMinValue: number, newMaxValue: number): number {
     return (value - minValue) / (maxValue - minValue) * (newMaxValue - newMinValue) + newMinValue;
+  }
+  ScreenShot = async () => {
+    let dataURL;
+    (window as any).canvas.gridHelper.visible = false;
+    (window as any).canvas.AxesHelper.visible = false;
+    (window as any).canvas.render();
+    dataURL = (window as any).canvas.renderer.domElement.toDataURL('image/png');
+    (window as any).canvas.gridHelper.visible = true;
+    (window as any).canvas.AxesHelper.visible = true;
+    // console.log(dataURL);
+    return dataURL;
   }
   
   calculateDifference(pos1: number[], pos2: number[]): number {
@@ -143,54 +156,77 @@ export class ProvenanceTracker implements IProvenanceTracker {
     let H_val = 0;
     type ActionLabels = keyof typeof onehot_action;
     const onehot_action = {
-      'CameraMove': 0b0000000000000,
-      'CameraPan': 0b0000000000000,
-      'CameraZoom': 0b0010000000000,
-      'Viewpoint': 0b0100000000000,
-      'SelectObject': 0b0110000000000,
-      'TranslateObject': 0b1000000000000,
-      'RotateObject': 0b1010000000000,
-      'Measurement': 0b1100000000000,
-      'Annotation': 0b1110000000000,
+      'Root':10,
+      'CameraMove': 1,
+      'CameraPan': 1,
+      'CameraZoom': 1,
+      'ViewpointFront': 1.5,
+      'ViewpointBack': 1.5,
+      'ViewpointLeft': 1.5,
+      'ViewpointRight': 1.5,
+      'ViewpointTop': 1.5,
+      'ViewpointBottom': 1.5,
+      'SelectObject': 2,
+      'TranslateObject': 3.1,
+      'RotateObject': 3.6,
+      'Measurement': 4.6,
+      'Annotation': 5.6
     };
     const onehot_general = {
-      'idle': 0b0000000000000000,
-      'f0': 0b0010000000000000,
-      'f1': 0b0100000000000000,
-      'f2': 0b0110000000000000,
-      'f3': 0b1000000000000000,
-      'f4': 0b1010000000000000,
-      'f5': 0b1100000000000000,
-      'f6': 0b1110000000000000,
-      'f7': 0b10000000000000000,
-      'f8': 0b10010000000000000,
-      'f9': 0b10100000000000000,
-      'f10': 0b10110000000000000,
-      'f11': 0b11000000000000000,
-      'f12': 0b11010000000000000
+      'idle': 1,
+      'f0': 2,
+      'f1': 3,
+      'f2': 4,
+      'f3': 5,
+      'f4': 6,
+      'f5': 7,
+      'f6': 8,
+      'f7': 9,
+      'f8': 10,
+      'f9': 11,
+      'f10': 12,
+      'f11': 13,
+      'f12': 14
     };
+  if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group
+    && NewNode.label === NewNode.parent.label)//같같
+  {
+    H_val += 0;
+  }
+  else if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group
+    && NewNode.label !== NewNode.parent.label)//같다
+  {
+    H_val += Math.abs(onehot_action[NewNode.label as ActionLabels]-onehot_action[NewNode.parent.label as ActionLabels]) * 10000;
+  }
+  else // 다다
+  {
+    H_val += 50000;
+  }
+  // // Find general value of the node.
+  // H_val += onehot_general['idle'];
 
-  // Find general value of the node.
-  H_val += onehot_general['idle'];
-
-  // Find action value of the node.
-  H_val += onehot_action[NewNode.label as ActionLabels];
+  // // Find action value of the node.
+  // H_val += onehot_action[NewNode.label as ActionLabels];
 
   // Calculate difference value of the node (parent comparison)
   try {
-    const doArgs = NewNode.action.doArguments[0];
-    const undoArgs = NewNode.action.undoArguments[0];
-    const do_position = doArgs.position || doArgs.zoom || doArgs.rotation;
-    const undo_position = undoArgs.position || undoArgs.zoom || undoArgs.rotation;
+    const doArgs = NewNode.action.doArguments;
+    const undoArgs = NewNode.action.undoArguments;
 
-    if (do_position && undo_position) {
+
+    if (doArgs && undoArgs && NewNode.label !=='SelectObject' && NewNode.label !=='Measurement' && NewNode.label !=='Annotation' && NewNode.label !=='RotateObject') {
+      const do_position = doArgs[0].position || doArgs[0];
+      const undo_position = undoArgs[0].position || undoArgs[0];
       const diff = this.calculateDifference(do_position, undo_position);
-      const maxValue = NewNode.label === 'TranslateObject' ? 2000 : 5000;
+      const maxValue = NewNode.label === 'TranslateObject' ? 1000 : 5000;
       const normalizedValue = this.normalizeValue(diff, 0, maxValue, 0, 1023);
       H_val += normalizedValue;
     } else if (NewNode.label === 'RotateObject') {
-      const diff = Math.abs(do_position[0] - undo_position[0]) + Math.abs(do_position[1] - undo_position[1]) + Math.abs(do_position[2] - undo_position[2]);
-      const normalizedValue = this.normalizeValue(diff, 0, 1077, 0, 1023);
+      const do_position = doArgs;
+      const undo_position = undoArgs;
+      const diff = Math.abs(do_position[0]._x - undo_position[0]._x) + Math.abs(do_position[0]._y - undo_position[0]._y) + Math.abs(do_position[0]._z - undo_position[0]._z);
+      const diff2 = this.calculateDifference([do_position[1].x, do_position[1].y, do_position[1].z], [undo_position[1].x, undo_position[1].y, undo_position[1].z]);
+      const normalizedValue = this.normalizeValue(diff+diff2, 0, 540+1500, 0, 1023);
       H_val += normalizedValue;
     } else {
       H_val += 1023;

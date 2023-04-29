@@ -9,7 +9,3 @@ export declare function setTitle(elm: HTMLDivSelection, onClick: () => any): voi
  * @description Show the buttons of the user interface.
  */
 export declare function addAggregationButtons(elm: HTMLDivSelection, provenanceTreeVisualization: ProvenanceTreeVisualization): void;
-/**
- * @description Slider for Arguments in simple HTML
- */
-export declare function addSlider<T extends HTMLElement>(elem: d3.Selection<T, any, any, any>, onChange: (val: number) => any): void;

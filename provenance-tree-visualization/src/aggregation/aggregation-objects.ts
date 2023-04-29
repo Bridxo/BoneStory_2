@@ -70,8 +70,32 @@ export function isKeyNode(node: ProvenanceNode): boolean {
 export const groupNodeLabel = (node: IGroupedTreeNode<ProvenanceNode>) => {
   if (node.wrappedNodes.length === 1) {
     return node.wrappedNodes[0].label;
-  } else {
-    return node.wrappedNodes[0].label;
+  } 
+  else {
+    const label_arr =node.wrappedNodes.map(n => n.label);
+    const unique_label_arr = new Set(label_arr);
+    if(unique_label_arr.size === 1)//all labels are the same
+      return node.wrappedNodes[0].label;
+    else{ // labels are different
+      let label = "";
+      const searchpattern = /Camera|View/;
+      const searchpattern_2 = /Object/;
+      const searchpattern_3 = /Annotation/;
+      const searchpattern_4 = /Measure/;
+      for (let u_label of unique_label_arr.values()) {
+        if(searchpattern.test(u_label) && label.search('Camera') === -1)
+          label = label + "Camera,";
+        else if(searchpattern_2.test(u_label) && label.search('Object') === -1)
+          label = label + "Object,";
+        else if(searchpattern_3.test(u_label) && label.search('Annotation') === -1)
+          label = label + "Annotation,";
+        else if(searchpattern_4.test(u_label) && label.search('Measure') === -1)
+          label = label + "Measure,";
+      }
+      label = label.slice(0, -1);
+      return label;
+
+    }
   }
 };
 

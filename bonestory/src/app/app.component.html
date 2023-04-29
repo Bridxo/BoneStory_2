@@ -1,5 +1,5 @@
 
-    <app-brainvis-canvas #canvas> 
+    <app-brainvis-canvas #canvas_> 
     </app-brainvis-canvas>
 
     <div id="bottom-container">
@@ -9,15 +9,16 @@
       <div id="side-child"><app-provenance-visualization #provvis z-index="997"></app-provenance-visualization></div>
       <mat-slider
       class="provslider"
-      [max]="30"
+      [max]= "provvis.getnodenumber()"
       [min]="0"
       [step]="1"
       [thumbLabel]="true"
       [tickInterval]="5"
-      [(ngModel)]="slider_value"
+      [(ngModel)]="provvis.slider_value"
       [vertical]="true"
       style="height: 300px;"
       matTooltip="Provenance-Grouping Slider"
+      (change)="provvis.setgroupnumber()"
     ></mat-slider>
     </div>
     <div style="height:0px;">
@@ -28,11 +29,11 @@
           type="file"
           name="images"
           multiple
-          (change)="onselect_submit($event, canvas.load_stl_models)"
+          (change)="onselect_submit($event, canvas_.load_stl_models)"
           />
     </div>
     <div>
-      <button id="demo_btn" mat-icon-button (click)="canvas.load_demo()" title="Load Demo Models" style="cursor: pointer;">
+      <button id="demo_btn" mat-icon-button (click)="canvas_.load_demo()" title="Load Demo Models" style="cursor: pointer;">
         <mat-icon>school</mat-icon>
       </button>
       <button id="upload_btn" mat-icon-button onclick="filesel.click()" title="Load STL files" style="cursor: pointer;">
@@ -55,6 +56,7 @@
       <strong>[Mouse]</strong> <br />
       L-click (cam mode): Rotate camera <br />
       R-click (cam mode): Pan camera <br />
+      Wheel (cam mode): Zoom camera <br />
       Double-click: Select object <br />
       <strong>[Keyboard]</strong> <br />
       C: Camera mode<br />

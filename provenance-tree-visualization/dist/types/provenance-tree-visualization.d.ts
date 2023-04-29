@@ -20,6 +20,10 @@ export declare class ProvenanceTreeVisualization {
     traverser: ProvenanceGraphTraverser;
     camera_show: boolean;
     colorScheme: any;
+    numberofnodes: number;
+    numberOfUniqueValues: number;
+    groupnumber: number;
+    real_traverser: any;
     g: D3SVGGSelection;
     svg: D3SVGSelection;
     container: any;
@@ -29,6 +33,8 @@ export declare class ProvenanceTreeVisualization {
     private hierarchyRoot;
     private zoomer;
     private currentHierarchyNodelength;
+    private currentHierarchyMaxlength;
+    private keynode;
     private TreeLength;
     private TreeWidth;
     private sizeX;
@@ -51,6 +57,7 @@ export declare class ProvenanceTreeVisualization {
     getFullsizeview(): void;
     setTraverser(traverser: ProvenanceGraphTraverser): void;
     removeNodesAndLinkChildren<T>(tree: IGroupedTreeNode<T>, condition: (node: IGroupedTreeNode<T>) => boolean): IGroupedTreeNode<T>;
+    Grouping_hierarchy<T>(wraproot: IGroupedTreeNode<ProvenanceNode>): d3.HierarchyNode<IGroupedTreeNode<ProvenanceNode>>;
     /**
      * @description Update the tree layout.
      */

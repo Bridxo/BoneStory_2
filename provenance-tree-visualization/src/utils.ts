@@ -43,3 +43,12 @@ export const group = <T>(node: IGroupedTreeNode<T>, test: NodeGroupTest<T>) => {
   } while (merged);
   node.children.map(child => group(child, test));
 };
+
+
+export const cam_test = <T>(label: any) => {
+  const searchpattern = /Camera|View/;
+  if(searchpattern.test(label))
+    return true;
+  else
+    return false;
+};

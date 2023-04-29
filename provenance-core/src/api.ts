@@ -55,9 +55,13 @@ export interface NodeMetadata {
   /**
    * HLEE added 1. Branch number (get branch number for slide conversion)
    * HLEE added 2. H_value (for Heirarchical Clustering tree value)
+   * HLEE added 3. screenshot (for screenshot of the slide)
+   * HLEE added 4. O_group (for O_group of the slide)
    */
   branchnumber: number;
+  screenshot:string;
   H_value: number;
+  O_group: string;
 }
 
 /**

@@ -188,8 +188,8 @@ export class SlideDeckVisualization {
             }while(temp_node.children.length != 0)
 
             let bnumber = temp_node.metadata.branchnumber;
-            console.log(node);
-            console.log(bnumber);
+            // console.log(node);
+            // console.log(bnumber);
             if(this._slideDocker[bnumber] === undefined){
             const newslideDeck = new ProvenanceSlidedeck({ name: 'bonestory', version: '1.0.0' },(window as any).traverser);
             this._slideDocker[bnumber] = newslideDeck;
@@ -208,7 +208,7 @@ export class SlideDeckVisualization {
                 do {
                     if((temp_node as StateNode).parent.metadata.bookmarked){
                         alpha.push((temp_node as StateNode).parent);
-                        console.log(alpha);
+                        // console.log(alpha);
                     }
                     temp_node = (temp_node as StateNode).parent;
                     counter++;

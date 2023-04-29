@@ -52,13 +52,14 @@ export interface NodeAggregator<T> {
  * @param node {IGroupedTreeNode<ProvenanceNode>} - Parent node
  * @param child {IGroupedTreeNode<ProvenanceNode>} - Child node
  */
-function transferToParent(
+export function transferToParent(
   node: IGroupedTreeNode<ProvenanceNode>,
   child: IGroupedTreeNode<ProvenanceNode>
 ) {
-  node.children.splice(node.children.indexOf(child), 1);
+  const index = node.children.indexOf(child);
+  node.children.splice(index, 1);
   node.children.push(...child.children);
-  node.wrappedNodes.push(...child.wrappedNodes);
+  node.wrappedNodes.unshift(...child.wrappedNodes);
 }
 
 /**
@@ -67,16 +68,34 @@ function transferToParent(
  * @param child {IGroupedTreeNode<ProvenanceNode>} - Child node
  * @param grandChild {IGroupedTreeNode<ProvenanceNode>} - Child of the child node
  */
-function transferChildren(
-  node: IGroupedTreeNode<ProvenanceNode>,
-  child: IGroupedTreeNode<ProvenanceNode>,
-  grandChild: IGroupedTreeNode<ProvenanceNode>
+export function transferChildren(
+  node: any,
+  child: any,
+  grandChild: any
 ) {
+  //data part
   node.children.splice(node.children.indexOf(child), 1);
   child.children.splice(child.children.indexOf(grandChild), 1);
   grandChild.wrappedNodes.push(...child.wrappedNodes);
-  grandChild.children.push(...child.children);
   node.children.push(grandChild);
+}
+export function transferChildren_2(
+  Startparentnode: any,
+  Startnode: any,
+  Endnode: any
+) {
+  //data part
+  let tempNode = Endnode.parent;
+  let superParent = Startparentnode.parent;
+  do{
+    tempNode.data.children.splice(tempNode.children[0]);
+    Endnode.data.wrappedNodes.push(...tempNode.data.wrappedNodes);
+    tempNode = tempNode.parent;
+  }while(tempNode.data != Startparentnode.data)
+  Startparentnode.data.children.splice(Startparentnode.children.indexOf(Startnode), 1);
+  Endnode.data.wrappedNodes.push(...Startparentnode.data.wrappedNodes);
+  superParent.data.children.splice(superParent.children.indexOf(Startparentnode), 1);
+  superParent.data.children.push(Endnode.data);
 }
 
 /**
@@ -280,6 +299,10 @@ const nodeDepthComparison = <T>(
     return -1;
   }
   return 0;
+};
+
+const mergemarking = () => {
+
 };
 
 /**

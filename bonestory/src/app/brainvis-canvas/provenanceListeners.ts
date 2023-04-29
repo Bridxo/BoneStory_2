@@ -29,7 +29,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
       if(s_1.distanceTo(s_2)>1.0){
         switch(canvas.viewpoint_action){
           case 0:
-            if(event.state == 0){
+            if(event.state == 2){
               tracker.applyAction({
                 metadata: {userIntent: 'exploration'},
                 do: 'CameraMove',
@@ -39,7 +39,6 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
               });
               const a = new Vector3().fromArray((event as any).orientation.position);
               const b = new Vector3().fromArray((startEvent as any).orientation.position);
-              console.log(a.distanceTo(b));
             }
             else {
               tracker.applyAction({

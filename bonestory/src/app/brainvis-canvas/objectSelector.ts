@@ -18,8 +18,8 @@ enum modes {
 export default class ObjectSelector  implements IIntersectionListener  {
     private objects = new THREE.Object3D;
     private canvas: BrainvisCanvasComponent;
-    private previousSelectedObject: THREE.Mesh = <THREE.Mesh>{};
-    private pastSelectedObject: THREE.Mesh = <THREE.Mesh>{};
+    private previousSelectedObject: THREE.Mesh = undefined;
+    private pastSelectedObject: THREE.Mesh = undefined;
 
     private pastColor: number = 0;
     private previousColor: number = 0;
@@ -91,14 +91,14 @@ export default class ObjectSelector  implements IIntersectionListener  {
 
     onMouseDown(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.isdragging = true;
-        if(this.previousSelectedObject.name != undefined && this.state == modes.Translation){ //left click with translation
+        if(this.previousSelectedObject != undefined && this.state == modes.Translation){ //left click with translation
             this.interactive = false;
             this.isobjmoving = true;
             const temp_pos = this.previousSelectedObject.position.clone();
             this.sposition = temp_pos;
             this.eventdispatcher.dispatchEvent({type:'t_start', position: this.previousSelectedObject.position});
         }
-        else if(this.previousSelectedObject.name != undefined && this.state == modes.Rotation){
+        else if(this.previousSelectedObject != undefined && this.state == modes.Rotation){
             this.interactive = false;
             this.isobjrotating = true;
             const temp_pos = this.previousSelectedObject.position.clone();
@@ -166,7 +166,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
   setkey(event: any, keydown_coordinate_: any) {
     switch (event.key) {
       case 't':
-        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
+        if(!(window as any).istyping && this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
           this.state = modes.Translation;
           this.eventdispatcher.dispatchEvent({ type: 'interactive' });
         }
@@ -237,7 +237,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
               let previousName = '';
               let asMeshPongMaterial = null;
 
-              if (this.previousSelectedObject.name != undefined) {
+              if (this.previousSelectedObject != undefined) {
                   asMeshPongMaterial = this.previousSelectedObject.material as THREE.MeshLambertMaterial;
                   asMeshPongMaterial.color.setHex(this.previousColor);
                   previousName = this.previousSelectedObject.name;
@@ -259,9 +259,9 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
           this.previousSelectedObject == intersection.object &&
           intersection.object instanceof THREE.Mesh) {
             this.pastColor = this.previousColor;
-            this.previousColor = intersection.object.material.color.getHex();
+            this.previousColor = undefined;
             this.pastSelectedObject = this.previousSelectedObject;
-            this.previousSelectedObject = intersection.object;
+            this.previousSelectedObject = undefined;
             // const asMeshPongMaterial = <THREE.MeshPhongMaterial>this.previousSelectedObject.material;       
           // asMeshPongMaterial.color.setHex(this.pastColor); // return to original color
           
@@ -466,10 +466,10 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.previousColor = newSelection[2]; // color
         this.pastColor = newSelection[3]; //color past
 
-        console.log(this.previousSelectedObject);
-        console.log(this.pastSelectedObject);
-        console.log(this.previousColor);
-        console.log(this.pastColor);
+        // console.log(this.previousSelectedObject);
+        // console.log(this.pastSelectedObject);
+        // console.log(this.previousColor);
+        // console.log(this.pastColor);
 
         // if (this.pastSelectedObject && this.pastSelectedObject.name != undefined) { // original one into original color object
             
@@ -480,7 +480,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         //     }
         // }
 
-        if (this.previousSelectedObject && this.previousSelectedObject.name != undefined) { // Change into BLUE color
+        if (this.previousSelectedObject && this.pastSelectedObject) { // Change into BLUE color
             const asMesh = <THREE.Mesh>this.previousSelectedObject;
             const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
             if (asMesh.material instanceof THREE.MeshLambertMaterial) {
@@ -522,10 +522,21 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
 
             }
         }
-        else{ // go to root node
+        else if (this.pastSelectedObject){
             const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
             const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
-            asMeshPongMaterial2.color.setHex(this.pastColor);
+            const temp_obj = this.pastSelectedObject;
+            const temp_color = this.pastColor;
+            asMeshPongMaterial2.color.setHex(temp_color);
+            this.pastSelectedObject = this.previousSelectedObject;
+            this.previousSelectedObject = undefined;
+            this.pastColor = this.previousColor;
+            this.previousColor = undefined;
+        }
+        else{ // go to root node
+            const asMesh2 = <THREE.Mesh>this.previousSelectedObject;
+            const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
+            asMeshPongMaterial2.color.setHex(0x0000ff);
             this.pastSelectedObject = this.previousSelectedObject;
             this.pastColor = this.previousColor;
         }

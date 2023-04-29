@@ -41,7 +41,9 @@ export class ProvenanceGraph implements IProvenanceGraph {
           createdBy: userid,
           createdOn: generateTimestamp(),
           branchnumber: 0,
-          H_value: 0
+          H_value: 0,
+          O_group: 'Idle',
+          screenshot: ''
         },
         children: [],
         artifacts: {}

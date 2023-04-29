@@ -1,17 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.caterpillar = void 0;
-var aggregation_objects_1 = require("./aggregation/aggregation-objects");
-var gratzl_old_1 = require("./gratzl_old");
-var d3 = require("d3");
+const aggregation_objects_1 = require("./aggregation/aggregation-objects");
+const gratzl_old_1 = require("./gratzl_old");
+const d3 = require("d3");
 function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisualization) {
     if (provenanceTreeVisualization.caterpillarActivated) {
-        var mainNodes = updateNodes.filter(function (d) { return d.x === 0; });
-        var mainNodesData_1 = mainNodes
+        const mainNodes = updateNodes.filter((d) => d.x === 0);
+        const mainNodesData = mainNodes
             .data()
-            .map(function (d) { return d.data.wrappedNodes[0].id; });
+            .map((d) => d.data.wrappedNodes[0].id);
         // console.log(mainNodesData);
-        var edgeNodes = mainNodes.filter(function (d) {
+        const edgeNodes = mainNodes.filter((d) => {
             if (d.children) {
                 return d.children.length > 1;
             }
@@ -20,30 +20,26 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
         edgeNodes.select("circle").attr("class", "intent_wrapped");
         edgeNodes.select("rect").attr("class", "intent_wrapped");
         // Hide the rest of the circles and links
-        updateNodes.filter(function (d) { return d.x !== 0; }).attr("class", "node hiddenClass");
+        updateNodes.filter((d) => d.x !== 0).attr("class", "node hiddenClass");
         updatedLinks
-            .filter(function (d) { return d.target.x !== 0; })
+            .filter((d) => d.target.x !== 0)
             .attr("class", "node hiddenClass");
         // Set the label which indicate the number of nodes wrapped
         updateNodes
             .select("text.circle-text")
-            .filter(function (d) { return d.x !== 0; })
+            .filter((d) => d.x !== 0)
             .attr("visibility", "visible");
         edgeNodes
             .select(".normal>text.circle-text")
             .attr("visibility", "visible")
-            .text(function (d) {
-            var copyNode = d.copy();
-            copyNode.children = copyNode.children.filter(function (e, i, arr) {
-                return !mainNodesData_1.includes(e.data.wrappedNodes[0].id);
-            });
+            .text((d) => {
+            const copyNode = d.copy();
+            copyNode.children = copyNode.children.filter((e, i, arr) => !mainNodesData.includes(e.data.wrappedNodes[0].id));
             return copyNode.descendants().length;
         })
-            .attr("x", function (d) {
-            var copyNode = d.copy();
-            copyNode.children = copyNode.children.filter(function (e, i, arr) {
-                return !mainNodesData_1.includes(e.data.wrappedNodes[0].id);
-            });
+            .attr("x", (d) => {
+            const copyNode = d.copy();
+            copyNode.children = copyNode.children.filter((e, i, arr) => !mainNodesData.includes(e.data.wrappedNodes[0].id));
             if (copyNode.descendants().length < 10) {
                 return -1.5;
             }
@@ -52,16 +48,16 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
             }
         });
         // Set the radius of the circle
-        edgeNodes.select("circle").attr("r", function (d) {
+        edgeNodes.select("circle").attr("r", (d) => {
             return Math.min(4 + 0.15 * d.descendants().length, 6);
         });
         // Set the click function
-        edgeNodes.on("click", function (d) {
-            var actualCatGraph = d3.selectAll(".classCat");
+        edgeNodes.on("click", (d) => {
+            const actualCatGraph = d3.selectAll(".classCat");
             // When click again -> auxiliar tree disappearss.
             if (actualCatGraph
                 .data()
-                .map(function (k) { return k.data.wrappedNodes[0].id; })
+                .map((k) => k.data.wrappedNodes[0].id)
                 .includes(d.data.wrappedNodes[0].id)) {
                 actualCatGraph
                     .data([])
@@ -78,35 +74,29 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
             }
             else {
                 // else -> deploy the new tree.
-                var treeCopy = d.copy();
-                treeCopy.children = treeCopy.children.filter(function (e, i, arr) {
-                    return !mainNodesData_1.includes(e.data.wrappedNodes[0].id);
-                });
-                var treeLayoutCat = (0, gratzl_old_1.default)().size([35, 120]);
-                var treeCat = treeLayoutCat(treeCopy, treeCopy);
-                var excatNodes = provenanceTreeVisualization.g
+                const treeCopy = d.copy();
+                treeCopy.children = treeCopy.children.filter((e, i, arr) => !mainNodesData.includes(e.data.wrappedNodes[0].id));
+                const treeLayoutCat = (0, gratzl_old_1.default)().size([35, 120]);
+                const treeCat = treeLayoutCat(treeCopy, treeCopy);
+                const excatNodes = provenanceTreeVisualization.g
                     .selectAll("g.classCat")
-                    .data(treeCat.descendants(), function (datum) {
-                    return datum.data.wrappedNodes.map(function (n) { return n.id; }).join();
-                });
+                    .data(treeCat.descendants(), (datum) => datum.data.wrappedNodes.map((n) => n.id).join());
                 excatNodes.exit().remove();
-                var catNodes = excatNodes
+                const catNodes = excatNodes
                     .enter()
                     .append("g")
                     .attr("class", "classCat node branch-active ")
                     .data(treeNodes)
-                    .attr("transform", function (datum) {
-                    return datum.data.wrappedNodes[0].metadata.isSlideAdded
-                        ? "translate(".concat(d.x - 3, ", ").concat(d.y, ")")
-                        : "translate(".concat(d.x, ", ").concat(d.y, ")");
-                });
+                    .attr("transform", (datum) => datum.data.wrappedNodes[0].metadata.isSlideAdded
+                    ? `translate(${d.x - 3}, ${d.y})`
+                    : `translate(${d.x}, ${d.y})`);
                 // .append('g')
                 // .attr('class', 'classCat node branch-active ')
                 // .attr('transform', (k: any) => `translate(${k.x}, ${k.y})`);
                 catNodes.append("circle").attr("r", 3);
                 // Fix the radius of the circles according to #nodes wrapped
-                catNodes.select("circle").attr("r", function (datum) {
-                    var radius = 2;
+                catNodes.select("circle").attr("r", (datum) => {
+                    let radius = 2;
                     if (datum.data.neighbour === true) {
                         radius = 3;
                     }
@@ -116,8 +106,8 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
                     return radius;
                 });
                 // Assign classes to the circles
-                catNodes.select("circle").attr("class", function (datum) {
-                    var classString = "";
+                catNodes.select("circle").attr("class", (datum) => {
+                    let classString = "";
                     console.log(d.data.wrappedNodes[0].metadata);
                     if (d.data.wrappedNodes[0].metadata.bookmarked === true) {
                         classString += ' bookmarked';
@@ -128,14 +118,12 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
                     classString += " intent_" + (0, aggregation_objects_1.getNodeIntent)(d.data.wrappedNodes[0]);
                     return classString;
                 });
-                catNodes.on("click", function (datum) {
-                    return provenanceTreeVisualization.traverser.toStateNode(datum.data.wrappedNodes[0].id, 250);
-                });
+                catNodes.on("click", datum => provenanceTreeVisualization.traverser.toStateNode(datum.data.wrappedNodes[0].id, 250));
                 // Set the #nodes-wrapped label
                 catNodes
                     .append("text")
                     .attr("class", "circle-text")
-                    .attr("visibility", function (datum) {
+                    .attr("visibility", (datum) => {
                     if (datum.data.wrappedNodes.length === 1) {
                         return "hidden";
                     }
@@ -143,29 +131,27 @@ function caterpillar(updateNodes, treeNodes, updatedLinks, provenanceTreeVisuali
                         return "visible";
                     }
                 })
-                    .attr("x", function (datum) {
+                    .attr("x", (datum) => {
                     if (datum.data.wrappedNodes.length >= 10) {
                         return -3;
                     }
                     return -1.5;
                 })
                     .attr("y", 2)
-                    .text(function (datum) { return datum.data.wrappedNodes.length.toString(); });
+                    .text((datum) => datum.data.wrappedNodes.length.toString());
                 // Set the links between circles
-                var oldLinksCat = provenanceTreeVisualization.g
+                const oldLinksCat = provenanceTreeVisualization.g
                     .selectAll("path.linkCat")
-                    .data(treeCat.links(), function (datum) {
-                    return datum.target.data.wrappedNodes.map(function (n) { return n.id; }).join();
-                });
+                    .data(treeCat.links(), (datum) => datum.target.data.wrappedNodes.map((n) => n.id).join());
                 oldLinksCat.exit().remove();
-                var newLinksCat = oldLinksCat
+                const newLinksCat = oldLinksCat
                     .enter()
                     .insert("path", "g")
                     .attr("d", provenanceTreeVisualization.linkPath);
                 oldLinksCat
                     .merge(newLinksCat)
                     .attr("class", "link linkCat")
-                    .filter(function (datum) { return datum.target.x === 0; })
+                    .filter((datum) => datum.target.x === 0)
                     .attr("class", "link active linkCat");
             } // end else actualgraph
         }); // end on click

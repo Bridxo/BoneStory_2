@@ -22,8 +22,7 @@ export function findHierarchyNodeFromProvenanceNode(
   });
 
   if (currentHierarchyNode === undefined) {
-    throw new Error("Cannot find current selected node in tree.");
-  }
+    throw new Error("Cannot find current selected node in tree.");  }
 
   return currentHierarchyNode;
 }

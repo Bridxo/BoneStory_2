@@ -9,16 +9,16 @@
 /*
  * Original file is from the AMI library (but I think they got it from Three.js)
  * Modified for the Visual Storytelling project to be able to get and save state
- * and to allow for smooth tansitions
+ * and to allow for smooth transitions
  */
 
 import * as THREE from 'three';
 
 export enum STATE {
   NONE = -1,
-  ROTATE = 0,
-  ZOOM = 1,
-  PAN = 2,
+  ROTATE = 2,
+  ZOOM = -1,
+  PAN = 1,
   TOUCH_ROTATE = 3,
   TOUCH_ZOOM = 4,
   TOUCH_PAN = 5,
@@ -469,10 +469,11 @@ export default class Trackball{
     if (this.state !== STATE.NONE) {
       return;
     } else if (event.keyCode === this.keys[STATE.ROTATE] && !this.noRotate) {
-      this.state = STATE.ROTATE;
-    } else if (event.keyCode === this.keys[STATE.ZOOM] && !this.noZoom) {
-      this.state = STATE.ZOOM;
-    } else if (event.keyCode === this.keys[STATE.PAN] && !this.noPan) {
+      this.state = STATE.ROTATE;} 
+      //else if (event.keyCode === this.keys[STATE.ZOOM] && !this.noZoom) {
+    //   this.state = STATE.ZOOM;
+    // } 
+    else if (event.keyCode === this.keys[STATE.PAN] && !this.noPan) {
       this.state = STATE.PAN;
     }
   }
@@ -619,7 +620,7 @@ export default class Trackball{
     } else {
       //  { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4, CUSTOM: 99 };
       switch (this.state) {
-        case 0:
+        case 2:
           //  1 or 2 fingers, smae behavior
           this.state = STATE.TOUCH_ROTATE;
           this.moveCurr.copy(this.getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
@@ -702,7 +703,7 @@ export default class Trackball{
 
       //  { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4, CUSTOM: 99 };
       switch (this.state) {
-        case 0:
+        case 2:
           this.movePrev.copy(this.moveCurr);
           this.moveCurr.copy(this.getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
           break;
@@ -711,7 +712,7 @@ export default class Trackball{
           this.zoomEnd.copy(this.getMouseOnScreen(event.touches[0].pageX, event.touches[0].pageY));
           break;
 
-        case 2:
+        case 1:
           this.panEnd.copy(this.getMouseOnScreen(event.touches[0].pageX, event.touches[0].pageY));
           break;
 
@@ -768,7 +769,7 @@ export default class Trackball{
       this.state = STATE.NONE;
     } else {
       switch (this.state) {
-        case 0:
+        case 2:
           this.movePrev.copy(this.moveCurr);
           this.moveCurr.copy(this.getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
           break;

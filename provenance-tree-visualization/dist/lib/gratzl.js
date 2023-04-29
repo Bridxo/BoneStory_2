@@ -10,9 +10,9 @@ function depthSort(a, b) {
     return 0;
 }
 function GratzlLayout(_root, _current) {
-    var root = _root;
-    var current = _current;
-    var widths = [];
+    const root = _root;
+    const current = _current;
+    const widths = [];
     // const maxY = Math.max.apply(null, root.leaves().map((leaf) => leaf.depth));
     function setTreeX(node, val) {
         node.x = val;
@@ -21,9 +21,9 @@ function GratzlLayout(_root, _current) {
         if (node.children) {
             node
                 .leaves()
-                .forEach(function (leaf) {
+                .forEach(leaf => {
                 if (typeof leaf.x === "undefined") {
-                    var width = Math.max.apply(null, widths.slice(node.depth, leaf.depth + 1));
+                    const width = Math.max.apply(null, widths.slice(node.depth, leaf.depth + 1));
                     setTreeX(leaf, val > width ? val : width + 1);
                 }
             });
@@ -32,8 +32,8 @@ function GratzlLayout(_root, _current) {
             setTreeX(node.parent, val);
         }
     }
-    root.leaves().forEach(function (leaf) {
-        leaf.ancestors().forEach(function (leafAncestor) {
+    root.leaves().forEach(leaf => {
+        leaf.ancestors().forEach(leafAncestor => {
             if (!leafAncestor.maxDescendantDepth ||
                 leaf.depth > leafAncestor.maxDescendantDepth) {
                 leafAncestor.maxDescendantDepth = leaf.depth;
@@ -41,8 +41,8 @@ function GratzlLayout(_root, _current) {
         });
     });
     /* start at the deepest (active) leaf of activeNode. */
-    var deepestLeaf = current;
-    deepestLeaf.leaves().forEach(function (leaf) {
+    let deepestLeaf = current;
+    deepestLeaf.leaves().forEach(leaf => {
         if (leaf.data.wrappedNodes[0].metadata.mainbranch) {
             deepestLeaf = leaf;
         }

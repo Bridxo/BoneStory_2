@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.aggregationObjectsUI2 = exports.aggregationObjectsUI1 = exports.aggregationObjects = exports.plotTrimmerG = exports.plotTrimmerC = exports.plotTrimmer = exports.pruning = exports.compression = exports.grouping = exports.rawData = exports.defaultData = exports.testNeighbours = exports.testIsIntervalNode = exports.testUserIntent = exports.testNothing = exports.wrapNode = exports.groupNodeLabel = exports.isKeyNode = exports.getNodeRenderer = exports.getNodeIntent = void 0;
-var aggregation_implementations_1 = require("./aggregation-implementations");
-var provenance_core_1 = require("@visualstorytelling/provenance-core");
+const aggregation_implementations_1 = require("./aggregation-implementations");
+const provenance_core_1 = require("@visualstorytelling/provenance-core");
 /**
  * @description Getter for the user intent of the node selected.
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
@@ -48,12 +48,34 @@ exports.isKeyNode = isKeyNode;
  * @description Returns a label for grouped nodes.
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
-var groupNodeLabel = function (node) {
+const groupNodeLabel = (node) => {
     if (node.wrappedNodes.length === 1) {
         return node.wrappedNodes[0].label;
     }
     else {
-        return node.wrappedNodes[0].label;
+        const label_arr = node.wrappedNodes.map(n => n.label);
+        const unique_label_arr = new Set(label_arr);
+        if (unique_label_arr.size === 1) //all labels are the same
+            return node.wrappedNodes[0].label;
+        else { // labels are different
+            let label = "";
+            const searchpattern = /Camera|View/;
+            const searchpattern_2 = /Object/;
+            const searchpattern_3 = /Annotation/;
+            const searchpattern_4 = /Measure/;
+            for (let u_label of unique_label_arr.values()) {
+                if (searchpattern.test(u_label) && label.search('Camera') === -1)
+                    label = label + "Camera,";
+                else if (searchpattern_2.test(u_label) && label.search('Object') === -1)
+                    label = label + "Object,";
+                else if (searchpattern_3.test(u_label) && label.search('Annotation') === -1)
+                    label = label + "Annotation,";
+                else if (searchpattern_4.test(u_label) && label.search('Measure') === -1)
+                    label = label + "Measure,";
+            }
+            label = label.slice(0, -1);
+            return label;
+        }
     }
 };
 exports.groupNodeLabel = groupNodeLabel;
@@ -63,8 +85,8 @@ exports.groupNodeLabel = groupNodeLabel;
  * without modifying the (provenance) node.
  * @param  node  {IGroupedTreeNode<ProvenanceNode>} - Node selected.
  */
-var wrapNode = function (node) {
-    var searchpattern = /Camera|View/;
+const wrapNode = (node) => {
+    const searchpattern = /Camera|View/;
     if (searchpattern.test(node.label))
         return {
             wrappedNodes: [node],
@@ -90,28 +112,28 @@ exports.wrapNode = wrapNode;
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Node #1 to be tested.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node #2 to be tested.
  */
-var testNothing = function (a, b) { return false; };
+const testNothing = (a, b) => false;
 exports.testNothing = testNothing;
 /**
  * @description Test if two nodes share the same userIntent.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Node #1 to be tested.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node #2 to be tested.
  */
-var testUserIntent = function (a, b) { return getNodeIntent(a.wrappedNodes[0]) === getNodeIntent(b.wrappedNodes[0]); };
+const testUserIntent = (a, b) => getNodeIntent(a.wrappedNodes[0]) === getNodeIntent(b.wrappedNodes[0]);
 exports.testUserIntent = testUserIntent;
 /**
  * @description Test if b is an interval node.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Not used.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node to be tested.
  */
-var testIsIntervalNode = function (a, b) { return b.children.length === 1; };
+const testIsIntervalNode = (a, b) => b.children.length === 1;
 exports.testIsIntervalNode = testIsIntervalNode;
 /**
  * @description Test if a and b are neighbours.
  * @param a {IGroupedTreeNode<ProvenanceNode>} - Node #1 to be tested.
  * @param b {IGroupedTreeNode<ProvenanceNode>} - Node #2 to be tested.
  */
-var testNeighbours = function (a, b) { return (0, aggregation_implementations_1.areNeighbours)(a, b); };
+const testNeighbours = (a, b) => (0, aggregation_implementations_1.areNeighbours)(a, b);
 exports.testNeighbours = testNeighbours;
 //////// Objects that represent the different data aggregation algorithms///////////
 /**Default Option as Raw Data */
@@ -140,7 +162,9 @@ exports.grouping = {
     tests: [exports.testUserIntent, exports.testIsIntervalNode],
     algorithm: aggregation_implementations_1.group,
     arg: false,
-    description: "This algorithm groups nodes of the same category (color).\nThe remaining nodes represent the last interactions of category groups.\nThe grouped nodes must have connectivity equal to two or less (interval nodes or leaves) and must belong to the same category group."
+    description: `This algorithm groups nodes of the same category (color).
+The remaining nodes represent the last interactions of category groups.
+The grouped nodes must have connectivity equal to two or less (interval nodes or leaves) and must belong to the same category group.`
 };
 /**
  * @description Object of the interface DataAggregation<ProvenanceNode>.
@@ -150,7 +174,10 @@ exports.compression = {
     tests: [exports.testIsIntervalNode, exports.testIsIntervalNode],
     algorithm: aggregation_implementations_1.compress,
     arg: false,
-    description: "This algorithm groups nodes with connectivity equals to two (interval nodes). However,\nthe node which 'absorbs' the grouped nodes and which is still visualized can be of any connectivity\nThe remaining nodes are nodes with connectivity different to two (leaves or subroots).\nThe nodes are grouped regardless their category."
+    description: `This algorithm groups nodes with connectivity equals to two (interval nodes). However,
+the node which 'absorbs' the grouped nodes and which is still visualized can be of any connectivity
+The remaining nodes are nodes with connectivity different to two (leaves or subroots).
+The nodes are grouped regardless their category.`
 };
 /**
  * @description Object of the interface DataAggregation<ProvenanceNode>.
@@ -160,7 +187,11 @@ exports.pruning = {
     tests: [exports.testIsIntervalNode],
     algorithm: aggregation_implementations_1.prune,
     arg: true,
-    description: "This algorithm groups nodes with connectivity equals to two (interval nodes), regardless their category.\nA chosen parameter indicates the minimum height that a subtree must have to be shown.\nE.g., if the chosen parameter is two, the subtrees with height two or less than two will be grouped.\nThe grouped subtrees are represented by their subroot.\nThe main tree is not considered as a subtree."
+    description: `This algorithm groups nodes with connectivity equals to two (interval nodes), regardless their category.
+A chosen parameter indicates the minimum height that a subtree must have to be shown.
+E.g., if the chosen parameter is two, the subtrees with height two or less than two will be grouped.
+The grouped subtrees are represented by their subroot.
+The main tree is not considered as a subtree.`
 };
 /**
  * @description Object of the interface DataAggregation<ProvenanceNode>.

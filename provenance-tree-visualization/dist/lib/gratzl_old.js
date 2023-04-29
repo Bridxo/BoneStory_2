@@ -10,9 +10,9 @@ function depthSort(a, b) {
     return 0;
 }
 function GratzlLayoutOld() {
-    var dx = 5;
-    var dy = 50;
-    var widths = [];
+    let dx = 5;
+    let dy = 50;
+    const widths = [];
     function setTreeX(node, val) {
         node.xOffset = val;
         widths[node.depth] = val;
@@ -20,9 +20,9 @@ function GratzlLayoutOld() {
             node
                 .leaves()
                 .sort(depthSort)
-                .forEach(function (leaf) {
+                .forEach(leaf => {
                 if (typeof leaf.xOffset === "undefined") {
-                    var width = Math.max.apply(null, widths.slice(node.depth, leaf.depth + 1));
+                    const width = Math.max.apply(null, widths.slice(node.depth, leaf.depth + 1));
                     setTreeX(leaf, val > width ? val : width + 1);
                 }
             });
@@ -31,16 +31,16 @@ function GratzlLayoutOld() {
             setTreeX(node.parent, val);
         }
     }
-    var tree = Object.assign(function (_root, _activeNode) {
+    const tree = Object.assign((_root, _activeNode) => {
         /*
          * set maxDescendantDepth on each node,
          * which is the depth of its deepest child
          *
          * */
-        var root = _root;
-        var activeNode = _activeNode;
-        root.leaves().forEach(function (leaf) {
-            leaf.ancestors().forEach(function (leafAncestor) {
+        const root = _root;
+        const activeNode = _activeNode;
+        root.leaves().forEach(leaf => {
+            leaf.ancestors().forEach(leafAncestor => {
                 if (!leafAncestor.maxDescendantDepth ||
                     leaf.depth > leafAncestor.maxDescendantDepth) {
                     leafAncestor.maxDescendantDepth = leaf.depth;
@@ -48,21 +48,21 @@ function GratzlLayoutOld() {
             });
         });
         /* rendering should start at the deepest leaf of activeNode. */
-        var deepestLeaf = activeNode;
-        activeNode.leaves().forEach(function (leaf) {
+        let deepestLeaf = activeNode;
+        activeNode.leaves().forEach(leaf => {
             if (deepestLeaf.depth < leaf.depth) {
                 deepestLeaf = leaf;
             }
         });
         setTreeX(deepestLeaf, 0);
-        var maxX = Math.max.apply(null, widths);
-        var maxY = Math.max.apply(null, root.leaves().map(function (leaf) { return leaf.depth; }));
-        root.each(function (node) {
+        const maxX = Math.max.apply(null, widths);
+        const maxY = Math.max.apply(null, root.leaves().map(leaf => leaf.depth));
+        root.each(node => {
             sizeNode(node, maxX, maxY);
         });
         return root;
     }, {
-        size: (function (x) {
+        size: ((x) => {
             return x ? ((dx = +x[0]), (dy = +x[1]), tree) : [dx, dy];
         })
     });
