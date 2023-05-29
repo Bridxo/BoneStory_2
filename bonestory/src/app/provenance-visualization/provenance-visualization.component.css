@@ -59,6 +59,12 @@ app-provenance-visualization {
     opacity: 1;
 }
 
+.node path {
+    stroke: #000000; 
+    stroke-width: 0.3px;
+    opacity: 1;
+}
+
 .node rect.keynode {
     stroke: #000000;
     stroke-width: 1px;
@@ -106,9 +112,15 @@ app-provenance-visualization {
     
 }
 
+.node path.node-activepie {    
+    stroke: #000000;  
+    stroke-width: 1.5px;  
+}
 
-.node.node-active {    
-    stroke: #4ba3bd;    
+
+.node path.node-active {    
+    stroke: #000000;  
+    stroke-width: 1.5px;  
 }
 
 .node.node-active circle {
@@ -118,7 +130,12 @@ app-provenance-visualization {
 
 .node.node-active rect {
     stroke: #000000;
-    stroke-width: 1.5px;
+    stroke-width: 1.2px;
+}
+
+.node.node-active path {
+    stroke: #000000;
+    stroke-width: 1.0px;
 }
 
 .node text {

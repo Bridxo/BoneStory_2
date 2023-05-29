@@ -64,7 +64,7 @@ export class IntersectionManager {
     constructor(domElement, camera) {
         this.camera = camera;
         this.domElement = domElement;
-        domElement.addEventListener('dblclick', this.onMouseDoubleclick, false);
+        domElement.addEventListener('dblclick', [], false);
         domElement.addEventListener('mousemove', this.onMouseMove, false);
         domElement.addEventListener('mousedown', this.onMouseDown, false);
         domElement.addEventListener('mouseup', this.onMouseUp, false);

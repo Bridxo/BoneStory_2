@@ -3,7 +3,7 @@ app-brainvis-canvas {
   width: 100%;
   height: 100%;
 }
-#gui { position: absolute; top: 2px; left: 2px; overflow-y: auto !important; max-height: 80vh;}
+#gui { position: absolute; top: 2px; left: 2px; overflow-y: auto !important; max-height: 75%;}
 
 #bottom-container {
   position: absolute;
@@ -79,29 +79,88 @@ app-brainvis-canvas {
   position: absolute;
   right:20%;
   z-index: 9999;
+  transition: display 0.5s ease-in-out;
 }
-
+#sidenav-trigger:hover {
+  color: black;
+}
 #upload_btn {
-  text-align: center;
-  font-size: 19px;
-  border-radius: 50%;
-  color:rgb(255, 255, 255);
-  justify-content: center;
-  text-decoration: none;
+  display: flex; /* enables flex layout */
+  justify-content: center; /* centers content horizontally */
+  align-items: center; /* centers content vertically */
+  line-height: 7px;
+  border: none;
+  color: white;
+
   position: absolute;
   right : 22%;
+  transition: all 0.3s ease;
+
   z-index: 9999;
 }
+
+#upload_btn:hover {
+  color: black; /* color on mouse hover */
+}
+
 #saveprov_btn {
-  text-align: center;
-  font-size: 19px;
-  border-radius: 50%;
-  color:rgb(255, 255, 255);
-  justify-content: center;
-  text-decoration: none;
   position: absolute;
-  right : 24.5%;
-  z-index: 9999;
+  right: 24.5%;
+  color: white;
+  border: none;
+  border-radius: 0; 
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+#saveprov_btn b {
+  font-size: 12px;
+  text-align: center;
+}
+
+#saveprov_btn .icons {
+  display: none;
+  position: absolute;
+  bottom: 0%;
+  left: 50%;
+  transform: translate(-50%, 120%);
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+#saveprov_btn .icons::before {
+  content: "";
+  position: absolute;
+  top: -25%;
+  left: 50%;
+  margin-left: -10px;
+  border-width: 10px;
+  border-style: solid;
+  border-color: white transparent transparent transparent;
+  transform: rotate(180deg); /* Rotate the arrow */
+
+}
+
+#saveprov_btn .icons button {
+  background: none;
+  border: none;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+#saveprov_btn:hover .icons {
+  display: block;
+}
+
+#saveprov_btn:hover {
+  color: black;
 }
 
 #demo_btn {
@@ -114,53 +173,55 @@ app-brainvis-canvas {
   position: absolute;
   right : 27%;
   z-index: 9999;
+  transition: all 0.3s ease;
 }
 
+#demo_btn:hover {
+  color: black; /* color on mouse hover */
+}
+
+
 .provslider {
-  top: 23%;
+  top: 27%;
+  left: -3%;
   display: flex;
   flex-direction: column;
   overflow-x: visible;
   z-index: 1;
   overflow: visible; /* Set the overflow property to visible */
+  user-select: none;
+  -moz-user-select: none; /* For Firefox */
+  -webkit-user-select: none; /* For Safari */
+  -ms-user-select: none; /* For IE 10+ */
+  user-select: none; /* Standard syntax */
 }
-.provslider .mat-slider-thumb-label {
+.mat-tooltip-component {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+.mat-slider-thumb-label {
   transform: translateY(50%) rotate(-90deg) !important;
   transform-origin: right center !important;
   z-index: 9999;
+  user-select: none;
+  -moz-user-select: none; /* For Firefox */
+  -webkit-user-select: none; /* For Safari */
+  -ms-user-select: none; /* For IE 10+ */
+  user-select: none; /* Standard syntax */
 }
+
+
 
 
 .annotation {
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  margin-left: 15px;
-  margin-top: 15px;
-  padding: 1em;
-  width: 200px;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: .5em;
-  font-size: 12px;
-  line-height: 1.2;
-  transition: opacity .5s;
-}
-
-.annotation::before {
-  content: '1';
-  position: absolute;
-  top: -30px;
-  left: -30px;
-  width: 30px;
-  height: 30px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  font-size: 16px;
-  line-height: 30px;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.8);
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 5px;
+  pointer-events: none; /* This makes the annotation 'click-through' */
 }
 
 .mode-widget {

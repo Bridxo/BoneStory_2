@@ -2,6 +2,7 @@ import { Component, ElementRef, OnInit, ViewEncapsulation } from '@angular/core'
 import { ProvenanceService } from '../provenance.service';
 import { ProvenanceTreeVisualization } from '@visualstorytelling/provenance-tree-visualization';
 import {addVisualizationListeners} from './visualizationListeners';
+import { get } from 'lodash';
 
 @Component({
   selector: 'app-provenance-visualization',
@@ -13,6 +14,7 @@ export class ProvenanceVisualizationComponent implements OnInit {
   private _viz: ProvenanceTreeVisualization;
   public slider_value = 0;
   constructor(private elementRef: ElementRef, private provenance: ProvenanceService) {
+    window.addEventListener('resize', this.getfullsizeview.bind(this));
   }
 
   ngOnInit() {
@@ -29,12 +31,20 @@ export class ProvenanceVisualizationComponent implements OnInit {
   }
 
   getnodenumber() {
-    return this._viz.numberofnodes - this._viz.numberOfUniqueValues - 1;
+    try{
+      return this._viz.numberofnodes - this._viz.numberOfUniqueValues;
+    }catch(error){
+      return 0;
+    }
   }
   setgroupnumber() {
     console.log(this.slider_value);
     this._viz.groupnumber = this.slider_value;
     this.update();
+  }
+
+  getfullsizeview() {
+    this._viz.getFullsizeview();
   }
 
 }
@@ -44,6 +54,5 @@ export class ProvenanceVisualizationComponent implements OnInit {
   blockContextMenu = function (evt: any) {
       evt.preventDefault();
   };
-
   window.addEventListener('contextmenu', blockContextMenu);
 })();

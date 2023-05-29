@@ -4,47 +4,35 @@ exports.addLegend = void 0;
 const legendData = {
     legends: [
         {
-            name: 'bookmarked',
-            color: '#fff',
-            shape: 'circle',
-            opacity: 0.3
-        },
-        {
-            name: 'exploration',
+            name: 'Camera',
             color: '#8dd3c7',
             shape: 'circle',
-            opacity: 0.3
+            stroke: '#000000'
         },
         {
-            name: 'selection',
+            name: 'Object Trans',
             color: '#80b1d3',
             shape: 'circle',
-            opacity: 0.3
+            stroke: '#000000'
         },
         {
-            name: 'configuration',
+            name: 'Object Selection',
             color: '#fdb462',
             shape: 'circle',
-            opacity: 0.3
+            stroke: '#000000'
         },
         {
-            name: 'derivation',
-            color: '#fb8072',
+            name: 'Story Node',
+            color: '#f9f9f9',
             shape: 'circle',
-            opacity: 0.3
+            stroke: '#ff0000'
         },
         {
-            name: 'provenance',
+            name: 'Measurement',
             color: '#bebada',
             shape: 'circle',
-            opacity: 0.3
+            stroke: '#000000'
         },
-        {
-            name: 'annotation',
-            color: '#EEE932',
-            shape: 'circle',
-            opacity: 0.3
-        }
     ],
     commands: [
         'HOW TO PERFORM SOME INTERACTIONS:',
@@ -66,33 +54,51 @@ const legendData = {
     ]
 };
 function addLegend(elm) {
-    const legendContainer = elm.append('div').attr('class', 'legend').attr('id', 'legendContainer').attr('style', 'margin-bottom: 15%; display: none;');
-    const legendList = legendContainer.append('ul');
+    const legendContainer = elm
+        .append('div')
+        .attr('class', 'legend')
+        .attr('id', 'legendContainer')
+        .style('position', 'absolute')
+        .style('z-index', '1')
+        .style('bottom', '1%')
+        .style('right', '1%')
+        .style('display', 'none');
+    const containerWidth = window.innerWidth * 0.2;
+    const legendWidth = containerWidth * 0.8;
+    const legendBox = legendContainer
+        .append('div')
+        .attr('class', 'legend-box')
+        .style('background-color', '#f9f9f9')
+        .style('border', '1px solid #ddd')
+        .style('padding', '10px')
+        .style('border-radius', '4px')
+        .style('width', `${legendWidth}px`)
+        .style('min-height', '60px');
+    const legendList = legendBox.append('ul');
     const listItem = legendList
         .selectAll('li')
         .data(legendData.legends)
         .enter()
-        .append('li');
+        .append('li')
+        .style('list-style-type', 'none')
+        .style('margin-bottom', '5px')
+        .style('display', 'flex')
+        .style('align-items', 'center');
+    const legendSvg = listItem
+        .append('svg')
+        .attr('width', 12)
+        .attr('height', 12);
+    legendSvg.append('circle')
+        .attr('cx', 6)
+        .attr('cy', 6)
+        .attr('r', 6)
+        .style('fill', (d) => d.color)
+        .style('stroke', (d) => d.stroke || '#000000')
+        .style('stroke-width', '1px');
     listItem
-        .append('div')
-        .attr('class', (d) => {
-        if (d.name === 'bookmarked') {
-            return 'bookmarked';
-        }
-        else if (d.name === 'story') {
-            return 'story';
-        }
-        else if (d.name === 'loaded') {
-            return 'loaded';
-        }
-        else {
-            return 'circle';
-        }
-    })
-        .attr('style', (d) => `background-color:${d.color}`);
-    listItem.append('span').text((d) => {
-        return d.name;
-    });
+        .append('span')
+        .style('margin-left', '5px')
+        .text((d) => d.name);
 }
 exports.addLegend = addLegend;
 // export function addCommandsList(elm: any) {

@@ -27,6 +27,6 @@ export class ProvenanceSlidesComponent implements OnInit {
     this._deckViz = new SlideDeckVisualization(this._deck, this.elementRef.nativeElement.children[0]);
     (window as any).slideDeck = this._deck;
     (window as any).slideDeckViz = this._deckViz;
-    addListenersSlides(this._deckViz, this._deck, this.provenance);
+    (window as any).listenerslide = addListenersSlides(this._deckViz, this._deck, this.provenance);
   }
 }

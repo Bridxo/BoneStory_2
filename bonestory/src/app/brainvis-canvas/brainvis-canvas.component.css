@@ -3,3 +3,12 @@
 }
 
 #gui { position: absolute; top: 2px; left: 2px }
+
+.annotation {
+  position: absolute;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 5px;
+  pointer-events: none; /* This makes the annotation 'click-through' */
+}

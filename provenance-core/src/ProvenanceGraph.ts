@@ -46,11 +46,12 @@ export class ProvenanceGraph implements IProvenanceGraph {
           screenshot: ''
         },
         children: [],
-        artifacts: {}
+        artifacts: { name: [''], opacity: [0], hide_val: [false] }
       } as RootNode;
     }
     this.addNode(this.root);
     this._current = this.root;
+
   }
   id!: string;
 
@@ -60,6 +61,14 @@ export class ProvenanceGraph implements IProvenanceGraph {
     }
     this._nodes[node.id] = node;
     this._mitt.emit('nodeAdded', node);
+  }
+
+  removeNode(node: ProvenanceNode): void {
+    if (!this._nodes[node.id]) {
+      throw new Error('Node id not found');
+    }
+    delete this._nodes[node.id];
+    this._mitt.emit('nodeRemoved', node);
   }
 
   getNode(id: NodeIdentifier): ProvenanceNode {

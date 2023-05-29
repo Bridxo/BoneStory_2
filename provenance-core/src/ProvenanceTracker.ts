@@ -102,6 +102,9 @@ export class ProvenanceTracker implements IProvenanceTracker {
 
       newNode = createNewStateNode(currentNode, actionResult);
     }
+    //artifact part 
+    if((window as any).canvas.objstat != undefined)
+      newNode.artifacts = JSON.parse(JSON.stringify((window as any).canvas.objstat));
     //screen-shot part
     newNode.metadata.screenshot = await this.ScreenShot();
 
@@ -135,20 +138,30 @@ export class ProvenanceTracker implements IProvenanceTracker {
   }
   ScreenShot = async () => {
     let dataURL;
+    const grid_temp = (window as any).canvas.gridHelper.visible;
+    const axes_temp = (window as any).canvas.AxesHelper.visible;
     (window as any).canvas.gridHelper.visible = false;
     (window as any).canvas.AxesHelper.visible = false;
     (window as any).canvas.render();
     dataURL = (window as any).canvas.renderer.domElement.toDataURL('image/png');
-    (window as any).canvas.gridHelper.visible = true;
-    (window as any).canvas.AxesHelper.visible = true;
+    (window as any).canvas.gridHelper.visible = grid_temp;
+    (window as any).canvas.AxesHelper.visible = axes_temp;
     // console.log(dataURL);
     return dataURL;
   }
   
-  calculateDifference(pos1: number[], pos2: number[]): number {
-    const xDiff = pos1[0] - pos2[0];
-    const yDiff = pos1[1] - pos2[1];
-    const zDiff = pos1[2] - pos2[2];
+  calculateDifference(pos1: any, pos2: any): number {
+    let xDiff, yDiff, zDiff;
+    if(pos1.x){
+      xDiff = pos1.x - pos2.x;
+      yDiff = pos1.y - pos2.y;
+      zDiff = pos1.z - pos2.z;
+    }
+    else{
+      xDiff = pos1[0] - pos2[0];
+      yDiff = pos1[1] - pos2[1];
+      zDiff = pos1[2] - pos2[2];
+    }
     return Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
   }
 
@@ -160,33 +173,17 @@ export class ProvenanceTracker implements IProvenanceTracker {
       'CameraMove': 1,
       'CameraPan': 1,
       'CameraZoom': 1,
-      'ViewpointFront': 1.5,
-      'ViewpointBack': 1.5,
-      'ViewpointLeft': 1.5,
-      'ViewpointRight': 1.5,
-      'ViewpointTop': 1.5,
-      'ViewpointBottom': 1.5,
+      'ViewpointFront': 1,
+      'ViewpointBack': 1,
+      'ViewpointLeft': 1,
+      'ViewpointRight': 1,
+      'ViewpointTop': 1,
+      'ViewpointBottom': 1,
       'SelectObject': 2,
       'TranslateObject': 3.1,
       'RotateObject': 3.6,
-      'Measurement': 4.6,
-      'Annotation': 5.6
-    };
-    const onehot_general = {
-      'idle': 1,
-      'f0': 2,
-      'f1': 3,
-      'f2': 4,
-      'f3': 5,
-      'f4': 6,
-      'f5': 7,
-      'f6': 8,
-      'f7': 9,
-      'f8': 10,
-      'f9': 11,
-      'f10': 12,
-      'f11': 13,
-      'f12': 14
+      'Measurement': 6.6,
+      'Annotation': 7.6
     };
   if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group
     && NewNode.label === NewNode.parent.label)//같같
@@ -196,11 +193,11 @@ export class ProvenanceTracker implements IProvenanceTracker {
   else if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group
     && NewNode.label !== NewNode.parent.label)//같다
   {
-    H_val += Math.abs(onehot_action[NewNode.label as ActionLabels]-onehot_action[NewNode.parent.label as ActionLabels]) * 10000;
+    H_val += (Math.abs(onehot_action[NewNode.label as ActionLabels]-onehot_action[NewNode.parent.label as ActionLabels]) + 0.1) * 10000;
   }
   else // 다다
   {
-    H_val += 50000;
+    H_val += 100000;
   }
   // // Find general value of the node.
   // H_val += onehot_general['idle'];
@@ -215,8 +212,8 @@ export class ProvenanceTracker implements IProvenanceTracker {
 
 
     if (doArgs && undoArgs && NewNode.label !=='SelectObject' && NewNode.label !=='Measurement' && NewNode.label !=='Annotation' && NewNode.label !=='RotateObject') {
-      const do_position = doArgs[0].position || doArgs[0];
-      const undo_position = undoArgs[0].position || undoArgs[0];
+      const do_position = doArgs[0].position || doArgs[1];
+      const undo_position = undoArgs[0].position || undoArgs[1];
       const diff = this.calculateDifference(do_position, undo_position);
       const maxValue = NewNode.label === 'TranslateObject' ? 1000 : 5000;
       const normalizedValue = this.normalizeValue(diff, 0, maxValue, 0, 1023);
@@ -225,7 +222,7 @@ export class ProvenanceTracker implements IProvenanceTracker {
       const do_position = doArgs;
       const undo_position = undoArgs;
       const diff = Math.abs(do_position[0]._x - undo_position[0]._x) + Math.abs(do_position[0]._y - undo_position[0]._y) + Math.abs(do_position[0]._z - undo_position[0]._z);
-      const diff2 = this.calculateDifference([do_position[1].x, do_position[1].y, do_position[1].z], [undo_position[1].x, undo_position[1].y, undo_position[1].z]);
+      const diff2 = this.calculateDifference(do_position[1], undo_position[1]);
       const normalizedValue = this.normalizeValue(diff+diff2, 0, 540+1500, 0, 1023);
       H_val += normalizedValue;
     } else {

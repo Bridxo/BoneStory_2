@@ -7,7 +7,6 @@ import { provGraphControls } from './controls';
 import { IHierarchyPointNodeWithMaxDepth } from './gratzl';
 import { IGroupedTreeNode,cam_test } from './utils';
 import { NodeAggregator, transferToParent, transferChildren, transferChildren_2 } from './aggregation/aggregation-implementations';
-
 import {
   getNodeIntent,
   getNodeRenderer,
@@ -51,6 +50,8 @@ export class ProvenanceTreeVisualization {
   public camera_show: boolean = true;
   public colorScheme: any;
   public numberofnodes: number = 1;
+  public numberofnodeswocam : number = 0;
+  public numberofnodeswcam: number = 0;
   public numberOfUniqueValues: number = 1;
   public groupnumber: number = 0;
   public real_traverser: any;
@@ -83,15 +84,16 @@ export class ProvenanceTreeVisualization {
   public mergingEnabled: boolean = false;
   public transferringEnabled: boolean = false;
   public copyingEnabled: boolean = false;
+  public activeleave: any;
 
   constructor(traverser: ProvenanceGraphTraverser, elm: HTMLDivElement) {
     this.traverser = traverser;
     this.colorScheme = d3.scaleOrdinal(d3.schemeAccent);
+
     this.container = d3.select(elm)
       .append('div')
       .attr('class', 'visualizationContainer')
       .attr('style', 'width: 100%; height:' + `${window.innerHeight}` + 'px');
-
     provGraphControls(this);
 
     // Append svg element
@@ -111,28 +113,29 @@ export class ProvenanceTreeVisualization {
     // Disable dbclick zoom
     this.svg.on('dblclick.zoom', null);
 
-    traverser.graph.on('currentChanged', () => {
-      this.update();
-      (window as any).slideDeckViz.onChange(traverser.graph.current);
+    traverser.graph.on('currentChanged', async () => {
+      await this.update();
+      (window as any).slideDeckViz.onChange(this.activeleave);
       (window as any).slideDeckViz.provchanged(traverser.graph.current);
-
-
     });
 
     traverser.graph.on('nodeChanged', () => {
       this.update();
     });
 
-    traverser.graph.on('nodeAdded', () => {
+    traverser.graph.on('nodeAdded', (event) => {
       this.currentHierarchyNodelength += 1.0;
       this.scaleToFit();
-      this.numberofnodes++;
+      this.numberofnodeswcam++;
+      if(!cam_test(event.label) && this.camera_show)
+        this.numberofnodeswocam++;
     });
 
     this.update();
     this.zoomer = d3.zoom() as any;
     this.setZoomExtent();
     this.svg.call(this.zoomer);
+    this.svg.on('dblclick.zoom', (event) =>{return null;});
   }
   public setZoomExtent() {
     this.zoomer.scaleExtent([0.1, 10]).on('zoom', () => {
@@ -168,7 +171,7 @@ export class ProvenanceTreeVisualization {
         d3.zoomIdentity.translate(this.sizeX / 2.1, -trans_y).scale(maxScale)
       );
   }
-
+  
   public linkPath({
     source,
     target
@@ -238,6 +241,7 @@ export class ProvenanceTreeVisualization {
     }
     this.camera_show = this.camera_show ? false : true;
     if(!this.camera_show){
+      this.groupnumber = 0;
       const closenode = find_noncameranode(this.traverser);
       this.traverser.toStateNode(closenode.id, 0);
     }
@@ -277,7 +281,7 @@ export class ProvenanceTreeVisualization {
       for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
   
-        if (condition(child)) {
+        if (condition(child)&& !child.bookmarked) {
           // Remove the node from the children array
           node.children.splice(i, 1);
   
@@ -292,20 +296,64 @@ export class ProvenanceTreeVisualization {
         }
       }
     };
-  
-    // Create a shallow copy of the tree
-  
-    // Call the removeNodes function on the copied tree
     removeNodes(tree);
   
     return tree;
   }
+
+  public async deleteNode(): Promise<void> {
+    this.traverser.graph.current;
+    if (this.traverser.graph.current.label === "root") return;
+  
+    if (this.traverser.graph.current.label !== 'root') {
+      const current_node = this.traverser.graph.current as any;
+      const parent_node = current_node.parent;
+      const parent_children = parent_node.children;
+      const current_index = parent_children.indexOf(current_node);
+  
+      const deleteChildrenRecursively = (node: any) => {
+        if (node.children.length > 0) {
+          node.children.forEach((child: any) => deleteChildrenRecursively(child));
+        }
+        node.children = [];
+        if(cam_test(node.label)){
+          this.numberofnodeswocam--;
+          this.numberofnodeswcam--;
+        }
+
+        else
+          this.numberofnodeswcam--;
+
+        if(node.metadata.bookmarked)
+          (window as any).slideDeckViz.onDelete(null);
+      };
+  
+      deleteChildrenRecursively(current_node);
+      parent_children.splice(current_index, 1);
+      if(parent_node.children.length > 0)
+        this.traverser.toStateNode(parent_node.children[0].id, 0);
+      this.traverser.toStateNode(parent_node.id, 0);
+    }
+  }
+  
+  
   public Grouping_hierarchy<T>(wraproot: IGroupedTreeNode<ProvenanceNode>): d3.HierarchyNode<IGroupedTreeNode<ProvenanceNode>> {
     let hierarchyRoot = d3.hierarchy(wraproot);
-    let allnodes = hierarchyRoot.descendants().filter((d: any) => d.data.wrappedNodes[0].label !== 'Root');
-    let branches = allnodes.filter((d:any) => d.data.children.length > 1).length;
-    let bookmarks = allnodes.filter((d:any) => d.data.wrappedNodes[0].metadata.bookmarked).length;
-    allnodes = allnodes.filter((d:any) => d.parent.data.children.length == 1); // exclude branches merging
+    let allnodes = hierarchyRoot.descendants().filter((d: any) => d.data.wrappedNodes[0].label !== 'Root' && d.data.depth !== 1);
+    let branches = allnodes.reduce((sum: number, node: any) => {
+      if (node.data.children.length > 1) {
+        return sum + node.data.children.length;
+      } else {
+        return sum;
+      }
+    }, 0);
+    if(hierarchyRoot.children != undefined){
+      hierarchyRoot.children!.forEach((child: any) => {
+          branches++;
+      });
+    }
+    
+    allnodes = allnodes.filter((d:any) => d.parent.children.length == 1); // exclude branches merging
     allnodes.sort((a, b) => {
       return a.data.wrappedNodes[0].metadata.H_value - b.data.wrappedNodes[0].metadata.H_value;
     });
@@ -316,39 +364,31 @@ export class ProvenanceTreeVisualization {
     console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.O_group));
 
     //size-calculation (왔다 갔다 할 경우 고려해야함)
-    const uniqueValues = allnodes.map(node => node.data.wrappedNodes[0].metadata.O_group);
-    var outputArr = uniqueValues.filter((value, index, self) => {
-      return self.indexOf(value) === index;
-    });
-    this.numberOfUniqueValues = outputArr.length + branches + bookmarks;
+    const uniqueValues = allnodes
+    .filter(node => node.parent!.data.wrappedNodes[0].metadata.O_group != node.data.wrappedNodes[0].metadata.O_group && node.parent!.data.children.length == 1 && node.parent!.data.wrappedNodes[0].label != 'Root')
+    .map(node => node.data.wrappedNodes[0].metadata.O_group);
+
+    this.numberOfUniqueValues = uniqueValues.length + branches;
+    // console.log('uniqueValues', uniqueValues);
+    // console.log('branches', branches);
 
 
     const groupslicenodes = allnodes.slice(0, this.groupnumber);
     groupslicenodes.sort((a, b) => {return b.depth - a.depth});
-
-    // Group nodes by branchnumber
-    // const nodesByBranch = groupslicenodes.reduce((acc, node) => {
-    //   const branchNumber :number = node.data.wrappedNodes[0].metadata.branchnumber;
-    //   if (!acc[branchNumber]) {
-    //     acc[branchNumber] = [];
-    //   }
-    //   acc[branchNumber].push(node);
-    //   return acc;
-    // }, {});
-
-    // Extract values from nodesByBranch object into an array of arrays
-    // const nodesByBranchArr = Object.values(nodesByBranch);
-
-    // console.log(nodesByBranchArr);
     groupslicenodes.sort((a, b) => {return a.data.wrappedNodes[0].metadata.branchnumber - b.data.wrappedNodes[0].metadata.branchnumber})
     let Endnode = 0;
     let Startnode = 0;
     for(let i = 0; i<groupslicenodes.length; i++){
-      if(groupslicenodes[i].depth - groupslicenodes[i+1]?.depth == 1){
+      if (groupslicenodes[i].data.wrappedNodes[0].metadata.branchnumber != groupslicenodes[i+1]?.data.wrappedNodes[0].metadata.branchnumber)
+      {
+        transferChildren(groupslicenodes[i].parent!.parent! as any, groupslicenodes[i].parent! as any, groupslicenodes[i] as any);
+      }
+      else if(groupslicenodes[i].depth - groupslicenodes[i+1]?.depth == 1){
         Startnode = i;
         Endnode = i+1;
         for(Endnode; Endnode<groupslicenodes.length; Endnode++){
-          if(groupslicenodes[Endnode].depth - groupslicenodes[Endnode+1]?.depth != 1){
+          if(groupslicenodes[Endnode].depth - groupslicenodes[Endnode+1]?.depth != 1 || 
+            groupslicenodes[Endnode].data.wrappedNodes[0].metadata.branchnumber != groupslicenodes[Endnode+1]?.data.wrappedNodes[0].metadata.branchnumber){
             break;
           }
         }
@@ -356,28 +396,17 @@ export class ProvenanceTreeVisualization {
         i = Endnode;
       }
       else{
-        transferChildren(groupslicenodes[i].parent!.parent!.data as any, groupslicenodes[i].parent!.data as any, groupslicenodes[i].data as any);
+        transferChildren(groupslicenodes[i].parent!.parent! as any, groupslicenodes[i].parent! as any, groupslicenodes[i] as any);
       }
 
     }
-    // groupslicenodes.forEach((node) => transferChildren(node.parent!.parent!.data as any, node.parent!.data as any, node.data as any));
-    // for(let i = 0; i < this.groupnumber; i++){
-    
-    //   if (allnodes.length >= i && allnodes[i]?.parent?.data && allnodes[i].data) {
-    //     transferChildren(allnodes[i].parent!.parent!.data, allnodes[i].parent!.data, allnodes[i].data);
-    //   }
-    //  }
 
     hierarchyRoot = d3.hierarchy(wraproot); // Updated the treeRoot
-    allnodes = hierarchyRoot.descendants().filter((d: any) => d.data.wrappedNodes[0].label !== 'Root');
-    allnodes.sort((a, b) => {
-      return a.data.wrappedNodes[0].metadata.H_value - b.data.wrappedNodes[0].metadata.H_value;
-    });
     console.log('======After======')
     console.log(groupslicenodes);
-    console.log(allnodes.map(node => node.depth));
-    console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.H_value));
-    console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.O_group));
+    console.log(groupslicenodes.map(node => node.depth));
+    console.log(groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.H_value));
+    console.log(groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.O_group));
 
     return hierarchyRoot;
   }
@@ -385,32 +414,42 @@ export class ProvenanceTreeVisualization {
    * @description Update the tree layout.
    */
   public update = ()  =>  {
+    console.log('update');
+    this.traverser.graph.root.children.forEach((child: any) => {
+      child.metadata.H_value = 1000000;
+    });
     let wrappedRoot = wrapNode(this.traverser.graph.root);
     let clonedWrappedRoot = wrapNode(this.traverser.graph.root);
     let camhideNodes = this.removeNodesAndLinkChildren(clonedWrappedRoot, node => node.camera === true); 
 
     let hierarchyRoot;
     // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-    if (this.camera_show == true)
+    if (this.camera_show == true){
       // hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated the treeRoot
+      this.numberofnodes = this.numberofnodeswcam;
       hierarchyRoot = this.Grouping_hierarchy(wrappedRoot);
+      
+    }
+
     else{
       hierarchyRoot = d3.hierarchy(camhideNodes);
       if(cam_test(this.traverser.graph.current.label)){
         this.currentHierarchyNodelength = hierarchyRoot.path(this.keynode
           ).length;
         this.scaleToFit();
-        return ;
       }
+      this.numberofnodes = this.numberofnodeswocam;
+      hierarchyRoot = this.Grouping_hierarchy(camhideNodes);
     }
-    let currentHierarchyNode;
+    let currentHierarchyNode = undefined;
     hierarchyRoot.each(node => {
       if (node.data.wrappedNodes.includes(this.traverser.graph.current)) {
         currentHierarchyNode = node;
       }
     });
     if (currentHierarchyNode === undefined) {
-      this.traverser.toStateNode((this.traverser.graph.current as any).parent.id);
+      this.traverser.toStateNode(hierarchyRoot.leaves()[0].data.wrappedNodes[0].id);
+      this.traverser.toStateNode(this.traverser.graph.root.id);
       return;
     }
     this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode as d3.HierarchyNode<IGroupedTreeNode<ProvenanceNode>>).length;
@@ -420,10 +459,11 @@ export class ProvenanceTreeVisualization {
     const treemaxwidth = tree.descendants().map(function (item) {return item.x}).reduce(function(prev, current) {return (prev > current) ? prev : current});
     const treemaxlength = tree.descendants().map(function (item) {return item.y}).reduce(function(prev, current) {return (prev > current) ? prev : current});
     this.currentHierarchyMaxlength = treemaxlength;
-    const oldNodes = this.g.selectAll('g.node').data(treeNodes, (d: any) => {
+    const oldNodes = this.g.selectAll('g').data(treeNodes, (d: any) => {
       const data = d.data.wrappedNodes.map((n: any) => n.id).join();
       return data;
     });
+
     // console.log(treemaxwidth);
     this.TreeWidth = Math.max(this.TreeWidth,treemaxwidth);
     this.TreeLength = Math.max(this.TreeLength,treemaxlength);
@@ -439,43 +479,14 @@ export class ProvenanceTreeVisualization {
       );
 
     // node label
-    newNodes
-    .append('foreignObject')
-    .attr('class', 'circle-img')
-    .attr('width', 15)
-    .attr('height', 15)
-    .attr('x', 7)
-    .attr('y', -17)
-    .html(d => {
-      if (d.data.wrappedNodes[0].metadata.screenshot) {
-        return `<div><img src="${d.data.wrappedNodes[0].metadata.screenshot}" width="15" height="15" /></div>`;
-      } else {
-        return '';
-      }
-    })
-    
-  
-  newNodes
-    .append('text')
-    .attr('class', 'circle-label')
-    .text(d => groupNodeLabel(d.data)) // .text(d => d.data.neighbour.toString())
-    .attr('x', 7)
-    .attr('alignment-baseline', 'central');
+  let hoverTimeout: any;
 
-  // newNodes
-  //   .append('text')
-  //   .attr('class', 'depth-label')
-  //   .text(d => (d.data.wrappedNodes.length > 1)?d.data.wrappedNodes.length:'') // .text(d => d.data.neighbour.toString())
-  //   .attr('x', 0)
-  //   .attr('alignment-baseline', 'central');
-
-    // .call(this.wrap, 70);
     const updateNodes = newNodes.merge(oldNodes as any);
-
     updateNodes.selectAll('g.normal').remove();
     updateNodes.selectAll('g.bookmarked').remove();
     updateNodes.selectAll('.circle-text').remove();
-
+    updateNodes.selectAll('.circle-label').remove();
+    updateNodes.selectAll('.circle-img').remove();
     const getNodeSize = (node: any) => {
       let counter = 0;
       const countWrappedNodesRecursively = (currentNode: ProvenanceNode[]) => {
@@ -492,6 +503,61 @@ export class ProvenanceTreeVisualization {
       return Math.min(2.7 + 0.6 * node.wrappedNodes.length, 7);
     };
 
+    updateNodes
+    .append('text')
+    .attr('class', 'circle-label')
+    .text(d => groupNodeLabel(d.data)) // .text(d => d.data.neighbour.toString())
+    .attr('x', d => d.data.wrappedNodes.length<=4? 7:9)
+    .attr('alignment-baseline', 'central');
+
+
+  
+  updateNodes
+  .append('foreignObject')
+  .attr('class', 'circle-img')
+  .attr('width', 15)
+  .attr('height', 15)
+  .attr('x', 7)
+  .attr('y', -17)
+  .html(d => {
+    if (d.data.wrappedNodes[0].metadata.screenshot) {
+      return `<div><img class="thumbnail" src="${d.data.wrappedNodes[0].metadata.screenshot}" width="15" height="15" /></div>`;
+    } else {
+      return '';
+    }
+  })
+  .on('mouseenter', function (d: any) {
+    if (d.data.wrappedNodes[0].metadata.screenshot) {
+      // Clear any existing timeout
+      clearTimeout(hoverTimeout);
+
+      // Raise the current circle-img element to the top
+    d3.select(this).raise();
+
+      // Set a timeout to resize the circle-img and thumbnail after .5 second
+      hoverTimeout = setTimeout(() => {
+        this.setAttribute('width', '50');
+        this.setAttribute('height', '50');
+        const thumbnail = this.querySelector('.thumbnail');
+        if (thumbnail) {
+          (thumbnail as HTMLElement).style.width = '50px';
+          (thumbnail as HTMLElement).style.height = '50px';
+        }
+      }, 300);
+    }
+  })
+  .on('mouseleave', function () {
+    // Clear the timeout and reset the circle-img and thumbnail size
+    clearTimeout(hoverTimeout);
+    this.setAttribute('width', '15');
+    this.setAttribute('height', '15');
+    const thumbnail = this.querySelector('.thumbnail');
+    if (thumbnail) {
+      (thumbnail as HTMLElement).style.width = '15px';
+      (thumbnail as HTMLElement).style.height = '15px';
+    }
+  });
+
     // other nodes to circle
     updateNodes
       .filter((d: any) => {
@@ -503,35 +569,19 @@ export class ProvenanceTreeVisualization {
       .attr('class', 'normal');
 
 
-    updateNodes.on('contextmenu', (d: any) => {
-      this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
+    updateNodes.on('contextmenu', async (d: any) => {
+      if(d.data.wrappedNodes.length !=1)
+        return;
+      await this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
       this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
-      // this.update();
-      // (window as any).slideDeckViz.onChange();
       d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
       if (!d.data.wrappedNodes[0].metadata.bookmarked) {
-        (window as any).slideDeckViz.onDelete(null, this.traverser.graph.current);
-        this.traverser.graph.current.metadata.H_value-=50000;
+        (window as any).slideDeckViz.onDelete(null);
       } else {
         (window as any).slideDeckViz.onAdd(this.traverser.graph.current);
-        this.traverser.graph.current.metadata.H_value+=50000;
       }
       this.update();
     });
-
-    updateNodes.on('dblclick', (d: any) => {
-      this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
-      this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
-      // collapse the nodes as it is
-      // if((this.traverser.graph.current as any).parent.){
-      //   this.traverser.graph.current = this.traverser.graph.current.children[0];
-      // }
-      console.log('hello');
-      this.update();
-      // d.data.
-    });
-
-
     // set classes on node
     updateNodes
         .attr('class', 'node')
@@ -564,12 +614,17 @@ export class ProvenanceTreeVisualization {
 
       updateNodes
       .filter((d: any) => {
-        const ref = d.data.wrappedNodes.includes(this.traverser.graph.current);
-        return ref;
+        if(d.data.wrappedNodes.length == 1){
+          const ref = d.data.wrappedNodes.includes(this.traverser.graph.current);
+          return ref;
+        }
       })
       .attr('class', 'node branch-active neighbour node-active');
 
-
+    hierarchyRoot.leaves().forEach((node: any) => {
+      if(node.data.wrappedNodes[0].metadata.mainbranch)
+        this.activeleave = node;
+    });
     updateNodes
       .select('g')
       .append((d: any) => {
@@ -577,15 +632,86 @@ export class ProvenanceTreeVisualization {
           return node.metadata.bookmarked === true;
         });
         // Check if the node is bookmarked
-        if (isBookmarked) {
+        if (isBookmarked && d.data.wrappedNodes.length == 1) {
           // If yes, create a square shape
           return document.createElementNS(d3.namespaces.svg, 'rect');
-        } else {
+        } 
+        else {
           // Otherwise, create a circle shape
-          return document.createElementNS(d3.namespaces.svg, 'circle');
+        if(d.data.wrappedNodes.length == 1) 
+            return document.createElementNS(d3.namespaces.svg, 'circle');
+        else { // ordinal creator
+            // Initialize the colorScale array
+            const colorScale: string[] = [];
+
+            // Populate the colorScale array based on the conditions
+            d.data.wrappedNodes.forEach((node: any) => {
+              if (node.metadata.bookmarked === true) {
+                colorScale.push('#a94442');
+              } else if (node.label.includes('Camera') || node.label.includes('View')) {
+                colorScale.push('#60aa85');
+              } else if (node.label.includes('SelectObject')) {
+                colorScale.push('#b8852c');
+              } else if (node.label.includes('TranslateObject') || node.label.includes('RotateObject')) {
+                colorScale.push('#286090');
+              } else if (node.label.includes('Measurement')) {
+                colorScale.push('#9210dd');
+              }
+            });
+
+            // Create an array of objects containing label and value properties
+            const data = d.data.wrappedNodes.map((node: any) => ({
+              label: node, // Use the entire original node object as the label
+              value: 1
+            }));
+            // Calculate pie chart data
+            const pieChartData = d3.pie<{ label: object; value: number }>().value((d: any) => d.value)(data);
+            const pieGroup = document.createElementNS(d3.namespaces.svg, 'g');
+            pieChartData.reverse();
+            const arc = d3.arc().outerRadius(getNodeSize(d.data)).innerRadius(0);
+            let tempactive: SVGPathElement;
+            // Iterate over the pie chart data and create the pie slices
+            pieChartData.forEach((slice: any, index: number) => {
+
+              const path = document.createElementNS(d3.namespaces.svg, 'path');
+              const pathElement = path as SVGPathElement;
+              pathElement.setAttribute('d', arc(slice) as string);
+              pathElement.setAttribute('fill', colorScale[index]);
+            
+              // Add class to the path element based on the condition
+              if (data[index].label === this.traverser.graph.current) {
+                pathElement.setAttribute('class', 'node-activepie');
+                tempactive = pathElement;
+              }
+            
+              pathElement.addEventListener('click', async () => {
+                if(tempactive)
+                  tempactive.setAttribute('class', '');
+                await this.traverser.toStateNode(data[index].label.id, 0); // set to 0 to all trans related work
+            
+                // Add class to the clicked path element
+                pathElement.setAttribute('class', 'node-activepie');
+                tempactive = pathElement;
+              });
+              pathElement.addEventListener('contextmenu', async (event: MouseEvent) => {
+                await this.traverser.toStateNode(data[index].label.id, 0);
+                this.traverser.graph.current = this.traverser.graph.getNode(data[index].label.id);
+                data[index].label.metadata.bookmarked = !data[index].label.metadata.bookmarked;
+                if (!data[index].label.metadata.bookmarked) {
+                  (window as any).slideDeckViz.onDelete(null);
+                } else {
+                  (window as any).slideDeckViz.onAdd(this.traverser.graph.current);
+                }
+                this.update();
+              });
+              pieGroup.appendChild(path);
+            });
+
+            return pieGroup;
+          }
+          
         }
       })
-      .on('dblclick.zoom', null)
       .attr('class', (d: any) => {
         let classString = '';
         const isBookmarked = d.data.wrappedNodes.some((node: any) => {
@@ -655,19 +781,14 @@ export class ProvenanceTreeVisualization {
       .attr('class', (d: any) => 'circle-img renderer_' + getNodeRenderer(d.data.wrappedNodes[0]))
       .attr('visibility', (d: any) => (d.x === 0 ? 'visible' : 'hidden'));
     
-    updateNodes.on('click', d => {
-      
-      if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
-        this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
+    updateNodes.on('click', async (d,i) => {
+      if(d.data.wrappedNodes.length > 1){
+        // this.traverser.toStateNode(d.data.wrappedNodes[i].id, 0);
+      }
+      else if(d.data.wrappedNodes[0].id !== this.traverser.graph.current.id){
+        await this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
       }
     });
-
-    updateNodes
-    .append('text')
-    .attr('class', 'depth-label')
-    .text(d => (d.data.wrappedNodes.length > 1)?d.data.wrappedNodes.length:'') // .text(d => d.data.neighbour.toString())
-    .attr('x', -1)
-    .attr('alignment-baseline', 'central');
 
 
     updateNodes
@@ -688,6 +809,11 @@ export class ProvenanceTreeVisualization {
           return classString;
         }
       );
+
+    // Raise each node in newNodes in reverse order
+    updateNodes.nodes().slice().reverse().forEach(node => {
+      d3.select(node).raise();
+    });
 
     const oldLinks = this.g
       .selectAll('path.link')
@@ -720,7 +846,6 @@ export class ProvenanceTreeVisualization {
       caterpillar(updateNodes, treeNodes, updatedLinks, this);
     }
     this.real_traverser = updateNodes;
-    // this.scaleToFit();
   } // end update
 
   public getTraverser(): ProvenanceGraphTraverser {

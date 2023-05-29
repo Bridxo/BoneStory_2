@@ -6,11 +6,13 @@ import {ProvenanceService} from '../provenance.service';
 /** These are the listeners I used for the importing and exporting of the graph. They mostly come down to two `click` listeners I created for
  * two imput buttons.
  */
-
 export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, service: ProvenanceService) => {
 
-    let exportButton = document.getElementById('saveprov_btn');
+    let exportButton = document.getElementById('saveprov_btn_1');
     exportButton.addEventListener("click", (e: Event) => downloadJson(e, service.tracker.getGraph()));
+
+    let importButton = document.getElementById('saveprov_btn_2');
+    importButton.addEventListener('click', (e: Event) => importJson(e));
 
     // let importButton = document.getElementById('importButton');
     // importButton.addEventListener('click', (e: Event) => importJson(e));
@@ -18,18 +20,41 @@ export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, ser
 /** The next 3 functions are used for importing a graph. The first one (importJson) loads the file, the second one (getFile) reads the data in it
  * and the last one (restoreGraph) converts it to a graph object. 
  */
-
-    function importJson(e: Event) : void{
+async function getFileWithConfirm(message: string, acceptType: string, listener: (e: Event) => void): Promise<void> {
+    let confirmDialog = confirm(message);
+    if (confirmDialog) {
+      return new Promise((resolve, reject) => {
         let element = document.createElement('input');
         element.setAttribute('type', 'file');
         element.setAttribute('id', 'input-file');
-        element.setAttribute('accept', '.json');
+        element.setAttribute('accept', acceptType);
         element.style.display = 'none';
         document.body.appendChild(element);
-        document.getElementById('input-file').addEventListener('change', (e: Event) => getFile(e))
+        element.addEventListener('change', (e) => {
+          listener(e);
+          document.body.removeChild(element);
+          resolve();
+        })
         element.click(); // simulate click
-        document.body.removeChild(element);
+      });
     }
+  }
+
+  let isRunning = false;
+
+async function importJson(e: Event): Promise<void> {
+  if (isRunning) {
+    return;
+  }
+  isRunning = true;
+
+  try {
+    await getFileWithConfirm("Load provenance graph Json file (1/2)", ".json", getFile);
+    await getFileWithConfirm("Load story-slide Json file (2/2)", ".json", (window as any).listenerslide.getFile);
+  } finally {
+    isRunning = false;
+  }
+}
 
     function getFile(e: Event){
         let input = <HTMLInputElement>e.target;

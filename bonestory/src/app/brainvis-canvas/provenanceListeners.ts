@@ -37,8 +37,6 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
                 undo: 'CameraMove',
                 undoArguments: [(startEvent as any).orientation, 500],
               });
-              const a = new Vector3().fromArray((event as any).orientation.position);
-              const b = new Vector3().fromArray((startEvent as any).orientation.position);
             }
             else {
               tracker.applyAction({
@@ -135,15 +133,13 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
 
   canvas.addEventListener('transStart', (startEvent) => {
       const transEndListener =  debounce ((event) => {
-        let s_1 = new Vector3((startEvent as any).position[0],(startEvent as any).position[1],(startEvent as any).position[2]);
-        let s_2 = new Vector3((event as any).position[0],(event as any).position[1],(event as any).position[2]);
-        if(s_1.distanceTo(s_2)>0){
+        if(startEvent.position.distanceTo(event.position)>0){
           tracker.applyAction({
             metadata: {userIntent: 'selection'},
             do: 'TranslateObject',
-            doArguments: [(event as any).position,0],
+            doArguments: [event.rotation,event.position,0],
             undo: 'TranslateObject',
-            undoArguments: [(startEvent as any).position,0],
+            undoArguments: [startEvent.rotation,startEvent.position,0],
             });
         }
         canvas.removeEventListener('transEnd', transEndListener);

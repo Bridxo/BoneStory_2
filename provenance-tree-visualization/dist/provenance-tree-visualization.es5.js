@@ -1,5 +1,29 @@
-import { selectAll, hierarchy, namespaces, scaleOrdinal, schemeAccent, select, zoom, event as event$1, zoomIdentity } from 'd3';
+import { select, selectAll, hierarchy, namespaces, pie, arc, scaleOrdinal, schemeAccent, zoom, event as event$1, zoomIdentity } from 'd3';
 import { isStateNode } from '@visualstorytelling/provenance-core';
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+
+function __awaiter(thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
 
 function GratzlLayout(_root, _current) {
     const root = _root;
@@ -50,87 +74,110 @@ function provGraphControls(provenanceTreeVisualization) {
     var graph = provenanceTreeVisualization.traverser.graph;
     var traverser = provenanceTreeVisualization.traverser;
     window.onkeydown = keyPress;
+    let isProcessingKey = false; // Lock
     function keyPress(e) {
-        var evtobj = window.event ? event : e;
-        // ctrl + Z  / undo
-        if (evtobj.ctrlKey && evtobj.key === 'z' && graph.current.parent) {
-            var real_traverser = provenanceTreeVisualization.real_traverser;
-            var parent_id = '';
-            real_traverser
-                .filter((d) => {
-                const ref = d.data.wrappedNodes.includes(graph.current);
-                if (ref) {
-                    parent_id = d.parent.data.wrappedNodes[0].id;
-                }
-            });
-            if (provenanceTreeVisualization.groupnumber == 0)
-                traverser.toStateNode(parent_id, 250);
-            else
-                traverser.toStateNode(parent_id, 0);
-            provenanceTreeVisualization.getFullsizeview();
-            provenanceTreeVisualization.update();
-        }
-        // ctrl + X  / go to the root
-        else if (evtobj.ctrlKey && evtobj.key === 'x') {
-            traverser.toStateNode(graph.root.id, 0);
-        }
-        // ctrl + y  / redo
-        else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
-            var real_traverser = provenanceTreeVisualization.real_traverser;
-            var child_id = '';
-            real_traverser
-                .filter((d) => {
-                const ref = d.data.wrappedNodes.includes(graph.current);
-                if (ref) {
-                    for (const child of d.children) {
-                        if (child.data.wrappedNodes[0].metadata.mainbranch)
-                            child_id = child.data.wrappedNodes[0].id;
+        return __awaiter(this, void 0, void 0, function* () {
+            var evtobj = window.event ? event : e;
+            if (isProcessingKey)
+                return;
+            // ctrl + Z  / undo
+            if (evtobj.ctrlKey && evtobj.key === 'z' && graph.current.parent) {
+                isProcessingKey = true;
+                var real_traverser = provenanceTreeVisualization.real_traverser;
+                var parent_id = '';
+                real_traverser
+                    .filter((d) => {
+                    const ref = d.data.wrappedNodes.includes(graph.current);
+                    if (ref) {
+                        const index = d.data.wrappedNodes.indexOf(graph.current);
+                        if (index != d.data.wrappedNodes.length - 1)
+                            parent_id = d.data.wrappedNodes[index + 1].id;
+                        else
+                            parent_id = d.parent.data.wrappedNodes[0].id;
                     }
-                }
-            });
-            if (provenanceTreeVisualization.groupnumber == 0)
-                traverser.toStateNode(child_id, 250);
-            else
-                traverser.toStateNode(child_id, 0);
-            provenanceTreeVisualization.getFullsizeview();
+                });
+                yield traverser.toStateNode(parent_id, 250);
+                yield provenanceTreeVisualization.getFullsizeview();
+                yield provenanceTreeVisualization.update();
+                setTimeout(() => {
+                    isProcessingKey = false;
+                }, 300);
+            }
+            // ctrl + X  / go to the root
+            else if (evtobj.ctrlKey && evtobj.key === 'x') {
+                isProcessingKey = true;
+                yield traverser.toStateNode(graph.root.id, 0);
+                setTimeout(() => {
+                    isProcessingKey = false;
+                }, 250);
+            }
+            // ctrl + y  / redo
+            else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
+                isProcessingKey = true;
+                var real_traverser = provenanceTreeVisualization.real_traverser;
+                var child_id = '';
+                real_traverser
+                    .filter((d) => {
+                    const ref = d.data.wrappedNodes.includes(graph.current);
+                    if (ref) {
+                        const index = d.data.wrappedNodes.indexOf(graph.current);
+                        if (index != 0)
+                            child_id = d.data.wrappedNodes[index - 1].id;
+                        else {
+                            if (d.data.wrappedNodes[0].children) {
+                                d.data.wrappedNodes[0].children.forEach((child) => {
+                                    if (child.metadata.mainbranch) {
+                                        child_id = child.id;
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+                yield traverser.toStateNode(child_id, 250);
+                yield provenanceTreeVisualization.getFullsizeview();
+                yield provenanceTreeVisualization.update();
+                setTimeout(() => {
+                    isProcessingKey = false;
+                }, 300);
+            }
+            // ctrl + Q  / add the current node to the story
+            else if (evtobj.keyCode === 81 && evtobj.altKey) {
+                graph.current.metadata.story = true;
+                window.slideDeck.onAdd(graph.current);
+            }
+            // // ctrl + 1  / all neighbour nodes are added to the slide deck (by creation order)
+            // else if (evtobj.keyCode === 49 && evtobj.altKey) {
+            //     let nodes = graph.getNodes();
+            //     var arrayNodes = [];
+            //     for (const nodeId of Object.keys(nodes)) {
+            //         let node = nodes[nodeId];
+            //         arrayNodes.push(node);
+            //     }
+            //     for (const node of arrayNodes) {
+            //         if (((node.metadata.creationOrder > graph.current.metadata.creationOrder - 2) == true) &&     // the range can be adjusted
+            //             ((node.metadata.creationOrder < graph.current.metadata.creationOrder + 2) == true)) {
+            //             node.metadata.story = true;
+            //             (window as any).slideDeck.onAdd(node);
+            //         }
+            //     }
+            // }
+            // // ctrl + W  / derivation and annotation (by creation order)
+            // else if (evtobj.keyCode === 87 && evtobj.altKey) {
+            //     let nodes = graph.getNodes();
+            //     var arrayNodes: any[] = [];
+            //     for (const nodeId of Object.keys(nodes)) {
+            //         let node = nodes[nodeId];
+            //         arrayNodes.push(node);
+            //     }
+            //     arrayNodes.shift();
+            //     for (const node of (arrayNodes as any).filter((node: any) => node.action.metadata.userIntent == 'derivation' || 'annotation')) {
+            //         node.metadata.story = true;
+            //         (window as any).slideDeck.onAdd(node);
+            //     }
+            // }
             provenanceTreeVisualization.update();
-        }
-        // ctrl + Q  / add the current node to the story
-        else if (evtobj.keyCode === 81 && evtobj.altKey) {
-            graph.current.metadata.story = true;
-            window.slideDeck.onAdd(graph.current);
-        }
-        // // ctrl + 1  / all neighbour nodes are added to the slide deck (by creation order)
-        // else if (evtobj.keyCode === 49 && evtobj.altKey) {
-        //     let nodes = graph.getNodes();
-        //     var arrayNodes = [];
-        //     for (const nodeId of Object.keys(nodes)) {
-        //         let node = nodes[nodeId];
-        //         arrayNodes.push(node);
-        //     }
-        //     for (const node of arrayNodes) {
-        //         if (((node.metadata.creationOrder > graph.current.metadata.creationOrder - 2) == true) &&     // the range can be adjusted
-        //             ((node.metadata.creationOrder < graph.current.metadata.creationOrder + 2) == true)) {
-        //             node.metadata.story = true;
-        //             (window as any).slideDeck.onAdd(node);
-        //         }
-        //     }
-        // }
-        // // ctrl + W  / derivation and annotation (by creation order)
-        // else if (evtobj.keyCode === 87 && evtobj.altKey) {
-        //     let nodes = graph.getNodes();
-        //     var arrayNodes: any[] = [];
-        //     for (const nodeId of Object.keys(nodes)) {
-        //         let node = nodes[nodeId];
-        //         arrayNodes.push(node);
-        //     }
-        //     arrayNodes.shift();
-        //     for (const node of (arrayNodes as any).filter((node: any) => node.action.metadata.userIntent == 'derivation' || 'annotation')) {
-        //         node.metadata.story = true;
-        //         (window as any).slideDeck.onAdd(node);
-        //     }
-        // }
-        provenanceTreeVisualization.update();
+        });
     }
     // ngAfterViewChecked() {
     //   this._viz.setZoomExtent();
@@ -160,23 +207,23 @@ const cam_test = (label) => {
  */
 function transferChildren(node, child, grandChild) {
     //data part
-    node.children.splice(node.children.indexOf(child), 1);
-    child.children.splice(child.children.indexOf(grandChild), 1);
-    grandChild.wrappedNodes.push(...child.wrappedNodes);
-    node.children.push(grandChild);
+    node.data.children.splice(node.data.children.indexOf(child.data), 1);
+    grandChild.data.wrappedNodes.push(...child.data.wrappedNodes);
+    child.data.children.splice(child.data.children.indexOf(grandChild.data), 1);
+    node.data.children.push(grandChild.data);
 }
 function transferChildren_2(Startparentnode, Startnode, Endnode) {
     //data part
     let tempNode = Endnode.parent;
     let superParent = Startparentnode.parent;
     do {
-        tempNode.data.children.splice(tempNode.children[0]);
+        tempNode.data.children.splice(tempNode.data.children.indexOf(Endnode.data), 1);
         Endnode.data.wrappedNodes.push(...tempNode.data.wrappedNodes);
         tempNode = tempNode.parent;
     } while (tempNode.data != Startparentnode.data);
-    Startparentnode.data.children.splice(Startparentnode.children.indexOf(Startnode), 1);
+    Startparentnode.data.children.splice(Startparentnode.data.children.indexOf(Startnode.data), 1);
     Endnode.data.wrappedNodes.push(...Startparentnode.data.wrappedNodes);
-    superParent.data.children.splice(superParent.children.indexOf(Startparentnode), 1);
+    superParent.data.children.splice(superParent.data.children.indexOf(Startparentnode.data), 1);
     superParent.data.children.push(Endnode.data);
 }
 // /**
@@ -271,6 +318,14 @@ const groupNodeLabel = (node) => {
                     label = label + "Measure,";
             }
             label = label.slice(0, -1);
+            if (label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 3)
+                label = node.wrappedNodes[0].metadata.O_group;
+            if (label == 'Object')
+                label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            if (label == 'SelectObject')
+                label = label.slice(0, -6) + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            if (label == 'Camera')
+                label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
             return label;
         }
     }
@@ -319,16 +374,141 @@ const rawData = {
     description: "No algorithm is applied. The full provenance data is shown."
 };
 
+const legendData = {
+    legends: [
+        {
+            name: 'Camera',
+            color: '#8dd3c7',
+            shape: 'circle',
+            stroke: '#000000'
+        },
+        {
+            name: 'Object Trans',
+            color: '#80b1d3',
+            shape: 'circle',
+            stroke: '#000000'
+        },
+        {
+            name: 'Object Selection',
+            color: '#fdb462',
+            shape: 'circle',
+            stroke: '#000000'
+        },
+        {
+            name: 'Story Node',
+            color: '#f9f9f9',
+            shape: 'circle',
+            stroke: '#ff0000'
+        },
+        {
+            name: 'Measurement',
+            color: '#bebada',
+            shape: 'circle',
+            stroke: '#000000'
+        },
+    ],
+    commands: [
+        'HOW TO PERFORM SOME INTERACTIONS:',
+        '- RIGHT-CLICK+DRAGGING on imaging data = Zoom the imaging data',
+        '- SHIFT+CLICK on imaging data = Magnify a view',
+        '- ALT+RIGHT CLICK on measurements = Delete a measurement',
+        '- RIGHT CLICK on graph nodes = Bookmark a node and to add one slide representing the current state to the storyline',
+        '- SCROLLING on graph = Zoom the graph',
+        '- SHIFT+SCROLLING on storyline = Scale the graph',
+        '- SHIFT+DRAGGING on text box = Move the text box',
+        '- SCROLLING on storyline = Slide the graph'
+    ],
+    tasks: [
+        'TASKS TO BE PERFORMED:',
+        '- TASK 1 = Explore the imaging data to find all nodules/anomalies in it.',
+        '- TASK 2 = Measure the diameter of all the nodules/anomalies found in the imaging data.',
+        '- TASK 3 = Create annotations and/or make additional measurements on the nodules/anomalies found in the imaging data.',
+        '- TASK 4 = Create a text report and a visual data story to communicate your findings to collaborators.'
+    ]
+};
+function addLegend(elm) {
+    const legendContainer = elm
+        .append('div')
+        .attr('class', 'legend')
+        .attr('id', 'legendContainer')
+        .style('position', 'absolute')
+        .style('z-index', '1')
+        .style('bottom', '1%')
+        .style('right', '1%')
+        .style('display', 'none');
+    const containerWidth = window.innerWidth * 0.2;
+    const legendWidth = containerWidth * 0.8;
+    const legendBox = legendContainer
+        .append('div')
+        .attr('class', 'legend-box')
+        .style('background-color', '#f9f9f9')
+        .style('border', '1px solid #ddd')
+        .style('padding', '10px')
+        .style('border-radius', '4px')
+        .style('width', `${legendWidth}px`)
+        .style('min-height', '60px');
+    const legendList = legendBox.append('ul');
+    const listItem = legendList
+        .selectAll('li')
+        .data(legendData.legends)
+        .enter()
+        .append('li')
+        .style('list-style-type', 'none')
+        .style('margin-bottom', '5px')
+        .style('display', 'flex')
+        .style('align-items', 'center');
+    const legendSvg = listItem
+        .append('svg')
+        .attr('width', 12)
+        .attr('height', 12);
+    legendSvg.append('circle')
+        .attr('cx', 6)
+        .attr('cy', 6)
+        .attr('r', 6)
+        .style('fill', (d) => d.color)
+        .style('stroke', (d) => d.stroke || '#000000')
+        .style('stroke-width', '1px');
+    listItem
+        .append('span')
+        .style('margin-left', '5px')
+        .text((d) => d.name);
+}
+// export function addCommandsList(elm: any) {
+//   const commandsContainer = elm.append('div').attr('class', 'legend')
+//     .attr('id', 'commandsContainer').attr('style', 'margin-bottom: 15%; display: none;');
+//   const commandsList = commandsContainer.append('ul');
+//   const commandsListItem = commandsList
+//     .selectAll('li')
+//     .data(legendData.commands)
+//     .enter()
+//     .append('li');
+//   commandsListItem
+//     .append('div')
+//   commandsListItem.append('span').text((d: any) => {
+//     return d;
+//   });
+// }
+// export function addTasksList(elm: any) {
+// const tasksContainer = elm.append('div').attr('class', 'legend')
+//       .attr('id', 'tasksContainer').attr('style', 'margin-bottom: 15%; display: none;');
+//     const tasksList = tasksContainer.append('ul');
+//     const tasksListItem = tasksList
+//       .selectAll('li')
+//       .data(legendData.tasks)
+//       .enter()
+//       .append('li');
+//       tasksListItem
+//       .append('div')
+//     tasksListItem.append('span').text((d: any) => {
+//       return d;
+//     });
+//   }
+
 /**
  * @description Show the buttons of the user interface.
  */
 function addAggregationButtons(elm, provenanceTreeVisualization) {
     const container = elm.append('div').attr('class', 'container');
-    // const holder = provenanceTreeVisualization.container
-    //   .append("div")
-    //   .attr("class", "holder")
-    //   .attr("id", "groupingContainer")
-    //   .attr("style", "position: absolute; bottom: 25%; display:none;");
     const goToTheRootButton = provenanceTreeVisualization.container
         .append('button')
         .attr('id', 'root-trigger')
@@ -377,8 +557,11 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
                 parent_id = d.parent.data.wrappedNodes[0].id;
             }
         });
-        if (provenanceTreeVisualization.groupnumber == 0)
-            provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
+        if (provenanceTreeVisualization.groupnumber == 0) {
+            setTimeout(() => {
+                provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
+            }, 300);
+        }
         else
             provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
         provenanceTreeVisualization.getFullsizeview();
@@ -422,8 +605,11 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
                 }
             }
         });
-        if (provenanceTreeVisualization.groupnumber == 0)
+        if (provenanceTreeVisualization.groupnumber == 0) {
             provenanceTreeVisualization.traverser.toStateNode(child_id, 250);
+            setTimeout(() => {
+            }, 300);
+        }
         else
             provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
         provenanceTreeVisualization.getFullsizeview();
@@ -453,7 +639,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
         .attr('min', 0)
         .attr('step', 1)
         .attr('thumbLabel', true)
-        .attr('style', 'position: absolute; z-index: 1; top: 22%;left: 10%;')
+        .attr('style', 'position: absolute; z-index: 1; top: 27%;left: 5%;')
         .attr('tickInterval', 5)
         .attr('vertical', true)
         .style('height', '300px')
@@ -491,45 +677,88 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
     HidecameraButton
         .append('div')
         .attr('class', 'mat-button-focus-overlay');
+    const DeleteNodeButton = provenanceTreeVisualization.container
+        .append('button')
+        .attr('id', 'delete-trigger')
+        .attr('class', 'mat-icon-button mat-button-base mat-primary')
+        .attr('color', 'primary')
+        .attr('style', 'position: absolute; z-index: 1; top: 22%;')
+        .attr('ng-reflect-color', 'primary')
+        .attr('title', 'Delete Node(s)')
+        .attr('disabled', provenanceTreeVisualization.groupnumber >= 1 ? 'disabled' : null) // Add the disabled attribute conditionally
+        .on('mousedown', () => {
+        var real_traverser = provenanceTreeVisualization.real_traverser;
+        real_traverser
+            .filter((d) => {
+            const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
+            if (ref) {
+                if (d.data.wrappedNodes.length == 1)
+                    provenanceTreeVisualization.deleteNode();
+            }
+        });
+    });
+    const buttonWrapper = DeleteNodeButton
+        .append('span')
+        .attr('class', 'mat-button-wrapper');
+    buttonWrapper
+        .append('mat-icon')
+        .attr('class', 'mat-icon notranslate material-icons mat-icon-no-color')
+        .attr('role', 'img')
+        .attr('aria-hidden', 'true')
+        .text('delete_forever');
+    buttonWrapper
+        .append('div')
+        .attr('class', 'mat-button-ripple mat-ripple mat-button-ripple-round')
+        .attr('ng-reflect-centered', 'true')
+        .attr('ng-reflect-disabled', 'false')
+        .attr('ng-reflect-trigger', '[object HTMLButtonElement]');
+    buttonWrapper
+        .append('div')
+        .attr('class', 'mat-button-focus-overlay');
+    // Add CSS class to the button and icon when disabled
+    DeleteNodeButton.classed('disabled', provenanceTreeVisualization.groupnumber >= 1);
+    DeleteNodeButton.select('.mat-icon').classed('disabled', provenanceTreeVisualization.groupnumber >= 1);
+    // Add a window resize event listener
+    window.addEventListener('resize', () => {
+        // Get the container element where the legend will be appended
+        const container = select('#legendContainer');
+        // Remove the existing legend if it exists
+        container.remove();
+        // Call the addLegend function to recreate the legend with updated dimensions
+        addLegend(provenanceTreeVisualization.container);
+    });
+    addLegend(provenanceTreeVisualization.container);
+    const HelpButton = provenanceTreeVisualization.container
+        .append('button')
+        .attr('id', 'help_trigger')
+        .attr('class', 'mat-icon-button mat-button-base mat-primary')
+        .attr('color', 'primary')
+        .attr('style', 'position: absolute; z-index: 10; Bottom: 0.7%; Right: 1.0%;')
+        .attr('ng-reflect-color', 'primary')
+        .attr('title', 'Graph color legend')
+        .on('mousedown', () => {
+        const legendContainer = select("#legendContainer");
+        const isVisible = legendContainer.style("display") === "none";
+        legendContainer.style("display", isVisible ? "Block" : "none");
+    });
+    HelpButton
+        .append('span')
+        .attr('class', 'mat-button-wrapper')
+        .append('mat-icon')
+        .attr('class', 'mat-icon notranslate material-icons mat-icon-no-color')
+        .attr('role', 'img')
+        .attr('aria-hidden', 'true')
+        .text('help_outline');
+    HelpButton
+        .append('div')
+        .attr('class', 'mat-button-ripple mat-ripple mat-button-ripple-round')
+        .attr('ng-reflect-centered', 'true')
+        .attr('ng-reflect-disabled', 'false')
+        .attr('ng-reflect-trigger', '[object HTMLButtonElement]');
+    HelpButton
+        .append('div')
+        .attr('class', 'mat-button-focus-overlay');
 }
-// /**
-//  * @description Slider for Arguments in simple HTML
-//  */
-// export function addSlider<T extends HTMLElement>(
-//   elem: d3.Selection<T, any, any, any>,
-//   onChange: (val: number) => any
-// ): void {
-//   const container = elem.append('div');
-//   container.attr('class', 'sliderContainer');
-//   container.attr('style', 'visibility: show');
-//   const slider = container
-//     .append('input')
-//     .attr('id', 'arg')
-//     .attr('type', 'range')
-//     .attr('min', 0)
-//     .attr('max', 10)
-//     .attr('value', '0')
-//     .attr('class', 'slider');
-//   const currentValue = container.append('span').text(0);
-//   slider.on('change', () => {
-//     const val = parseInt(slider.node()!.value, 10);
-//     currentValue.text(val);
-//     onChange(val);
-//   });
-// }
-// function showSlider(value: string) {
-//   const slider = d3.select('.sliderContainer');
-//   switch (value) {
-//     case 'Pruning':
-//     case 'PlotTrimmer':
-//     case 'PlotTrimmer C':
-//     case 'PlotTrimmer G':
-//       slider.attr('style', 'display:block');
-//       break;
-//     default:
-//       slider.attr('style', 'display: none');
-//   }
-// }
 
 function depthSort(a, b) {
     if (a.maxDescendantDepth > b.maxDescendantDepth) {
@@ -774,6 +1003,8 @@ class ProvenanceTreeVisualization {
     constructor(traverser, elm) {
         this.camera_show = true;
         this.numberofnodes = 1;
+        this.numberofnodeswocam = 0;
+        this.numberofnodeswcam = 0;
         this.numberOfUniqueValues = 1;
         this.groupnumber = 0;
         this.aggregation = {
@@ -795,30 +1026,38 @@ class ProvenanceTreeVisualization {
          * @description Update the tree layout.
          */
         this.update = () => {
+            console.log('update');
+            this.traverser.graph.root.children.forEach((child) => {
+                child.metadata.H_value = 1000000;
+            });
             let wrappedRoot = wrapNode(this.traverser.graph.root);
             let clonedWrappedRoot = wrapNode(this.traverser.graph.root);
             let camhideNodes = this.removeNodesAndLinkChildren(clonedWrappedRoot, node => node.camera === true);
             let hierarchyRoot;
             // aggregateNodes(this.aggregation, wrappedRoot, this.traverser.graph.current);
-            if (this.camera_show == true)
+            if (this.camera_show == true) {
                 // hierarchyRoot = d3.hierarchy(wrappedRoot); // Updated the treeRoot
+                this.numberofnodes = this.numberofnodeswcam;
                 hierarchyRoot = this.Grouping_hierarchy(wrappedRoot);
+            }
             else {
                 hierarchyRoot = hierarchy(camhideNodes);
                 if (cam_test(this.traverser.graph.current.label)) {
                     this.currentHierarchyNodelength = hierarchyRoot.path(this.keynode).length;
                     this.scaleToFit();
-                    return;
                 }
+                this.numberofnodes = this.numberofnodeswocam;
+                hierarchyRoot = this.Grouping_hierarchy(camhideNodes);
             }
-            let currentHierarchyNode;
+            let currentHierarchyNode = undefined;
             hierarchyRoot.each(node => {
                 if (node.data.wrappedNodes.includes(this.traverser.graph.current)) {
                     currentHierarchyNode = node;
                 }
             });
             if (currentHierarchyNode === undefined) {
-                this.traverser.toStateNode(this.traverser.graph.current.parent.id);
+                this.traverser.toStateNode(hierarchyRoot.leaves()[0].data.wrappedNodes[0].id);
+                this.traverser.toStateNode(this.traverser.graph.root.id);
                 return;
             }
             this.currentHierarchyNodelength = hierarchyRoot.path(currentHierarchyNode).length;
@@ -828,7 +1067,7 @@ class ProvenanceTreeVisualization {
             const treemaxwidth = tree.descendants().map(function (item) { return item.x; }).reduce(function (prev, current) { return (prev > current) ? prev : current; });
             const treemaxlength = tree.descendants().map(function (item) { return item.y; }).reduce(function (prev, current) { return (prev > current) ? prev : current; });
             this.currentHierarchyMaxlength = treemaxlength;
-            const oldNodes = this.g.selectAll('g.node').data(treeNodes, (d) => {
+            const oldNodes = this.g.selectAll('g').data(treeNodes, (d) => {
                 const data = d.data.wrappedNodes.map((n) => n.id).join();
                 return data;
             });
@@ -843,38 +1082,13 @@ class ProvenanceTreeVisualization {
                 .attr('class', 'node')
                 .attr('transform', (d) => `translate(${d.x * xScale}, ${d.y * yScale})`);
             // node label
-            newNodes
-                .append('foreignObject')
-                .attr('class', 'circle-img')
-                .attr('width', 15)
-                .attr('height', 15)
-                .attr('x', 7)
-                .attr('y', -17)
-                .html(d => {
-                if (d.data.wrappedNodes[0].metadata.screenshot) {
-                    return `<div><img src="${d.data.wrappedNodes[0].metadata.screenshot}" width="15" height="15" /></div>`;
-                }
-                else {
-                    return '';
-                }
-            });
-            newNodes
-                .append('text')
-                .attr('class', 'circle-label')
-                .text(d => groupNodeLabel(d.data)) // .text(d => d.data.neighbour.toString())
-                .attr('x', 7)
-                .attr('alignment-baseline', 'central');
-            // newNodes
-            //   .append('text')
-            //   .attr('class', 'depth-label')
-            //   .text(d => (d.data.wrappedNodes.length > 1)?d.data.wrappedNodes.length:'') // .text(d => d.data.neighbour.toString())
-            //   .attr('x', 0)
-            //   .attr('alignment-baseline', 'central');
-            // .call(this.wrap, 70);
+            let hoverTimeout;
             const updateNodes = newNodes.merge(oldNodes);
             updateNodes.selectAll('g.normal').remove();
             updateNodes.selectAll('g.bookmarked').remove();
             updateNodes.selectAll('.circle-text').remove();
+            updateNodes.selectAll('.circle-label').remove();
+            updateNodes.selectAll('.circle-img').remove();
             const getNodeSize = (node) => {
                 let counter = 0;
                 const countWrappedNodesRecursively = (currentNode) => {
@@ -888,6 +1102,56 @@ class ProvenanceTreeVisualization {
                 countWrappedNodesRecursively(node.wrappedNodes);
                 return Math.min(2.7 + 0.6 * node.wrappedNodes.length, 7);
             };
+            updateNodes
+                .append('text')
+                .attr('class', 'circle-label')
+                .text(d => groupNodeLabel(d.data)) // .text(d => d.data.neighbour.toString())
+                .attr('x', d => d.data.wrappedNodes.length <= 4 ? 7 : 9)
+                .attr('alignment-baseline', 'central');
+            updateNodes
+                .append('foreignObject')
+                .attr('class', 'circle-img')
+                .attr('width', 15)
+                .attr('height', 15)
+                .attr('x', 7)
+                .attr('y', -17)
+                .html(d => {
+                if (d.data.wrappedNodes[0].metadata.screenshot) {
+                    return `<div><img class="thumbnail" src="${d.data.wrappedNodes[0].metadata.screenshot}" width="15" height="15" /></div>`;
+                }
+                else {
+                    return '';
+                }
+            })
+                .on('mouseenter', function (d) {
+                if (d.data.wrappedNodes[0].metadata.screenshot) {
+                    // Clear any existing timeout
+                    clearTimeout(hoverTimeout);
+                    // Raise the current circle-img element to the top
+                    select(this).raise();
+                    // Set a timeout to resize the circle-img and thumbnail after .5 second
+                    hoverTimeout = setTimeout(() => {
+                        this.setAttribute('width', '50');
+                        this.setAttribute('height', '50');
+                        const thumbnail = this.querySelector('.thumbnail');
+                        if (thumbnail) {
+                            thumbnail.style.width = '50px';
+                            thumbnail.style.height = '50px';
+                        }
+                    }, 300);
+                }
+            })
+                .on('mouseleave', function () {
+                // Clear the timeout and reset the circle-img and thumbnail size
+                clearTimeout(hoverTimeout);
+                this.setAttribute('width', '15');
+                this.setAttribute('height', '15');
+                const thumbnail = this.querySelector('.thumbnail');
+                if (thumbnail) {
+                    thumbnail.style.width = '15px';
+                    thumbnail.style.height = '15px';
+                }
+            });
             // other nodes to circle
             updateNodes
                 .filter((d) => {
@@ -895,33 +1159,20 @@ class ProvenanceTreeVisualization {
             })
                 .append('g')
                 .attr('class', 'normal');
-            updateNodes.on('contextmenu', (d) => {
-                this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
+            updateNodes.on('contextmenu', (d) => __awaiter(this, void 0, void 0, function* () {
+                if (d.data.wrappedNodes.length != 1)
+                    return;
+                yield this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
                 this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
-                // this.update();
-                // (window as any).slideDeckViz.onChange();
                 d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
                 if (!d.data.wrappedNodes[0].metadata.bookmarked) {
-                    window.slideDeckViz.onDelete(null, this.traverser.graph.current);
-                    this.traverser.graph.current.metadata.H_value -= 50000;
+                    window.slideDeckViz.onDelete(null);
                 }
                 else {
                     window.slideDeckViz.onAdd(this.traverser.graph.current);
-                    this.traverser.graph.current.metadata.H_value += 50000;
                 }
                 this.update();
-            });
-            updateNodes.on('dblclick', (d) => {
-                this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
-                this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
-                // collapse the nodes as it is
-                // if((this.traverser.graph.current as any).parent.){
-                //   this.traverser.graph.current = this.traverser.graph.current.children[0];
-                // }
-                console.log('hello');
-                this.update();
-                // d.data.
-            });
+            }));
             // set classes on node
             updateNodes
                 .attr('class', 'node')
@@ -952,10 +1203,16 @@ class ProvenanceTreeVisualization {
                 .attr('class', 'node branch-active neighbour');
             updateNodes
                 .filter((d) => {
-                const ref = d.data.wrappedNodes.includes(this.traverser.graph.current);
-                return ref;
+                if (d.data.wrappedNodes.length == 1) {
+                    const ref = d.data.wrappedNodes.includes(this.traverser.graph.current);
+                    return ref;
+                }
             })
                 .attr('class', 'node branch-active neighbour node-active');
+            hierarchyRoot.leaves().forEach((node) => {
+                if (node.data.wrappedNodes[0].metadata.mainbranch)
+                    this.activeleave = node;
+            });
             updateNodes
                 .select('g')
                 .append((d) => {
@@ -963,16 +1220,83 @@ class ProvenanceTreeVisualization {
                     return node.metadata.bookmarked === true;
                 });
                 // Check if the node is bookmarked
-                if (isBookmarked) {
+                if (isBookmarked && d.data.wrappedNodes.length == 1) {
                     // If yes, create a square shape
                     return document.createElementNS(namespaces.svg, 'rect');
                 }
                 else {
                     // Otherwise, create a circle shape
-                    return document.createElementNS(namespaces.svg, 'circle');
+                    if (d.data.wrappedNodes.length == 1)
+                        return document.createElementNS(namespaces.svg, 'circle');
+                    else { // ordinal creator
+                        // Initialize the colorScale array
+                        const colorScale = [];
+                        // Populate the colorScale array based on the conditions
+                        d.data.wrappedNodes.forEach((node) => {
+                            if (node.metadata.bookmarked === true) {
+                                colorScale.push('#a94442');
+                            }
+                            else if (node.label.includes('Camera') || node.label.includes('View')) {
+                                colorScale.push('#60aa85');
+                            }
+                            else if (node.label.includes('SelectObject')) {
+                                colorScale.push('#b8852c');
+                            }
+                            else if (node.label.includes('TranslateObject') || node.label.includes('RotateObject')) {
+                                colorScale.push('#286090');
+                            }
+                            else if (node.label.includes('Measurement')) {
+                                colorScale.push('#9210dd');
+                            }
+                        });
+                        // Create an array of objects containing label and value properties
+                        const data = d.data.wrappedNodes.map((node) => ({
+                            label: node,
+                            value: 1
+                        }));
+                        // Calculate pie chart data
+                        const pieChartData = pie().value((d) => d.value)(data);
+                        const pieGroup = document.createElementNS(namespaces.svg, 'g');
+                        pieChartData.reverse();
+                        const arc$1 = arc().outerRadius(getNodeSize(d.data)).innerRadius(0);
+                        let tempactive;
+                        // Iterate over the pie chart data and create the pie slices
+                        pieChartData.forEach((slice, index) => {
+                            const path = document.createElementNS(namespaces.svg, 'path');
+                            const pathElement = path;
+                            pathElement.setAttribute('d', arc$1(slice));
+                            pathElement.setAttribute('fill', colorScale[index]);
+                            // Add class to the path element based on the condition
+                            if (data[index].label === this.traverser.graph.current) {
+                                pathElement.setAttribute('class', 'node-activepie');
+                                tempactive = pathElement;
+                            }
+                            pathElement.addEventListener('click', () => __awaiter(this, void 0, void 0, function* () {
+                                if (tempactive)
+                                    tempactive.setAttribute('class', '');
+                                yield this.traverser.toStateNode(data[index].label.id, 0); // set to 0 to all trans related work
+                                // Add class to the clicked path element
+                                pathElement.setAttribute('class', 'node-activepie');
+                                tempactive = pathElement;
+                            }));
+                            pathElement.addEventListener('contextmenu', (event) => __awaiter(this, void 0, void 0, function* () {
+                                yield this.traverser.toStateNode(data[index].label.id, 0);
+                                this.traverser.graph.current = this.traverser.graph.getNode(data[index].label.id);
+                                data[index].label.metadata.bookmarked = !data[index].label.metadata.bookmarked;
+                                if (!data[index].label.metadata.bookmarked) {
+                                    window.slideDeckViz.onDelete(null);
+                                }
+                                else {
+                                    window.slideDeckViz.onAdd(this.traverser.graph.current);
+                                }
+                                this.update();
+                            }));
+                            pieGroup.appendChild(path);
+                        });
+                        return pieGroup;
+                    }
                 }
             })
-                .on('dblclick.zoom', null)
                 .attr('class', (d) => {
                 let classString = '';
                 const isBookmarked = d.data.wrappedNodes.some((node) => {
@@ -1040,17 +1364,12 @@ class ProvenanceTreeVisualization {
                 .select('foreignObject.circle-img')
                 .attr('class', (d) => 'circle-img renderer_' + getNodeRenderer(d.data.wrappedNodes[0]))
                 .attr('visibility', (d) => (d.x === 0 ? 'visible' : 'hidden'));
-            updateNodes.on('click', d => {
-                if (d.data.wrappedNodes[0].id !== this.traverser.graph.current.id) {
-                    this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
+            updateNodes.on('click', (d, i) => __awaiter(this, void 0, void 0, function* () {
+                if (d.data.wrappedNodes.length > 1) ;
+                else if (d.data.wrappedNodes[0].id !== this.traverser.graph.current.id) {
+                    yield this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0); // set to 0 to all trans related works
                 }
-            });
-            updateNodes
-                .append('text')
-                .attr('class', 'depth-label')
-                .text(d => (d.data.wrappedNodes.length > 1) ? d.data.wrappedNodes.length : '') // .text(d => d.data.neighbour.toString())
-                .attr('x', -1)
-                .attr('alignment-baseline', 'central');
+            }));
             updateNodes
                 .data(treeNodes)
                 .transition()
@@ -1064,6 +1383,10 @@ class ProvenanceTreeVisualization {
                     var classString = `translate(${d.x * xScale}, ${d.y * yScale})`;
                 }
                 return classString;
+            });
+            // Raise each node in newNodes in reverse order
+            updateNodes.nodes().slice().reverse().forEach(node => {
+                select(node).raise();
             });
             const oldLinks = this.g
                 .selectAll('path.link')
@@ -1089,7 +1412,6 @@ class ProvenanceTreeVisualization {
                 caterpillar(updateNodes, treeNodes, updatedLinks, this);
             }
             this.real_traverser = updateNodes;
-            // this.scaleToFit();
         }; // end update
         this.traverser = traverser;
         this.colorScheme = scaleOrdinal(schemeAccent);
@@ -1108,23 +1430,26 @@ class ProvenanceTreeVisualization {
         addAggregationButtons(this.container, this);
         // Disable dbclick zoom
         this.svg.on('dblclick.zoom', null);
-        traverser.graph.on('currentChanged', () => {
-            this.update();
-            window.slideDeckViz.onChange(traverser.graph.current);
+        traverser.graph.on('currentChanged', () => __awaiter(this, void 0, void 0, function* () {
+            yield this.update();
+            window.slideDeckViz.onChange(this.activeleave);
             window.slideDeckViz.provchanged(traverser.graph.current);
-        });
+        }));
         traverser.graph.on('nodeChanged', () => {
             this.update();
         });
-        traverser.graph.on('nodeAdded', () => {
+        traverser.graph.on('nodeAdded', (event) => {
             this.currentHierarchyNodelength += 1.0;
             this.scaleToFit();
-            this.numberofnodes++;
+            this.numberofnodeswcam++;
+            if (!cam_test(event.label) && this.camera_show)
+                this.numberofnodeswocam++;
         });
         this.update();
         this.zoomer = zoom();
         this.setZoomExtent();
         this.svg.call(this.zoomer);
+        this.svg.on('dblclick.zoom', (event) => { return null; });
     }
     setZoomExtent() {
         this.zoomer.scaleExtent([0.1, 10]).on('zoom', () => {
@@ -1206,6 +1531,7 @@ class ProvenanceTreeVisualization {
         }
         this.camera_show = this.camera_show ? false : true;
         if (!this.camera_show) {
+            this.groupnumber = 0;
             const closenode = find_noncameranode(this.traverser);
             this.traverser.toStateNode(closenode.id, 0);
         }
@@ -1235,7 +1561,7 @@ class ProvenanceTreeVisualization {
         const removeNodes = (node) => {
             for (let i = 0; i < node.children.length; i++) {
                 const child = node.children[i];
-                if (condition(child)) {
+                if (condition(child) && !child.bookmarked) {
                     // Remove the node from the children array
                     node.children.splice(i, 1);
                     // Append the children of the removed node to the parent
@@ -1249,18 +1575,59 @@ class ProvenanceTreeVisualization {
                 }
             }
         };
-        // Create a shallow copy of the tree
-        // Call the removeNodes function on the copied tree
         removeNodes(tree);
         return tree;
     }
+    deleteNode() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.traverser.graph.current;
+            if (this.traverser.graph.current.label === "root")
+                return;
+            if (this.traverser.graph.current.label !== 'root') {
+                const current_node = this.traverser.graph.current;
+                const parent_node = current_node.parent;
+                const parent_children = parent_node.children;
+                const current_index = parent_children.indexOf(current_node);
+                const deleteChildrenRecursively = (node) => {
+                    if (node.children.length > 0) {
+                        node.children.forEach((child) => deleteChildrenRecursively(child));
+                    }
+                    node.children = [];
+                    if (cam_test(node.label)) {
+                        this.numberofnodeswocam--;
+                        this.numberofnodeswcam--;
+                    }
+                    else
+                        this.numberofnodeswcam--;
+                    if (node.metadata.bookmarked)
+                        window.slideDeckViz.onDelete(null);
+                };
+                deleteChildrenRecursively(current_node);
+                parent_children.splice(current_index, 1);
+                if (parent_node.children.length > 0)
+                    this.traverser.toStateNode(parent_node.children[0].id, 0);
+                this.traverser.toStateNode(parent_node.id, 0);
+            }
+        });
+    }
     Grouping_hierarchy(wraproot) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         let hierarchyRoot = hierarchy(wraproot);
-        let allnodes = hierarchyRoot.descendants().filter((d) => d.data.wrappedNodes[0].label !== 'Root');
-        let branches = allnodes.filter((d) => d.data.children.length > 1).length;
-        let bookmarks = allnodes.filter((d) => d.data.wrappedNodes[0].metadata.bookmarked).length;
-        allnodes = allnodes.filter((d) => d.parent.data.children.length == 1); // exclude branches merging
+        let allnodes = hierarchyRoot.descendants().filter((d) => d.data.wrappedNodes[0].label !== 'Root' && d.data.depth !== 1);
+        let branches = allnodes.reduce((sum, node) => {
+            if (node.data.children.length > 1) {
+                return sum + node.data.children.length;
+            }
+            else {
+                return sum;
+            }
+        }, 0);
+        if (hierarchyRoot.children != undefined) {
+            hierarchyRoot.children.forEach((child) => {
+                branches++;
+            });
+        }
+        allnodes = allnodes.filter((d) => d.parent.children.length == 1); // exclude branches merging
         allnodes.sort((a, b) => {
             return a.data.wrappedNodes[0].metadata.H_value - b.data.wrappedNodes[0].metadata.H_value;
         });
@@ -1269,22 +1636,27 @@ class ProvenanceTreeVisualization {
         console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.H_value));
         console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.O_group));
         //size-calculation (왔다 갔다 할 경우 고려해야함)
-        const uniqueValues = allnodes.map(node => node.data.wrappedNodes[0].metadata.O_group);
-        var outputArr = uniqueValues.filter((value, index, self) => {
-            return self.indexOf(value) === index;
-        });
-        this.numberOfUniqueValues = outputArr.length + branches + bookmarks;
+        const uniqueValues = allnodes
+            .filter(node => node.parent.data.wrappedNodes[0].metadata.O_group != node.data.wrappedNodes[0].metadata.O_group && node.parent.data.children.length == 1 && node.parent.data.wrappedNodes[0].label != 'Root')
+            .map(node => node.data.wrappedNodes[0].metadata.O_group);
+        this.numberOfUniqueValues = uniqueValues.length + branches;
+        // console.log('uniqueValues', uniqueValues);
+        // console.log('branches', branches);
         const groupslicenodes = allnodes.slice(0, this.groupnumber);
         groupslicenodes.sort((a, b) => { return b.depth - a.depth; });
         groupslicenodes.sort((a, b) => { return a.data.wrappedNodes[0].metadata.branchnumber - b.data.wrappedNodes[0].metadata.branchnumber; });
         let Endnode = 0;
         let Startnode = 0;
         for (let i = 0; i < groupslicenodes.length; i++) {
-            if (groupslicenodes[i].depth - ((_a = groupslicenodes[i + 1]) === null || _a === void 0 ? void 0 : _a.depth) == 1) {
+            if (groupslicenodes[i].data.wrappedNodes[0].metadata.branchnumber != ((_a = groupslicenodes[i + 1]) === null || _a === void 0 ? void 0 : _a.data.wrappedNodes[0].metadata.branchnumber)) {
+                transferChildren(groupslicenodes[i].parent.parent, groupslicenodes[i].parent, groupslicenodes[i]);
+            }
+            else if (groupslicenodes[i].depth - ((_b = groupslicenodes[i + 1]) === null || _b === void 0 ? void 0 : _b.depth) == 1) {
                 Startnode = i;
                 Endnode = i + 1;
                 for (Endnode; Endnode < groupslicenodes.length; Endnode++) {
-                    if (groupslicenodes[Endnode].depth - ((_b = groupslicenodes[Endnode + 1]) === null || _b === void 0 ? void 0 : _b.depth) != 1) {
+                    if (groupslicenodes[Endnode].depth - ((_c = groupslicenodes[Endnode + 1]) === null || _c === void 0 ? void 0 : _c.depth) != 1 ||
+                        groupslicenodes[Endnode].data.wrappedNodes[0].metadata.branchnumber != ((_d = groupslicenodes[Endnode + 1]) === null || _d === void 0 ? void 0 : _d.data.wrappedNodes[0].metadata.branchnumber)) {
                         break;
                     }
                 }
@@ -1292,25 +1664,15 @@ class ProvenanceTreeVisualization {
                 i = Endnode;
             }
             else {
-                transferChildren(groupslicenodes[i].parent.parent.data, groupslicenodes[i].parent.data, groupslicenodes[i].data);
+                transferChildren(groupslicenodes[i].parent.parent, groupslicenodes[i].parent, groupslicenodes[i]);
             }
         }
-        // groupslicenodes.forEach((node) => transferChildren(node.parent!.parent!.data as any, node.parent!.data as any, node.data as any));
-        // for(let i = 0; i < this.groupnumber; i++){
-        //   if (allnodes.length >= i && allnodes[i]?.parent?.data && allnodes[i].data) {
-        //     transferChildren(allnodes[i].parent!.parent!.data, allnodes[i].parent!.data, allnodes[i].data);
-        //   }
-        //  }
         hierarchyRoot = hierarchy(wraproot); // Updated the treeRoot
-        allnodes = hierarchyRoot.descendants().filter((d) => d.data.wrappedNodes[0].label !== 'Root');
-        allnodes.sort((a, b) => {
-            return a.data.wrappedNodes[0].metadata.H_value - b.data.wrappedNodes[0].metadata.H_value;
-        });
         console.log('======After======');
         console.log(groupslicenodes);
-        console.log(allnodes.map(node => node.depth));
-        console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.H_value));
-        console.log(allnodes.map(node => node.data.wrappedNodes[0].metadata.O_group));
+        console.log(groupslicenodes.map(node => node.depth));
+        console.log(groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.H_value));
+        console.log(groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.O_group));
         return hierarchyRoot;
     }
     getTraverser() {

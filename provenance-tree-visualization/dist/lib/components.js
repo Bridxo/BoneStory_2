@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addAggregationButtons = exports.setTitle = void 0;
+const d3 = require("d3");
+const legend_1 = require("./legend");
 function setTitle(elm, onClick) {
     elm
         .append('div')
@@ -24,6 +26,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
     //   .attr("class", "holder")
     //   .attr("id", "groupingContainer")
     //   .attr("style", "position: absolute; bottom: 25%; display:none;");
+    let processing = false; // Lock
     const goToTheRootButton = provenanceTreeVisualization.container
         .append('button')
         .attr('id', 'root-trigger')
@@ -65,6 +68,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
         .on('mousedown', () => {
         var real_traverser = provenanceTreeVisualization.real_traverser;
         var parent_id = '';
+        processing = true;
         real_traverser
             .filter((d) => {
             const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
@@ -72,8 +76,12 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
                 parent_id = d.parent.data.wrappedNodes[0].id;
             }
         });
-        if (provenanceTreeVisualization.groupnumber == 0)
-            provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
+        if (provenanceTreeVisualization.groupnumber == 0) {
+            setTimeout(() => {
+                provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
+                processing = false;
+            }, 300);
+        }
         else
             provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
         provenanceTreeVisualization.getFullsizeview();
@@ -107,6 +115,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
         .on('mousedown', () => {
         var real_traverser = provenanceTreeVisualization.real_traverser;
         var child_id = '';
+        processing = true;
         real_traverser
             .filter((d) => {
             const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
@@ -117,8 +126,12 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
                 }
             }
         });
-        if (provenanceTreeVisualization.groupnumber == 0)
+        if (provenanceTreeVisualization.groupnumber == 0) {
             provenanceTreeVisualization.traverser.toStateNode(child_id, 250);
+            setTimeout(() => {
+                processing = false;
+            }, 300);
+        }
         else
             provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
         provenanceTreeVisualization.getFullsizeview();
@@ -148,7 +161,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
         .attr('min', 0)
         .attr('step', 1)
         .attr('thumbLabel', true)
-        .attr('style', 'position: absolute; z-index: 1; top: 22%;left: 10%;')
+        .attr('style', 'position: absolute; z-index: 1; top: 27%;left: 5%;')
         .attr('tickInterval', 5)
         .attr('vertical', true)
         .style('height', '300px')
@@ -186,44 +199,87 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
     HidecameraButton
         .append('div')
         .attr('class', 'mat-button-focus-overlay');
+    const DeleteNodeButton = provenanceTreeVisualization.container
+        .append('button')
+        .attr('id', 'delete-trigger')
+        .attr('class', 'mat-icon-button mat-button-base mat-primary')
+        .attr('color', 'primary')
+        .attr('style', 'position: absolute; z-index: 1; top: 22%;')
+        .attr('ng-reflect-color', 'primary')
+        .attr('title', 'Delete Node(s)')
+        .attr('disabled', provenanceTreeVisualization.groupnumber >= 1 ? 'disabled' : null) // Add the disabled attribute conditionally
+        .on('mousedown', () => {
+        var real_traverser = provenanceTreeVisualization.real_traverser;
+        real_traverser
+            .filter((d) => {
+            const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
+            if (ref) {
+                if (d.data.wrappedNodes.length == 1)
+                    provenanceTreeVisualization.deleteNode();
+            }
+        });
+    });
+    const buttonWrapper = DeleteNodeButton
+        .append('span')
+        .attr('class', 'mat-button-wrapper');
+    buttonWrapper
+        .append('mat-icon')
+        .attr('class', 'mat-icon notranslate material-icons mat-icon-no-color')
+        .attr('role', 'img')
+        .attr('aria-hidden', 'true')
+        .text('delete_forever');
+    buttonWrapper
+        .append('div')
+        .attr('class', 'mat-button-ripple mat-ripple mat-button-ripple-round')
+        .attr('ng-reflect-centered', 'true')
+        .attr('ng-reflect-disabled', 'false')
+        .attr('ng-reflect-trigger', '[object HTMLButtonElement]');
+    buttonWrapper
+        .append('div')
+        .attr('class', 'mat-button-focus-overlay');
+    // Add CSS class to the button and icon when disabled
+    DeleteNodeButton.classed('disabled', provenanceTreeVisualization.groupnumber >= 1);
+    DeleteNodeButton.select('.mat-icon').classed('disabled', provenanceTreeVisualization.groupnumber >= 1);
+    // Add a window resize event listener
+    window.addEventListener('resize', () => {
+        // Get the container element where the legend will be appended
+        const container = d3.select('#legendContainer');
+        // Remove the existing legend if it exists
+        container.remove();
+        // Call the addLegend function to recreate the legend with updated dimensions
+        (0, legend_1.addLegend)(provenanceTreeVisualization.container);
+    });
+    (0, legend_1.addLegend)(provenanceTreeVisualization.container);
+    const HelpButton = provenanceTreeVisualization.container
+        .append('button')
+        .attr('id', 'help_trigger')
+        .attr('class', 'mat-icon-button mat-button-base mat-primary')
+        .attr('color', 'primary')
+        .attr('style', 'position: absolute; z-index: 10; Bottom: 0.7%; Right: 1.0%;')
+        .attr('ng-reflect-color', 'primary')
+        .attr('title', 'Graph color legend')
+        .on('mousedown', () => {
+        const legendContainer = d3.select("#legendContainer");
+        const isVisible = legendContainer.style("display") === "none";
+        legendContainer.style("display", isVisible ? "Block" : "none");
+    });
+    HelpButton
+        .append('span')
+        .attr('class', 'mat-button-wrapper')
+        .append('mat-icon')
+        .attr('class', 'mat-icon notranslate material-icons mat-icon-no-color')
+        .attr('role', 'img')
+        .attr('aria-hidden', 'true')
+        .text('help_outline');
+    HelpButton
+        .append('div')
+        .attr('class', 'mat-button-ripple mat-ripple mat-button-ripple-round')
+        .attr('ng-reflect-centered', 'true')
+        .attr('ng-reflect-disabled', 'false')
+        .attr('ng-reflect-trigger', '[object HTMLButtonElement]');
+    HelpButton
+        .append('div')
+        .attr('class', 'mat-button-focus-overlay');
 }
 exports.addAggregationButtons = addAggregationButtons;
-// /**
-//  * @description Slider for Arguments in simple HTML
-//  */
-// export function addSlider<T extends HTMLElement>(
-//   elem: d3.Selection<T, any, any, any>,
-//   onChange: (val: number) => any
-// ): void {
-//   const container = elem.append('div');
-//   container.attr('class', 'sliderContainer');
-//   container.attr('style', 'visibility: show');
-//   const slider = container
-//     .append('input')
-//     .attr('id', 'arg')
-//     .attr('type', 'range')
-//     .attr('min', 0)
-//     .attr('max', 10)
-//     .attr('value', '0')
-//     .attr('class', 'slider');
-//   const currentValue = container.append('span').text(0);
-//   slider.on('change', () => {
-//     const val = parseInt(slider.node()!.value, 10);
-//     currentValue.text(val);
-//     onChange(val);
-//   });
-// }
-// function showSlider(value: string) {
-//   const slider = d3.select('.sliderContainer');
-//   switch (value) {
-//     case 'Pruning':
-//     case 'PlotTrimmer':
-//     case 'PlotTrimmer C':
-//     case 'PlotTrimmer G':
-//       slider.attr('style', 'display:block');
-//       break;
-//     default:
-//       slider.attr('style', 'display: none');
-//   }
-// }
 //# sourceMappingURL=components.js.map

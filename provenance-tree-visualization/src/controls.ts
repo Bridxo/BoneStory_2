@@ -9,54 +9,75 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
 
     window.onkeydown = keyPress;
 
+    let isProcessingKey = false; // Lock
 
-    function keyPress(e: any) {
+    async function keyPress(e: any) {
         var evtobj = window.event ? event : e;
-
+        if(isProcessingKey) return;
         // ctrl + Z  / undo
         if (evtobj.ctrlKey && evtobj.key === 'z' && (graph.current as StateNode).parent) {
+            isProcessingKey = true;
             var real_traverser = provenanceTreeVisualization.real_traverser;
             var parent_id = '';
             real_traverser
             .filter((d: any) => {
               const ref = d.data.wrappedNodes.includes(graph.current);
               if(ref){
-                parent_id = d.parent.data.wrappedNodes[0].id;
+                const index = d.data.wrappedNodes.indexOf(graph.current);
+                if(index!=d.data.wrappedNodes.length-1)
+                    parent_id = d.data.wrappedNodes[index+1].id;
+                else
+                    parent_id = d.parent.data.wrappedNodes[0].id;
               }
             });
-            if(provenanceTreeVisualization.groupnumber == 0)
-                traverser.toStateNode(parent_id, 250);
-            else
-                traverser.toStateNode(parent_id, 0);
-            provenanceTreeVisualization.getFullsizeview();
-            provenanceTreeVisualization.update();
+            await traverser.toStateNode(parent_id, 250);
+            await provenanceTreeVisualization.getFullsizeview();
+            await provenanceTreeVisualization.update();
+            setTimeout(() => {
+                isProcessingKey = false;
+            }, 300);
         }
         // ctrl + X  / go to the root
         else if (evtobj.ctrlKey && evtobj.key === 'x') {
-            traverser.toStateNode(graph.root.id, 0);
+            isProcessingKey = true;
+            await traverser.toStateNode(graph.root.id, 0);
+            setTimeout(() => {
+                isProcessingKey = false;
+            }, 250);
         }
         // ctrl + y  / redo
         else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
+            isProcessingKey = true;
             var real_traverser = provenanceTreeVisualization.real_traverser;
             var child_id = '';
             real_traverser
             .filter((d: any) => {
               const ref = d.data.wrappedNodes.includes(graph.current);
               if(ref){
-                for(const child of d.children)
-                {
-                    if(child.data.wrappedNodes[0].metadata.mainbranch)
-                        child_id = child.data.wrappedNodes[0].id;
-                }
+                const index = d.data.wrappedNodes.indexOf(graph.current);
+                if(index!=0)
+                    child_id = d.data.wrappedNodes[index-1].id;
+                else{
+                    if(d.data.wrappedNodes[0].children)
+                    {
+                        d.data.wrappedNodes[0].children.forEach((child: any) => {
+                            if(child.metadata.mainbranch){
+                                child_id = child.id;
+                            }
+                        });
+                    }
                     
+                }
+                
+
               }
             });
-            if(provenanceTreeVisualization.groupnumber == 0)
-                traverser.toStateNode(child_id, 250);
-            else
-                traverser.toStateNode(child_id, 0);
-            provenanceTreeVisualization.getFullsizeview();
-            provenanceTreeVisualization.update();
+            await traverser.toStateNode(child_id, 250);
+            await provenanceTreeVisualization.getFullsizeview();
+            await provenanceTreeVisualization.update();
+            setTimeout(() => {
+                isProcessingKey = false;
+            }, 300);
         }
         // ctrl + Q  / add the current node to the story
         else if (evtobj.keyCode === 81 && evtobj.altKey) {

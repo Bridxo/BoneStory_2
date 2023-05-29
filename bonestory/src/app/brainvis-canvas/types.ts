@@ -3,6 +3,7 @@ export interface IOrientation {
     target: number[];
     up: number[];
     zoom?: number;
+    objstat?: any;
 }
 
 export interface ISlicePosition {

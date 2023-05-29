@@ -154,7 +154,6 @@ export default class Trackball{
 
         this.eye.applyQuaternion(quaternion);
         this.camera.up.applyQuaternion(quaternion);
-
         this.lastAxis.copy(axis);
         this.lastAngle = angle;
       } else if (!this.staticMoving && this.lastAngle) {
@@ -514,11 +513,11 @@ export default class Trackball{
     
     if(this.state === STATE.PAN && !this.noPan){
       const alphs = 1;
-      this.eventdispatcher.dispatchEvent({ type: 'start', alphs, state: this.state});
+      this.eventdispatcher.dispatchEvent({ type: 'start', alphs, state: this.state, mouse: event});
     }
-    else{
+    else if(this.state === STATE.ROTATE && !this.noRotate){
       const alphs = 0;
-      this.eventdispatcher.dispatchEvent({ type: 'start', alphs, state: this.state});
+      this.eventdispatcher.dispatchEvent({ type: 'start', alphs, state: this.state, mouse: event});
     }
 
   }

@@ -25,10 +25,10 @@
     font-size: 4em;
     color: hotpink;
     min-height: 0;
-    border: 1px dashed white;
+    border: 1px dashed black;
 }
 .provenanceAnnotation.editable > .CodeMirror {
-    border: 2px solid white;
+    border: 2px solid black;
 }
 .provenanceAnnotation:not(.editable) .CodeMirror-lines {
     visibility: hidden;
@@ -43,9 +43,10 @@
 }
 
 .provenanceAnnotation .CodeMirror-cursor {
-    border-left: 2px solid white;
-    border-right: 2px solid white;
-}
+    border-left: 2px solid black;
+    animation: blink 1s step-end infinite;
+  }
+  
 
 .provenanceAnnotation.editable .editor-preview {
     visibility: hidden;

@@ -74,10 +74,10 @@ export function transferChildren(
   grandChild: any
 ) {
   //data part
-  node.children.splice(node.children.indexOf(child), 1);
-  child.children.splice(child.children.indexOf(grandChild), 1);
-  grandChild.wrappedNodes.push(...child.wrappedNodes);
-  node.children.push(grandChild);
+  node.data.children.splice(node.data.children.indexOf(child.data), 1);
+  grandChild.data.wrappedNodes.push(...child.data.wrappedNodes);
+  child.data.children.splice(child.data.children.indexOf(grandChild.data), 1);
+  node.data.children.push(grandChild.data);
 }
 export function transferChildren_2(
   Startparentnode: any,
@@ -88,13 +88,13 @@ export function transferChildren_2(
   let tempNode = Endnode.parent;
   let superParent = Startparentnode.parent;
   do{
-    tempNode.data.children.splice(tempNode.children[0]);
+    tempNode.data.children.splice(tempNode.data.children.indexOf(Endnode.data),1);
     Endnode.data.wrappedNodes.push(...tempNode.data.wrappedNodes);
     tempNode = tempNode.parent;
   }while(tempNode.data != Startparentnode.data)
-  Startparentnode.data.children.splice(Startparentnode.children.indexOf(Startnode), 1);
+  Startparentnode.data.children.splice(Startparentnode.data.children.indexOf(Startnode.data), 1);
   Endnode.data.wrappedNodes.push(...Startparentnode.data.wrappedNodes);
-  superParent.data.children.splice(superParent.children.indexOf(Startparentnode), 1);
+  superParent.data.children.splice(superParent.data.children.indexOf(Startparentnode.data), 1);
   superParent.data.children.push(Endnode.data);
 }
 

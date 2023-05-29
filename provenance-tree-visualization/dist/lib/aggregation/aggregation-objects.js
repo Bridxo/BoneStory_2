@@ -74,6 +74,14 @@ const groupNodeLabel = (node) => {
                     label = label + "Measure,";
             }
             label = label.slice(0, -1);
+            if (label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 3)
+                label = node.wrappedNodes[0].metadata.O_group;
+            if (label == 'Object')
+                label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            if (label == 'SelectObject')
+                label = label.slice(0, -6) + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            if (label == 'Camera')
+                label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
             return label;
         }
     }

@@ -1,5 +1,5 @@
 
-    <app-brainvis-canvas #canvas_> 
+    <app-brainvis-canvas id= "main-canvas" #canvas_> 
     </app-brainvis-canvas>
 
     <div id="bottom-container">
@@ -16,9 +16,10 @@
       [tickInterval]="5"
       [(ngModel)]="provvis.slider_value"
       [vertical]="true"
-      style="height: 300px;"
+      style="height: 300px; left: -1%;"
       matTooltip="Provenance-Grouping Slider"
-      (change)="provvis.setgroupnumber()"
+      userselect="none"
+      (change)="provvis.setgroupnumber(); provvis.getfullsizeview()"
     ></mat-slider>
     </div>
     <div style="height:0px;">
@@ -37,16 +38,27 @@
         <mat-icon>school</mat-icon>
       </button>
       <button id="upload_btn" mat-icon-button onclick="filesel.click()" title="Load STL files" style="cursor: pointer;">
-        <mat-icon>cloud_upload</mat-icon>
+        <mat-icon> attach_file</mat-icon>
+    </button>
+    <div id="saveprov_btn" title="Save/Load Prov files(json)" style="cursor: pointer;">
+      <button mat-icon-button>
+        <mat-icon>theaters</mat-icon>
       </button>
-      <button id="saveprov_btn" mat-icon-button (click)="provvis.downloadJson()" title="Save Prov files(json)" style="cursor: pointer;">
-        <mat-icon>cloud_download</mat-icon>
-      </button>
-      <button id="sidenav-trigger" mat-icon-button (click)="onSidenavToggle(); provvis.update();" title="Provenance Tool" style="cursor: pointer;">
-        <mat-icon>menu</mat-icon>
-      </button>
+      <div class="icons">
+        <button mat-icon-button id="saveprov_btn_1" title="Save Prov files(json)" style="cursor: pointer;">
+          <mat-icon>cloud_download</mat-icon> <!-- Replace with the icon you want -->
+        </button>
+        <button mat-icon-button id="saveprov_btn_2" title="Load Prov file(json)" style="cursor: pointer;"> <!-- Replace with the function you want -->
+          <mat-icon>cloud_upload</mat-icon> <!-- Replace with the icon you want -->
+        </button>
+      </div>
     </div>
-    <div class="mode-widget" id="modewidget">
+      
+    <button id="sidenav-trigger" mat-icon-button (click)="onSidenavToggle(); provvis.update();" title="Provenance Tool" style="cursor: pointer;">
+      <mat-icon>menu</mat-icon>
+    </button>
+    </div>
+    <div class="mode-widget" id="modewidget" style="z-index: 1;">
       <span id="mode-display"></span>
     </div>
     <!-- <div id="cpus">
@@ -54,15 +66,16 @@
     </div> -->
     <div id="instructions">
       <strong>[Mouse]</strong> <br />
-      L-click (cam mode): Rotate camera <br />
-      R-click (cam mode): Pan camera <br />
-      Wheel (cam mode): Zoom camera <br />
-      Double-click: Select object <br />
+      R-click (cam mode): Rotate camera <br />
+      Wheel-click (cam mode): Pan camera <br />
+      Wheel-move (cam mode): Zoom camera <br />
+      L-click: Select object <br />
       <strong>[Keyboard]</strong> <br />
       C: Camera mode<br />
       R (object mode) : Rotate object<br />
       T (object mode): Translate object<br />
-      A (annotation mode): Add annotation on object<br />
       M (measurement mode): Measure distance (press M on point 1, press M again on point 2)<br />
+      Ctrl + Z: Undo<br />
+      Ctrl + Y: Redo<br />
     </div>
 

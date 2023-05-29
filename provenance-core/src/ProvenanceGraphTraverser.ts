@@ -89,8 +89,35 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
     this.tracker = tracker;
     this._mitt = mitt();
   }
+  // async executeFunctions(functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], artifactsToLoad: any[], transitionTimes: number[]): Promise<ProvenanceNode | undefined> {
+  //   const promises = functionsToDo.map(async (funcWithThis, i) => {
+  //     return new Promise<ProvenanceNode>((resolve) => {
+  //       if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
+  //         this.tracker.acceptActions = false;
+  //         // Fix problem with going back to a node (time correction)
+  //         if (funcWithThis.func.name !== "SelectObject" && funcWithThis.func.name !== "Annotation" && funcWithThis.func.name !== "Measurement") {
+  //           const argWithThis = argumentsToDo[i];
+  //           const durationIndex = argWithThis.length - 1;
+  //           if(i==argumentsToDo.length-1)
+  //             argumentsToDo[i][durationIndex] = transitionTimes[i];
+  //         }
+  //         const result = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i])
+  //         .then((window as any).canvas.Returnobjinfo(artifactsToLoad[i]));
+  //         this.tracker.acceptActions = true;
+  //         resolve(result);
+  //       } else {
+  //         const result = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i])          .then((window as any).canvas.Returnobjinfo(artifactsToLoad[i]));
 
-  async executeFunctions(functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], transitionTimes: number[]) {
+  //         resolve(result);
+  //       }
+  //     });
+  //   });
+  
+  //   const results = await Promise.all(promises);
+  //   return results[results.length - 1];
+  // }
+
+  async executeFunctions(functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], artifactsToLoad: any[], transitionTimes: number[]) {
     let result;
     for (let i = 0; i < functionsToDo.length; i++) {
       const funcWithThis = functionsToDo[i];
@@ -103,10 +130,10 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
           const duration_index = argwithThis.length - 1;
           argumentsToDo[i][duration_index] = transitionTimes[i];
         }
-        promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
+        promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i])).then((window as any).canvas.Returnobjinfo(artifactsToLoad[i]));
         this.tracker.acceptActions = true;
       } else {
-        promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i]));
+        promise = Promise.resolve(funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i])).then((window as any).canvas.Returnobjinfo(artifactsToLoad[i]));
       }
       result = await promise;
     }
@@ -121,7 +148,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
    */
   async toStateNode(
     id: NodeIdentifier,
-    transtionTime?: number
+    transitionTime?: number
   ): Promise<ProvenanceNode | undefined> {
     const currentNode = this.graph.current;
     const targetNode = this.graph.getNode(id);
@@ -139,7 +166,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
       throw new Error('No path to target node found in graph');
     }
 
-    let functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[];
+    let functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], artifactsToLoad: any[];
     const transitionTimes: number[] = [];
 
     interface CustomError extends Error {
@@ -150,8 +177,12 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
       const arg = this.getFunctionsAndArgsFromTrack(trackToTarget);
       functionsToDo = arg.functionsToDo;
       argumentsToDo = arg.argumentsToDo;
-      functionsToDo.forEach((func: any) => {
-        transitionTimes.push(transtionTime || 0);
+      artifactsToLoad = arg.artifactsToLoad;
+      functionsToDo.forEach((func: any, i) => {
+        if(trackToTarget[i].metadata.O_group != targetNode.metadata.O_group)
+          transitionTimes.push(0);
+        else
+        transitionTimes.push(transitionTime || 0);
       });
     } catch (error) {
       const customError = error as CustomError;
@@ -163,9 +194,9 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
         throw customError; // should never happen
       }
     }
-    const result = await this.executeFunctions(functionsToDo, argumentsToDo, transitionTimes);
+    const result = await this.executeFunctions(functionsToDo, argumentsToDo, artifactsToLoad, transitionTimes);
     this.graph.current = targetNode;
-    return result;
+    return targetNode;
   }
 
   private getFunctionsAndArgsFromTrack(
@@ -173,9 +204,11 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
   ): {
     functionsToDo: ActionFunctionWithThis[];
     argumentsToDo: any[];
+    artifactsToLoad: any[];
   } {
     const functionsToDo: ActionFunctionWithThis[] = [];
     const argumentsToDo: any[] = [];
+    const artifactsToLoad: any[] = [];
 
     for (let i = 0; i < track.length - 1; i++) {
       const thisNode = track[i];
@@ -191,6 +224,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
           const undoFunc = this.registry.getFunctionByName(thisNode.action.undo);
           functionsToDo.push(undoFunc);
           argumentsToDo.push(thisNode.action.undoArguments);
+          artifactsToLoad.push(thisNode.parent.artifacts);
         } else {
           /* istanbul ignore next */
           throw new Error('Going up from root? unreachable error ... i hope');
@@ -201,6 +235,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
           const doFunc = this.registry.getFunctionByName(nextNode.action.do);
           functionsToDo.push(doFunc);
           argumentsToDo.push(nextNode.action.doArguments);
+          artifactsToLoad.push(nextNode.artifacts);
         } else {
           /* istanbul ignore next */
           throw new Error('Going down to the root? unreachable error ... i hope');
@@ -208,7 +243,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
       }
     }
 
-    return { functionsToDo, argumentsToDo };
+    return { functionsToDo, argumentsToDo , artifactsToLoad};
   }
 
   on(type: string, handler: Handler) {

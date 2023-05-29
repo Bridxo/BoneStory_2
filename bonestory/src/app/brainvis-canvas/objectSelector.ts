@@ -44,10 +44,8 @@ export default class ObjectSelector  implements IIntersectionListener  {
 
     private changeTimeout = undefined;
 
-    private _offset = new THREE.Vector3();
-    private _selected;
-    private _selected_normal;
-    private _control;
+    private temp_pos;
+    private temp_rot;
     public _annotations = [];
     p3subp1 = new THREE.Vector3();
     targetposition = new THREE.Vector3();
@@ -91,19 +89,24 @@ export default class ObjectSelector  implements IIntersectionListener  {
 
     onMouseDown(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.isdragging = true;
+        if(pointer.button == 0 && this.state == modes.Cammode){
+          this.onMouseDoubleclick(intersection, pointer);
+          return;
+        }
+          
         if(this.previousSelectedObject != undefined && this.state == modes.Translation){ //left click with translation
             this.interactive = false;
             this.isobjmoving = true;
-            const temp_pos = this.previousSelectedObject.position.clone();
-            this.sposition = temp_pos;
-            this.eventdispatcher.dispatchEvent({type:'t_start', position: this.previousSelectedObject.position});
+            this.temp_pos = this.previousSelectedObject.position.clone();
+            this.temp_rot = this.previousSelectedObject.rotation.clone();
+            this.eventdispatcher.dispatchEvent({type:'t_start',rotation: this.temp_rot, position: this.temp_pos});
         }
         else if(this.previousSelectedObject != undefined && this.state == modes.Rotation){
             this.interactive = false;
             this.isobjrotating = true;
-            const temp_pos = this.previousSelectedObject.position.clone();
-            const temp_rot = this.previousSelectedObject.rotation.clone();
-            this.eventdispatcher.dispatchEvent({type:'r_start', rotation: temp_rot, position: temp_pos});
+            this.temp_pos = this.previousSelectedObject.position.clone();
+            this.temp_rot = this.previousSelectedObject.rotation.clone();
+            this.eventdispatcher.dispatchEvent({type:'r_start', rotation: this.temp_rot, position: this.temp_pos});
         }
         else{
             this.interactive = true;
@@ -145,17 +148,21 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     } 
     if (this.isobjrotating) {
       this.isobjrotating = false;
-      let tempQuaternion = new THREE.Quaternion();
-      let tempVector = new THREE.Vector3();
-      this.previousSelectedObject.getWorldQuaternion(tempQuaternion);
-      this.previousSelectedObject.getWorldPosition(tempVector);
-      this.objects.add(this.previousSelectedObject);
-      this.previousSelectedObject.setRotationFromQuaternion(tempQuaternion);
-      this.previousSelectedObject.position.set(tempVector.x,tempVector.y ,tempVector.z);
-      this.previousSelectedObject.updateMatrixWorld();
-      const temp_pos = this.previousSelectedObject.position.clone();
-      const temp_rot = this.previousSelectedObject.rotation.clone();
-      this.eventdispatcher.dispatchEvent({ type: 'r_end', rotation: temp_rot, position: temp_pos, object: this.previousSelectedObject });
+      if( Math.abs(this.canvas.pivot_group.rotation.x) +
+      Math.abs(this.canvas.pivot_group.rotation.y) +
+      Math.abs(this.canvas.pivot_group.rotation.z) > 0.1){
+        let tempQuaternion = new THREE.Quaternion();
+        let tempVector = new THREE.Vector3();
+        this.previousSelectedObject.getWorldQuaternion(tempQuaternion);
+        this.previousSelectedObject.getWorldPosition(tempVector);
+        this.objects.add(this.previousSelectedObject);
+        this.previousSelectedObject.setRotationFromQuaternion(tempQuaternion);
+        this.previousSelectedObject.position.set(tempVector.x,tempVector.y ,tempVector.z);
+        this.previousSelectedObject.updateMatrixWorld();
+      }
+      this.temp_pos = this.previousSelectedObject.position.clone();
+      this.temp_rot = this.previousSelectedObject.rotation.clone();
+      this.eventdispatcher.dispatchEvent({ type: 'r_end', rotation: this.temp_rot, position: this.temp_pos, object: this.previousSelectedObject });
     }
     this.interactive = true;
     this.state = modes.Cammode;
@@ -172,7 +179,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         }
         break;
       case 'r':
-        if(this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
+        if(!(window as any).istyping && this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
           this.setUpRaycaster(keydown_coordinate_);
           const intersectInfo = this.raycaster.intersectObject(this.previousSelectedObject, false)?.[0];
           if (intersectInfo) {
@@ -224,7 +231,8 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
   }
   
   onMouseDoubleclick(intersection: THREE.Intersection, pointer: MouseEvent) {
-      if (intersection !== undefined) {
+    this.eventdispatcher.dispatchEvent({ type: 'interactive' });
+    if (intersection !== undefined) {
           pointer.stopImmediatePropagation();
       }
       //case 1 -- Intersect object != previous object
@@ -414,6 +422,60 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         }
       }
     
+      changeControls_total(newPosition: THREE.Vector3, milliseconds: number , newRotation?: THREE.Euler, done?: () => void) {
+        if (this.previousSelectedObject.position === undefined || this.previousSelectedObject.rotation === undefined) {
+          return;
+        }
+      
+        const currentRotation = new THREE.Quaternion().setFromEuler(this.previousSelectedObject.rotation);
+        const targetRotation = new THREE.Quaternion().setFromEuler(newRotation);
+      
+        if (this.previousSelectedObject.position.equals(newPosition) && currentRotation.equals(targetRotation)) {
+          return;
+        }
+      
+        if (milliseconds <= 0) {
+          this.previousSelectedObject.position.copy(newPosition);
+          this.previousSelectedObject.rotation.copy(newRotation);
+        } else {
+          if (this.changeTimeout !== undefined) {
+            clearInterval(this.changeTimeout);
+            this.changeTimeout = undefined;
+          }
+      
+          this.toPosition = newPosition;
+          this.toRotation = targetRotation;
+          let changeTime = 0;
+          const delta = 30 / milliseconds;
+      
+          this.changeTimeout = setInterval(() => {
+            const t = changeTime;
+            const interPolateTime = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      
+            const nextPosition = this.previousSelectedObject.position.clone().lerp(newPosition, interPolateTime);
+            const nextQuaternion = currentRotation.clone().slerp(targetRotation, interPolateTime);
+            const nextRotation = new THREE.Euler().setFromQuaternion(nextQuaternion);
+      
+            this.previousSelectedObject.position.copy(nextPosition);
+            this.previousSelectedObject.rotation.set(nextRotation.x, nextRotation.y, nextRotation.z);
+      
+            changeTime += delta;
+      
+            if (changeTime > 1.0) {
+              this.previousSelectedObject.position.copy(newPosition);
+              this.previousSelectedObject.rotation.copy(newRotation);
+              clearInterval(this.changeTimeout);
+              this.changeTimeout = undefined;
+              if (done) {
+                done();
+              }
+            }
+          }, 30);
+        }
+      }
+      
+
+
     toRadians(angle) {
         return angle * (Math.PI / 180);
     }
