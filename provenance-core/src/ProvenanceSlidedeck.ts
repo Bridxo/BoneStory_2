@@ -51,6 +51,9 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
       return this._slides
 
   }
+  public setTraverser(traverser: IProvenanceGraphTraverser){
+    this._traverser = traverser;
+  }
 
   public addSlide(slide?: IProvenanceSlide, index?: number): IProvenanceSlide {
     if (

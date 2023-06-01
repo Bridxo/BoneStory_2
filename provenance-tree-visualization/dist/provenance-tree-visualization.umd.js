@@ -127,13 +127,20 @@
                             if (index != 0)
                                 child_id = d.data.wrappedNodes[index - 1].id;
                             else {
-                                if (d.data.wrappedNodes[0].children) {
-                                    d.data.wrappedNodes[0].children.forEach((child) => {
-                                        if (child.metadata.mainbranch) {
-                                            child_id = child.id;
+                                if (d.children) {
+                                    d.children.forEach((child) => {
+                                        if (child.data.wrappedNodes[0].metadata.mainbranch) {
+                                            const ind = child.data.wrappedNodes.length - 1;
+                                            child_id = child.data.wrappedNodes[ind].id;
+                                        }
+                                        else {
+                                            isProcessingKey = false;
+                                            return;
                                         }
                                     });
                                 }
+                                else
+                                    return;
                             }
                         }
                     });
@@ -303,7 +310,10 @@
             const label_arr = node.wrappedNodes.map(n => n.label);
             const unique_label_arr = new Set(label_arr);
             if (unique_label_arr.size === 1) //all labels are the same
-                return node.wrappedNodes[0].label;
+                if (node.wrappedNodes.length >= 2)
+                    return node.wrappedNodes[0].label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+                else
+                    return node.wrappedNodes[0].label;
             else { // labels are different
                 let label = "";
                 const searchpattern = /Camera|View/;
@@ -321,14 +331,17 @@
                         label = label + "Measure,";
                 }
                 label = label.slice(0, -1);
-                if (label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 3)
+                if (label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 2)
                     label = node.wrappedNodes[0].metadata.O_group;
-                if (label == 'Object')
+                else if (label == 'Object')
                     label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
-                if (label == 'SelectObject')
+                else if (label == 'SelectObject')
                     label = label.slice(0, -6) + "(" + node.wrappedNodes[0].metadata.O_group + ")";
-                if (label == 'Camera')
+                else if (label == 'Camera')
                     label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+                else if (node.wrappedNodes.length >= 2) {
+                    label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+                }
                 return label;
             }
         }
@@ -386,7 +399,7 @@
                 stroke: '#000000'
             },
             {
-                name: 'Object Trans',
+                name: 'Object Transformation',
                 color: '#80b1d3',
                 shape: 'circle',
                 stroke: '#000000'
@@ -560,13 +573,7 @@
                     parent_id = d.parent.data.wrappedNodes[0].id;
                 }
             });
-            if (provenanceTreeVisualization.groupnumber == 0) {
-                setTimeout(() => {
-                    provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
-                }, 300);
-            }
-            else
-                provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
+            provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
             provenanceTreeVisualization.getFullsizeview();
             provenanceTreeVisualization.update();
         });
@@ -608,13 +615,7 @@
                     }
                 }
             });
-            if (provenanceTreeVisualization.groupnumber == 0) {
-                provenanceTreeVisualization.traverser.toStateNode(child_id, 250);
-                setTimeout(() => {
-                }, 300);
-            }
-            else
-                provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
+            provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
             provenanceTreeVisualization.getFullsizeview();
             provenanceTreeVisualization.update();
         });
@@ -1445,8 +1446,11 @@
                 this.currentHierarchyNodelength += 1.0;
                 this.scaleToFit();
                 this.numberofnodeswcam++;
-                if (!cam_test(event.label) && this.camera_show)
+                if (!cam_test(event.label)) {
                     this.numberofnodeswocam++;
+                }
+                else
+                    this.camera_show = true;
             });
             this.update();
             this.zoomer = d3.zoom();
@@ -1559,6 +1563,7 @@
         }
         setTraverser(traverser) {
             this.traverser = traverser;
+            provGraphControls(this);
         }
         removeNodesAndLinkChildren(tree, condition) {
             const removeNodes = (node) => {

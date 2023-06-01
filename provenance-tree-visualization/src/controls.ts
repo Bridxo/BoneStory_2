@@ -58,14 +58,22 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
                 if(index!=0)
                     child_id = d.data.wrappedNodes[index-1].id;
                 else{
-                    if(d.data.wrappedNodes[0].children)
+                    if(d.children)
                     {
-                        d.data.wrappedNodes[0].children.forEach((child: any) => {
-                            if(child.metadata.mainbranch){
-                                child_id = child.id;
+                        d.children.forEach((child: any) => {
+                            if(child.data.wrappedNodes[0].metadata.mainbranch){
+                                const ind = child.data.wrappedNodes.length -1;
+                                child_id = child.data.wrappedNodes[ind].id;
                             }
+                            else{
+                                isProcessingKey = false;
+                                return;
+                            }
+
                         });
                     }
+                    else
+                        return;
                     
                 }
                 

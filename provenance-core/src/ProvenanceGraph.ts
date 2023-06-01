@@ -163,6 +163,7 @@ export function serializeProvenanceGraph(graph: ProvenanceGraph): SerializedProv
       (serializedNode as SerializedStateNode).parent = node.parent.id;
     }
     serializedNode.children = node.children.map(child => child.id);
+    graph.current = graph.root;
     return serializedNode;
   });
 

@@ -30,8 +30,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   declarations: [
     AppComponent,
     BrainvisCanvasComponent,
-    ProvenanceVisualizationComponent,
     ProvenanceSlidesComponent,
+    ProvenanceVisualizationComponent,
     SlideAnnotationsComponent,
     // CpuGpuUsageComponent
   ],

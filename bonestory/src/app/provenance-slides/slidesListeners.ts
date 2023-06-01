@@ -12,29 +12,23 @@ export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: Prov
     exportButton.addEventListener("click", (e: Event) => exportJson(e));
 
     // let importButton = document.getElementById("saveprov_btn_2");
-    // importButton.addEventListener("click", (e: Event)  => importJson(e));
+    // importButton.addEventListener("click", (e: Event)  => importJson(e).then((window as any)listener));
 
     // let importButton = document.getElementById("slidesImportButton");
     // importButton.addEventListener("click", (e: Event)  => importJson(e));
 
     // let mergeButton = document.getElementById("slidesMergeButton");
     // mergeButton.addEventListener("click", (e: Event) =>  merge(e));
-    
-    async function importJson(e: Event) : Promise<void>{
-    let confirmDialog = confirm("Load story-slide Json file (2/2)");
-    if (confirmDialog) {
-        let element = document.createElement('input');
-        element.setAttribute('type', 'file');
-        element.setAttribute('id', 'input-file');
-        element.setAttribute('accept', '.json');
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        document.getElementById('input-file').addEventListener('change', (e: Event) => getFile(e))
-        element.click(); // simulate click
-        document.body.removeChild(element);
-    }
-    }
+    (window as any).isRunning = false;
 
+    async function importJson(e: Event) : Promise<void>{
+        try{
+            getFile(e);
+        } catch (e){
+            console.log(e);
+        }
+    }
+    
     function getFile(e: Event){
         let input = <HTMLInputElement>e.target;
         let files = input.files;
@@ -111,5 +105,10 @@ export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: Prov
     //     importJsonMerge(e); 
     // }
 
-
+    return {
+        importJson,
+        getFile,
+        restoreDeck,
+        //...
+    }
 }

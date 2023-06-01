@@ -86,27 +86,21 @@ const upwardButton = provenanceTreeVisualization.container
   .attr('style', 'position: absolute; z-index: 1; top: 7%;')
   .attr('ng-reflect-color', 'primary')
   .on('mousedown', () => {
-    var real_traverser = provenanceTreeVisualization.real_traverser;
-    var parent_id = '';
-    processing = true;
-    real_traverser
-    .filter((d: any) => {
-      const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
-      if(ref){
-        parent_id = d.parent.data.wrappedNodes[0].id;
-      }
-    });
-    if(provenanceTreeVisualization.groupnumber == 0){
-      setTimeout(() => {
-        provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
-        processing = false;
-    }, 300);
-    }
-
-    else
+      var real_traverser = provenanceTreeVisualization.real_traverser;
+      var parent_id = '';
+      processing = true;
+      real_traverser
+      .filter((d: any) => {
+        const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
+        if(ref){
+          parent_id = d.parent.data.wrappedNodes[0].id;
+        }
+      });
       provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
-    provenanceTreeVisualization.getFullsizeview();
-    provenanceTreeVisualization.update();
+      provenanceTreeVisualization.getFullsizeview();
+      provenanceTreeVisualization.update();
+      processing = false;
+
   });
 
 upwardButton
@@ -138,32 +132,24 @@ const downwardButton = provenanceTreeVisualization.container
   .attr('style', 'position: absolute; z-index: 1; top: 12%;')
   .attr('ng-reflect-color', 'primary')
   .on('mousedown', () => {
-    var real_traverser = provenanceTreeVisualization.real_traverser;
-    var child_id = '';
-    processing = true;
-    real_traverser
-    .filter((d: any) => {
-      const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
-      if(ref){
-        for(const child of d.children)
-        {
-            if(child.data.wrappedNodes[0].metadata.mainbranch)
-                child_id = child.data.wrappedNodes[0].id;
+      var real_traverser = provenanceTreeVisualization.real_traverser;
+      var child_id = '';
+      processing = true;
+      real_traverser
+      .filter((d: any) => {
+        const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
+        if(ref){
+          for(const child of d.children)
+          {
+              if(child.data.wrappedNodes[0].metadata.mainbranch)
+                  child_id = child.data.wrappedNodes[0].id;
+          }
+              
         }
-            
-      }
-    });
-    if(provenanceTreeVisualization.groupnumber == 0){
-      provenanceTreeVisualization.traverser.toStateNode(child_id, 250);
-      setTimeout(() => {
-        processing = false;
-    }, 300);
-    }
-
-    else
+      });
       provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
-    provenanceTreeVisualization.getFullsizeview();
-    provenanceTreeVisualization.update();
+      provenanceTreeVisualization.getFullsizeview();
+      provenanceTreeVisualization.update();
   });
 
 downwardButton

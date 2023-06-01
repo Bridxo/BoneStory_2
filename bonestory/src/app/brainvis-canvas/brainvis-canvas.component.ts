@@ -25,6 +25,10 @@ import {updateModeDisplay} from '../util/Displaywidget';
 
 import { DragControls } from 'three/examples/jsm/controls/DragControls';
 import { ProvenanceVisualizationComponent } from '../provenance-visualization/provenance-visualization.component';
+
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass';
  
 
 
@@ -89,6 +93,7 @@ export class BrainvisCanvasComponent {
   relativePos: THREE.Vector3;
   rotate_counter = 0;
   rotate_prev_intersect: THREE.Vector3;
+  ctrl_down= false;
 
   @Input() set showObjects(showObjects: boolean) {
     this._showObjects = showObjects;
@@ -107,7 +112,7 @@ export class BrainvisCanvasComponent {
 
   // private camera: THREE.PerspectiveCamera;
   public camera: THREE.OrthographicCamera;
-  private renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+  private renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, preserveDrawingBuffer: true });
 
   // private transform: TransformControls;
   private number_of_stl = 0; //incresase numbers
@@ -136,11 +141,15 @@ export class BrainvisCanvasComponent {
   public service: ProvenanceService;
 
   // HJ added values
-  private selectedobj: THREE.Mesh; // for indicating selected object
+  public selectedobj: THREE.Mesh; // for indicating selected object
   public helper; // for indicating selected object surface normal
   public measure_groups = []; // Create an array to store the annotations
   public measure_counter = [];
   public annotations = [];
+  public composer;
+  public outlinePass;
+  public renderPass;
+  public gizmoLayer;
   private initial_zoom = 1;
   private spriteMap = new Map();
   private firstload = true;
@@ -152,17 +161,20 @@ export class BrainvisCanvasComponent {
   private inter_have;
   private inter_helper;
   private objstat: { name: string[], opacity: number[], hide_val: boolean[] };
+  private hidden_refresh = false;
+  private image_loaded = false;
 
   // stl file information
   private stl_objs: FormData;
 
   constructor(elem: ElementRef, provenance: ProvenanceService) {
-
+    
     this.elem = elem.nativeElement;
     this.service = provenance;
     this.eventdispatcher = new THREE.EventDispatcher();
     this.objects = new THREE.Object3D();
     this.objectSelector = new ObjectSelector(this.objects,this.renderer.domElement, this.camera, this);
+
     // todo: remove object from window
     // registerActions(this.service.registry, this);
     // addListeners(this.service.tracker, this);
@@ -173,19 +185,28 @@ export class BrainvisCanvasComponent {
   removeEventListener(type, listener){
     this.eventdispatcher.removeEventListener(type,listener);
 }
-  onWindowResize() {
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
+onWindowResize() {
+  this.width = window.innerWidth;
+  this.height = window.innerHeight;
 
-    //orthographic camera
-    this.camera.left = this.width / -2;
-    this.camera.right = this.width / 2;
-    this.camera.top = this.height / 2;
-    this.camera.bottom = this.height / -2;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(this.width, this.height);
-    //sidenav -> provenance graph
-  }
+  // Update pixel ratio
+  const pixelRatio = window.devicePixelRatio || 1;
+
+  // Orthographic camera
+  this.camera.left = this.width / -2;
+  this.camera.right = this.width / 2;
+  this.camera.top = this.height / 2;
+  this.camera.bottom = this.height / -2;
+  this.camera.updateProjectionMatrix();
+
+  // Adjust renderer size and pixel ratio
+  this.renderer.setSize(this.width, this.height);
+  this.renderer.setPixelRatio(pixelRatio);
+
+  // Render the scene
+  this.composer.render();
+  this.renderer.render();
+}
 
   @HostListener('window:resize', ['$event'])
   onResize() {
@@ -244,11 +265,29 @@ export class BrainvisCanvasComponent {
     this.controls.update();
     this.mm = new TransformControls(this.camera, this.renderer.domElement);
     this.mm.setSize(0.4);
+    // Set custom layer for the gizmo
+    this.gizmoLayer = new THREE.Layers();
+    this.gizmoLayer.set(1);
     
 
     
     this.intersectionManager = new IntersectionManager(this.renderer.domElement, this.camera);
     this.intersectionManager.addListener(this.objectSelector);
+
+    this.composer = new EffectComposer(this.renderer);
+    this.renderPass = new RenderPass(this.scene, this.camera);
+    this.composer.addPass(this.renderPass);
+    this.outlinePass = new OutlinePass(new THREE.Vector2(this.width, this.height), this.scene, this.camera);
+    this.outlinePass.selectedObjects = [];
+    this.outlinePass.edgeStrength = 1.0;
+    this.outlinePass.edgeGlow = 0.5;
+    this.outlinePass.edgeThickness = 1.0;
+    this.outlinePass.pulsePeriod = 0;
+    this.outlinePass.usePatternTexture = false;
+    this.outlinePass.visibleEdgeColor.set('#ffffff');
+    this.outlinePass.hiddenEdgeColor.set('#ffffff');
+    this.composer.addPass(this.outlinePass);
+    
 
     this.initScene();
     this.addEventListeners();
@@ -337,7 +376,6 @@ export class BrainvisCanvasComponent {
     this.addEventListener('wheel', (event) => {
       console.log('wheel');
     });
-
     window.addEventListener("beforeunload", function (e) {
       var confirmationMessage = "\o/";
       console.log('user terminated');
@@ -353,7 +391,9 @@ export class BrainvisCanvasComponent {
   }, false);
   
     window.addEventListener('keydown', (event) => {
-      
+      if(event.key == 'Control'){
+        this.ctrl_down = true;
+      }
       this.objectSelector.setkey(event, keydown_coordinate);
       this.mode = this.objectSelector.getmode();
       if(this.mode == modes.Cammode) // camera
@@ -367,6 +407,30 @@ export class BrainvisCanvasComponent {
       }
       // this.controls.update();
       });
+    
+    // window.addEventListener('keyup', (event) => {
+    //   if(event.key == 'Control'){
+    //     this.ctrl_down = false;
+    //     this.objectSelector.pastSelectedObjects = this.objectSelector.previousSelectedObjects
+    //     this.objectSelector.previousSelectedObjects = this.outlinePass.selectedObjects;
+    //     // this.eventdispatcher.dispatchEvent({
+    //     //   type: 'objectSelection',
+    //     //   newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
+    //     // });
+    //   }
+    //   this.objectSelector.setkey(event, keydown_coordinate);
+    //   this.mode = this.objectSelector.getmode();
+    //   if(this.mode == modes.Cammode) // camera
+    //     this.controls.enabled = true;
+    //   else{
+    //     this.controls.enabled = false;
+    //     if(this.mode == modes.Translation)
+    //       this.ModeText_add = '\nTranslate';
+    //     else if(this.mode == modes.Rotation)
+    //       this.ModeText_add = '\nRotate';
+    //   }
+    //   // this.controls.update();
+    //   });
 
     this.controls.addEventListener('zoom_track_start', (event) => {
       const position = this.controls.camera.position.toArray();
@@ -489,6 +553,9 @@ export class BrainvisCanvasComponent {
         this.mm.setMode('translate');
         this.mm.position.set(0,0,0);
         this.mm.attach(this.selectedobj);
+        this.mm.traverse((node) => {
+          node.layers.enable(this.gizmoLayer.mask);
+        });
         this.controls.enabled = false;
       }
       else if (mode == 1 && this.selectedobj!=undefined){ //Rotation
@@ -504,6 +571,9 @@ export class BrainvisCanvasComponent {
           this.selectedobj.position.sub(event.intersect);
           this.rotate_prev_intersect = event.intersect;
           this.mm.attach(this.pivot_group);
+          this.mm.traverse((node) => {
+            node.layers.enable(this.gizmoLayer.mask);
+          });
           this.rotate_counter++;
         }
         this.controls.enabled = false;
@@ -567,7 +637,6 @@ export class BrainvisCanvasComponent {
       new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
       newOrientation.zoom,
       within);
-      // this.Returnobjinfo(this.objects, newOrientation.objstat);
   }
 
   CameraPan(newOrientation: IOrientation, within: number) {
@@ -590,7 +659,7 @@ export class BrainvisCanvasComponent {
     if(undo === true){
       intersect[0].object.children.forEach (function (child) {
         if(child.name === 'measure'){
-          child.material.dispose();
+          child.materiaml.dispose();
           intersect[0].object.remove(child);
         }
       });
@@ -658,46 +727,6 @@ export class BrainvisCanvasComponent {
       undo: false
     });
   }
-  // Annotation(text: string, intersect: any, undo?: boolean) {
-  //   if(undo === true){
-  //     intersect[0].object.children.forEach (function (child) {
-  //       if(child.name === text){
-  //         child.element.remove(); // we also need to remove the HTML element
-  //       }
-  //     });
-  //     return;
-  //   }
-  
-  //   // Create a new div for the annotation
-  //   var annotationDiv = document.createElement('div');
-  //   annotationDiv.className = 'annotation'; // add 'annotation' class for styling
-  //   annotationDiv.innerText = text;
-  
-  //   // Place the div in the container (replace 'container' with your container id)
-  //   var container = document.getElementById('main-canvas');
-  //   container.appendChild(annotationDiv);
-    
-  //     // If annotations array doesn't exist, initialize it
-  //   if (!intersect[0].object.userData.annotations) {
-  //     intersect[0].object.userData.annotations = [];
-  //   }
-
-  //   // Create an annotation object with the 3D position and HTML element
-  //   var annotation = {
-  //     position: intersect[0].point.clone(),
-  //     element: annotationDiv
-  //   };
-  //   intersect[0].object.userData.annotations.push(annotation);
-  
-  //   this.eventdispatcher.dispatchEvent({
-  //     type: 'annotation',
-  //     text: text,
-  //     inter: intersect
-  //   });
-  //   this.mode = modes.Cammode;
-  //   this.ModeText_add = "";
-  // }
-
   Annotation(text: string, intersect: any, undo?: boolean) {
     if(undo === true){
       intersect[0].object.children.forEach (function (child) {
@@ -798,7 +827,8 @@ export class BrainvisCanvasComponent {
         });
       }
     });
-    this.render();
+    this.composer.render();
+
     
   }
 
@@ -988,7 +1018,7 @@ export class BrainvisCanvasComponent {
     toggleAllSprites: () => {
         this.spriteMap.forEach((value, key) => {
           value.visible = !value.visible;
-          value.sprite.visible = value.visible;
+          // value.sprite.visible = value.visible;
         });
       }
   }
@@ -1037,7 +1067,7 @@ export class BrainvisCanvasComponent {
           mesh.add(sprite);
           this.objects.add(mesh); // Add this line to update this.objects
 
-        const meshSettings = { ...objectSettings, name: mesh.name, hidden: false };
+        const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
         
         const applyNameChange = (mesh, oldName, newName) => {
           const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
@@ -1069,13 +1099,16 @@ export class BrainvisCanvasComponent {
 
         fragment_folder
             .add(meshSettings, 'hidden')
-            .name('Hide')
+            .name('Visibility')
             .onChange((value) => {
-                mesh.visible = !value;
+              if(!this.hidden_refresh){
+                mesh.visible = value;
                 const spriteObject = this.spriteMap.get(meshSettings.name);
-                if (spriteObject) spriteObject.visible = !value;
+                if (spriteObject) spriteObject.visible = value;
                 this.objstat = this.Extractobjinfo(this.objects);
                 this.fragmentoptionsrecorder();
+              }
+                this.hidden_refresh = false;
             });
 
         fragment_folder.add(material, 'opacity', 0, 1).name('Opacity')
@@ -1158,7 +1191,21 @@ export class BrainvisCanvasComponent {
     let uis = this.ui;
     const alpha = ['assets/SP_1_reduced.stl', 'assets/SP_2_reduced.stl', 'assets/SP_3_reduced.stl', 'assets/Clavicle Mid Shaft Bone Plate_2.stl'];
     fragment_folder = uis.addFolder('Fragments');
-    fragment_folder.add(this.viewpoint_button, "toggleAllSprites").name("Toggle Labels");
+    const labelsettings = { toggleAllSprites: true };
+    fragment_folder.add(labelsettings, "toggleAllSprites").name("Toggle Labels")
+    .onChange((value) => {
+      if (value) {
+        this.spriteMap.forEach((spriteObject) => {
+          spriteObject.sprite.visible = true;
+        });
+      }
+      else
+      {
+        this.spriteMap.forEach((spriteObject) => {
+          spriteObject.sprite.visible = false;
+        });
+      }
+    });
 
     for(let file of alpha) {
         await new Promise<void>((resolve) => {
@@ -1190,11 +1237,7 @@ export class BrainvisCanvasComponent {
                 mesh.add(sprite);
                 this.objects.add(mesh);
 
-                const objectSettings = {
-                    renderOrder: this._randerorder,
-                    hidden: false,
-                };
-                const meshSettings = { ...objectSettings, name: mesh.name, hidden: false };
+                const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
                 
                 const applyNameChange = (mesh, oldName, newName) => {
                   const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
@@ -1226,13 +1269,16 @@ export class BrainvisCanvasComponent {
 
                 fragment_folder
                     .add(meshSettings, 'hidden')
-                    .name('Hide')
+                    .name('Visibility')
                     .onChange((value) => {
-                        mesh.visible = !value;
+                      if(!this.hidden_refresh){
+                        mesh.visible = value;
                         const spriteObject = this.spriteMap.get(meshSettings.name);
-                        if (spriteObject) spriteObject.visible = !value;
+                        if (spriteObject) spriteObject.visible = value;
                         this.objstat = this.Extractobjinfo(this.objects);
                         this.fragmentoptionsrecorder();
+                      }
+                        this.hidden_refresh = false;
                     });
 
                 fragment_folder.add(material, 'opacity', 0, 1).name('Opacity')
@@ -1351,14 +1397,23 @@ export class BrainvisCanvasComponent {
   }
   Returnobjinfo(objinfo) {
     console.log(objinfo);
+    this.objstat = objinfo;
     let opacity = objinfo.opacity;
     let hide_val = objinfo.hide_val;
     let i = 0;
     this.objects.children.forEach((child) => {
       if (child instanceof THREE.Mesh) {
-        child.material.opacity = opacity[i];
+        child.material.opacity = opacity[i];  
         child.visible = hide_val[i];
         i++;
+      }
+    });
+    i= 0;
+    this.ui.__folders['Fragments'].__controllers.forEach((controller) => {
+      if(controller.property == 'hidden'){
+        this.hidden_refresh = true;
+        controller.setValue(hide_val[i]); 
+        i++
       }
     });
     this.ui.updateDisplay();
@@ -1370,12 +1425,27 @@ export class BrainvisCanvasComponent {
     const axes_temp = this.AxesHelper.visible;
     this.gridHelper.visible = false;
     this.AxesHelper.visible = false;
-    this.render();
+    this.renderer.autoClear = false;  // Prevent automatic clearing of the renderer
+
+    // Render the scene normally
+    this.renderer.clear();
+    this.renderer.render(this.scene, this.camera);
+    this.outlinePass.edgeThickness = 5.0;
+    this.outlinePass.edgeStrength = 9.0;
+    // Render the composer which includes the OutlinePass
+    this.composer.render();
+
+
+    // Capture the screenshot
     dataURL = this.renderer.domElement.toDataURL('image/png');
+    
+    this.renderer.autoClear = true;  // Restore automatic clearing
+    this.outlinePass.edgeStrength = 1.0;
+    this.outlinePass.edgeThickness = 1.0;
     this.gridHelper.visible = grid_temp;
     this.AxesHelper.visible = axes_temp;
     return dataURL;
-  }
+}
 }
 
 

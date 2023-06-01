@@ -6,7 +6,7 @@
       <app-provenance-slides #slides></app-provenance-slides>
     </div>
     <div id="side-container">
-      <div id="side-child"><app-provenance-visualization #provvis z-index="997"></app-provenance-visualization></div>
+      <div id="side-child"><app-provenance-visualization id="provcomp" #provvis z-index="997"></app-provenance-visualization></div>
       <mat-slider
       class="provslider"
       [max]= "provvis.getnodenumber()"
@@ -48,7 +48,7 @@
         <button mat-icon-button id="saveprov_btn_1" title="Save Prov files(json)" style="cursor: pointer;">
           <mat-icon>cloud_download</mat-icon> <!-- Replace with the icon you want -->
         </button>
-        <button mat-icon-button id="saveprov_btn_2" title="Load Prov file(json)" style="cursor: pointer;"> <!-- Replace with the function you want -->
+        <button mat-icon-button id="saveprov_btn_20" title="Load Prov file(json)" style="cursor: pointer;"> <!-- Replace with the function you want -->
           <mat-icon>cloud_upload</mat-icon> <!-- Replace with the icon you want -->
         </button>
       </div>

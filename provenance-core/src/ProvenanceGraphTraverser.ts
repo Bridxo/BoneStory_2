@@ -84,6 +84,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
     graph: IProvenanceGraph,
     tracker: IProvenanceTracker | null = null
   ) {
+    const w = window as any;
     this.registry = registry;
     this.graph = graph;
     this.tracker = tracker;

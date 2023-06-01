@@ -478,8 +478,11 @@ class ProvenanceTreeVisualization {
             this.currentHierarchyNodelength += 1.0;
             this.scaleToFit();
             this.numberofnodeswcam++;
-            if (!(0, utils_1.cam_test)(event.label) && this.camera_show)
+            if (!(0, utils_1.cam_test)(event.label)) {
                 this.numberofnodeswocam++;
+            }
+            else
+                this.camera_show = true;
         });
         this.update();
         this.zoomer = d3.zoom();
@@ -592,6 +595,7 @@ class ProvenanceTreeVisualization {
     }
     setTraverser(traverser) {
         this.traverser = traverser;
+        (0, controls_1.provGraphControls)(this);
     }
     removeNodesAndLinkChildren(tree, condition) {
         const removeNodes = (node) => {

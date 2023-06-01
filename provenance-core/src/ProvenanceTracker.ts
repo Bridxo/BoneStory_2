@@ -106,13 +106,15 @@ export class ProvenanceTracker implements IProvenanceTracker {
     if((window as any).canvas.objstat != undefined)
       newNode.artifacts = JSON.parse(JSON.stringify((window as any).canvas.objstat));
     //screen-shot part
-    newNode.metadata.screenshot = await this.ScreenShot();
+    newNode.metadata.screenshot = await (window as any).canvas.ScreenShot();
 
     //Object group part
-    if((window as any).canvas.selectedobj == undefined)
-      newNode.metadata.O_group = 'Idle';
-    else
+    if ((window as any).canvas.selectedobj != undefined) {
       newNode.metadata.O_group = (window as any).canvas.selectedobj.name;
+  } else {
+      console.log("selectedobj or selectedobj.name is undefined");
+  }
+      
     //H-value calculation part
     newNode.metadata.H_value = this.H_value(newNode);
 

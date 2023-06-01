@@ -56,7 +56,10 @@ const groupNodeLabel = (node) => {
         const label_arr = node.wrappedNodes.map(n => n.label);
         const unique_label_arr = new Set(label_arr);
         if (unique_label_arr.size === 1) //all labels are the same
-            return node.wrappedNodes[0].label;
+            if (node.wrappedNodes.length >= 2)
+                return node.wrappedNodes[0].label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            else
+                return node.wrappedNodes[0].label;
         else { // labels are different
             let label = "";
             const searchpattern = /Camera|View/;
@@ -74,14 +77,17 @@ const groupNodeLabel = (node) => {
                     label = label + "Measure,";
             }
             label = label.slice(0, -1);
-            if (label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 3)
+            if (label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 2)
                 label = node.wrappedNodes[0].metadata.O_group;
-            if (label == 'Object')
+            else if (label == 'Object')
                 label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
-            if (label == 'SelectObject')
+            else if (label == 'SelectObject')
                 label = label.slice(0, -6) + "(" + node.wrappedNodes[0].metadata.O_group + ")";
-            if (label == 'Camera')
+            else if (label == 'Camera')
                 label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            else if (node.wrappedNodes.length >= 2) {
+                label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+            }
             return label;
         }
     }

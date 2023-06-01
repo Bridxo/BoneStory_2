@@ -21,6 +21,8 @@ import { addAggregationButtons } from './components';
 import { findHierarchyNodeFromProvenanceNode } from './aggregation/aggregation';
 import { caterpillar } from './caterpillar';
 
+
+
 var xScale = -20;
 var yScale = 20;
 var treeWidth = 0;
@@ -127,8 +129,12 @@ export class ProvenanceTreeVisualization {
       this.currentHierarchyNodelength += 1.0;
       this.scaleToFit();
       this.numberofnodeswcam++;
-      if(!cam_test(event.label) && this.camera_show)
+      if(!cam_test(event.label)){
         this.numberofnodeswocam++;
+      }
+      else
+        this.camera_show = true;
+
     });
 
     this.update();
@@ -274,6 +280,8 @@ export class ProvenanceTreeVisualization {
 
   public setTraverser(traverser: ProvenanceGraphTraverser): void {
     this.traverser = traverser;
+    provGraphControls(this);
+
   }
 
   public removeNodesAndLinkChildren<T>(tree: IGroupedTreeNode<T>, condition: (node: IGroupedTreeNode<T>) => boolean): IGroupedTreeNode<T> {

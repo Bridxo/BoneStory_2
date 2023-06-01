@@ -22,7 +22,6 @@ export class ProvenanceVisualizationComponent implements OnInit {
       this.provenance.traverser,
       this.elementRef.nativeElement,
     );
-    
     addVisualizationListeners(this._viz, this.provenance);
   }
 
@@ -45,6 +44,10 @@ export class ProvenanceVisualizationComponent implements OnInit {
 
   getfullsizeview() {
     this._viz.getFullsizeview();
+  }
+
+  setviz(viz: ProvenanceTreeVisualization) {
+    this._viz = viz;
   }
 
 }

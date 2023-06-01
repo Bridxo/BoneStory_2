@@ -10,7 +10,7 @@ const legendData = {
             stroke: '#000000'
         },
         {
-            name: 'Object Trans',
+            name: 'Object Transformation',
             color: '#80b1d3',
             shape: 'circle',
             stroke: '#000000'

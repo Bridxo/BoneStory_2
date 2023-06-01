@@ -76,16 +76,10 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
                 parent_id = d.parent.data.wrappedNodes[0].id;
             }
         });
-        if (provenanceTreeVisualization.groupnumber == 0) {
-            setTimeout(() => {
-                provenanceTreeVisualization.traverser.toStateNode(parent_id, 250);
-                processing = false;
-            }, 300);
-        }
-        else
-            provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
+        provenanceTreeVisualization.traverser.toStateNode(parent_id, 0);
         provenanceTreeVisualization.getFullsizeview();
         provenanceTreeVisualization.update();
+        processing = false;
     });
     upwardButton
         .append('span')
@@ -126,14 +120,7 @@ function addAggregationButtons(elm, provenanceTreeVisualization) {
                 }
             }
         });
-        if (provenanceTreeVisualization.groupnumber == 0) {
-            provenanceTreeVisualization.traverser.toStateNode(child_id, 250);
-            setTimeout(() => {
-                processing = false;
-            }, 300);
-        }
-        else
-            provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
+        provenanceTreeVisualization.traverser.toStateNode(child_id, 0);
         provenanceTreeVisualization.getFullsizeview();
         provenanceTreeVisualization.update();
     });

@@ -6,6 +6,7 @@ import { BrainvisCanvasComponent } from './brainvis-canvas.component';
 const { Object3D } = THREE;
 import { IIntersectionListener } from './intersectionManager';
 
+
 enum modes {
   Translation = 0,
   Rotation = 1,
@@ -19,7 +20,9 @@ export default class ObjectSelector  implements IIntersectionListener  {
     private objects = new THREE.Object3D;
     private canvas: BrainvisCanvasComponent;
     private previousSelectedObject: THREE.Mesh = undefined;
+    public previousSelectedObjects: THREE.Mesh[] = [];
     private pastSelectedObject: THREE.Mesh = undefined;
+    public pastSelectedObjects: THREE.Mesh[] = [];
 
     private pastColor: number = 0;
     private previousColor: number = 0;
@@ -170,16 +173,16 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
 
   }
   
-  setkey(event: any, keydown_coordinate_: any) {
+  async setkey(event: any, keydown_coordinate_: any) {
     switch (event.key) {
       case 't':
-        if(!(window as any).istyping && this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
+        if(!(window as any).istyping && this.previousSelectedObject != undefined){
           this.state = modes.Translation;
           this.eventdispatcher.dispatchEvent({ type: 'interactive' });
         }
         break;
       case 'r':
-        if(!(window as any).istyping && this.previousSelectedObject.name != undefined && (this.previousSelectedObject.material as MeshLambertMaterial).color.getHex() == 0x0000ff){
+        if(!(window as any).istyping && this.previousSelectedObject != undefined){
           this.setUpRaycaster(keydown_coordinate_);
           const intersectInfo = this.raycaster.intersectObject(this.previousSelectedObject, false)?.[0];
           if (intersectInfo) {
@@ -192,36 +195,37 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
       case 'c':
         this.state = modes.Cammode;
         break;
-      case 'a':
-        if(!(window as any).istyping && !event.ctrlKey){
-          this.state = modes.Annotationmode;
-          const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
-          const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
-          if(annotation_intersect.length != 0){
-            updateModeDisplay('Annotation','');
-            var annotationText = prompt("Enter the text for the annotation:");
-            this.canvas.Annotation(annotationText, annotation_intersect, false);
-          }
-        }
-        else
-          this.state = modes.Cammode;
-        break;
-      case 'Delete':
-        this.state = modes.Delete;
-        const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
-        const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
-        if(annotation_intersect.length != 0){
-          var annotationText = prompt("Enter the text for the annotation:");
-          this.canvas.Annotation(annotationText, annotation_intersect, false);
-        }
-        break;
+      // case 'a':
+      //   if(!(window as any).istyping && !event.ctrlKey){
+      //     this.state = modes.Annotationmode;
+      //     const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
+      //     const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
+      //     if(annotation_intersect.length != 0){
+      //       updateModeDisplay('Annotation','');
+      //       var annotationText = prompt("Enter the text for the annotation:");
+      //       this.canvas.Annotation(annotationText, annotation_intersect, false);
+      //     }
+      //   }
+      //   else
+      //     this.state = modes.Cammode;
+      //   break;
+      // case 'Delete':
+      //   this.state = modes.Delete;
+      //   const annotation_vector = this.setUpRaycaster(keydown_coordinate_);
+      //   const annotation_intersect = this.raycaster.intersectObjects(this.objects.children);
+      //   if(annotation_intersect.length != 0){
+      //     var annotationText = prompt("Enter the text for the annotation:");
+      //     this.canvas.Annotation(annotationText, annotation_intersect, false);
+      //   }
+      //   break;
       case 'm':
         this.state = modes.Measure;
         const Measure_vector = this.setUpRaycaster(keydown_coordinate_);
         const Measure_intersect = this.raycaster.intersectObjects(this.objects.children);
         if(Measure_intersect.length != 0){
-          this.canvas.Measure(Measure_intersect, false);
+          await this.canvas.Measure(Measure_intersect, false);
         }
+        break;
       default:
         this.state = modes.Cammode;
         break;
@@ -231,7 +235,8 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
   }
   
   onMouseDoubleclick(intersection: THREE.Intersection, pointer: MouseEvent) {
-    this.eventdispatcher.dispatchEvent({ type: 'interactive' });
+    // this.eventdispatcher.dispatchEvent({ type: 'interactive' });
+
     if (intersection !== undefined) {
           pointer.stopImmediatePropagation();
       }
@@ -239,240 +244,109 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
       if (intersection !== undefined &&
           this.previousSelectedObject !== intersection.object &&
           intersection.object instanceof THREE.Mesh) { // Intersection object != previous selected
-
+          if(this.canvas.ctrl_down)
+            this.canvas.outlinePass.selectedObjects.push(intersection.object);
+          else
+            this.canvas.outlinePass.selectedObjects = [intersection.object];
+          this.canvas.render();
           const asMesh = <THREE.Mesh>intersection.object;
           if (asMesh.material instanceof THREE.MeshLambertMaterial) {
-              let previousName = '';
               let asMeshPongMaterial = null;
-
-              if (this.previousSelectedObject != undefined) {
-                  asMeshPongMaterial = this.previousSelectedObject.material as THREE.MeshLambertMaterial;
-                  asMeshPongMaterial.color.setHex(this.previousColor);
-                  previousName = this.previousSelectedObject.name;
-              }
               asMeshPongMaterial = asMesh.material as THREE.MeshLambertMaterial;
-              this.pastColor = this.previousColor;
-              this.previousColor = asMeshPongMaterial.color.getHex();
               this.pastSelectedObject = this.previousSelectedObject;
               this.previousSelectedObject = asMesh;
-
-              this.eventdispatcher.dispatchEvent({
+              this.canvas.selectedobj = this.previousSelectedObject;
+              if(this.pastSelectedObject==undefined){
+                this.eventdispatcher.dispatchEvent({
                   type: 'objectSelection',
-                  newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
+                  newObject: [this.previousSelectedObject.name, undefined, this.previousColor, this.pastColor]
               });
+              }
+              else{
+                this.eventdispatcher.dispatchEvent({
+                  type: 'objectSelection',
+                  newObject: [this.previousSelectedObject.name, this.pastSelectedObject.name, this.previousColor, this.pastColor]
+              });
+              }
+
           }
       } 
       //case 2 -- selected object == previous object
       else if (intersection !== undefined &&
           this.previousSelectedObject == intersection.object &&
           intersection.object instanceof THREE.Mesh) {
+            let index = this.canvas.outlinePass.selectedObjects.indexOf(intersection.object);
+
+            this.canvas.outlinePass.selectedObjects.splice(index, 1);
             this.pastColor = this.previousColor;
             this.previousColor = undefined;
             this.pastSelectedObject = this.previousSelectedObject;
             this.previousSelectedObject = undefined;
-            // const asMeshPongMaterial = <THREE.MeshPhongMaterial>this.previousSelectedObject.material;       
-          // asMeshPongMaterial.color.setHex(this.pastColor); // return to original color
-          
-          this.eventdispatcher.dispatchEvent({
-              type: 'objectSelection',
-              newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
-          });
+            this.canvas.selectedobj = this.previousSelectedObject;
+            if(!this.canvas.ctrl_down){
+              this.eventdispatcher.dispatchEvent({
+                type: 'objectSelection',
+                newObject: [undefined, this.pastSelectedObject.name, this.previousColor, this.pastColor]
+            });
+            }
       }
 
   }
-    // changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
-    //   if (this.previousSelectedObject.position == undefined){
-    //       return;
-    //   }
-    //   if (this.previousSelectedObject.position.equals(newPosition)) {
-    //       return;
-    //     }
-    //   if (milliseconds <= 0) {
-    //     this.previousSelectedObject.position.copy(newPosition);
-    //     if(newRotation !== undefined)
-    //       this.previousSelectedObject.rotation.toVector3().equals(newRotation);
-    //   } 
-    //   else {
-    //     // cancel previous animation
-    //     if (this.changeTimeout !== undefined) {
-    //       clearInterval(this.changeTimeout);
-    //       this.changeTimeout = undefined;
-    //     }
-    //     this.toPosition = newPosition;
-    //     if(newRotation !== undefined)
-    //       this.toRotation = newRotation;
-    //     let changeTime = 0;
-    //     const delta = 30 / milliseconds;
-    //     this.changeTimeout = setInterval((fromPosition: THREE.Vector3, toPosition: THREE.Vector3, fromRotation: THREE.Vector3, toRotation: THREE.Vector3) => {
-    //       const t = changeTime;
-    //       const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
-    //       const nextPosition = fromPosition.clone();
-    //       const distancePosition = toPosition.clone();
-    //       distancePosition.sub(fromPosition);
-    //       nextPosition.addScaledVector(distancePosition, interPolateTime);
-    //       if(newRotation !== undefined){
-    //         const nextRotation = fromRotation.clone() as THREE.Vector3;
-    //         const distanceRotation = toRotation.clone() as THREE.Vector3;
-    //         distanceRotation.sub(fromRotation as THREE.Vector3);
-    //         nextRotation.addScaledVector(distanceRotation, interPolateTime);
-    //         this.changecontrols(nextPosition, 0,undefined,nextRotation);
-    //         changeTime += delta;
-    //         if (changeTime > 1.0) {
-    //           this.changecontrols(toPosition, 0,undefined,toRotation);
-    //           clearInterval(this.changeTimeout);
-    //           this.changeTimeout = undefined;
-    //           if (done) {
-    //             done();
-    //           }
-    //         }
-    //       }
-    //       else{
-    //         this.changecontrols(nextPosition, 0);
-    //         changeTime += delta;
-    //         if (changeTime > 1.0) {
-    //           this.changecontrols(toPosition, 0);
-    //           clearInterval(this.changeTimeout);
-    //           this.changeTimeout = undefined;
-    //           if (done) {
-    //             done();
-    //           }
-    //         }
-    //       }
-    //     }, 30, this.previousSelectedObject.position.clone(), newPosition.clone(), new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y, this.previousSelectedObject.rotation.z ), newRotation.clone());
-    //   }
-    // }
-    changecontrols(newPosition: THREE.Vector3, milliseconds: number, done?: () => void, newRotation?: THREE.Vector3) {
-        if (this.previousSelectedObject.position == undefined){
-            return;
-        }
-        if (this.previousSelectedObject.position.equals(newPosition)) {
-            return;
-          }
-        if (milliseconds <= 0) {
-          this.previousSelectedObject.position.copy(newPosition);
-        } 
-        else {
-          // cancel previous animation
-          if (this.changeTimeout !== undefined) {
-            clearInterval(this.changeTimeout);
-            this.changeTimeout = undefined;
-          }
-          this.toPosition = newPosition;
-          let changeTime = 0;
-          const delta = 30 / milliseconds;
-          this.changeTimeout = setInterval((fromPosition, toPosition) => {
-            const t = changeTime;
-            const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
-            const nextPosition = fromPosition.clone();
-            const distancePosition = toPosition.clone();
-            distancePosition.sub(fromPosition);
-            nextPosition.addScaledVector(distancePosition, interPolateTime);
-            this.changecontrols(nextPosition, 0);
-            changeTime += delta;
-            if (changeTime > 1.0) {
-              this.changecontrols(toPosition, 0);
-              clearInterval(this.changeTimeout);
-              this.changeTimeout = undefined;
-              if (done) {
-                done();
-              }
-            }
-          }, 30, this.previousSelectedObject.position.clone(), newPosition.clone());
-        }
-      }
-
-    changecontrols_rotation(newrotation: THREE.Vector3, milliseconds: number, done?: () => void) {
-        if (this.previousSelectedObject.rotation == undefined){
-            return;
-        }
-        if (new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y,this.previousSelectedObject.rotation.z).equals(newrotation)) {
-            return;
-          }
-        if (milliseconds <= 0) {
-          this.previousSelectedObject.rotation.set(newrotation.x,newrotation.y,newrotation.z);
-        } 
-        else {
-          // cancel previous animation
-          if (this.changeTimeout !== undefined) {
-            clearInterval(this.changeTimeout);
-            this.changeTimeout = undefined;
-          }
-          this.toRotation = newrotation;
-          let changeTime = 0;
-          const delta = 30 / milliseconds;
-          this.changeTimeout = setInterval((fromPosition, toPosition) => {
-            const t = changeTime;
-            const interPolateTime = t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t; //  ease in/out function
-            const nextPosition = fromPosition.clone();
-            const distancePosition = toPosition.clone();
-            distancePosition.sub(fromPosition);
-            nextPosition.addScaledVector(distancePosition, interPolateTime);
     
-            this.changecontrols_rotation(nextPosition, 0);
-            changeTime += delta;
-            if (changeTime > 1.0) {
-              this.changecontrols_rotation(toPosition, 0);
-              clearInterval(this.changeTimeout);
-              this.changeTimeout = undefined;
-              if (done) {
-                done();
-              }
-            }
-          }, 30, new THREE.Vector3(this.previousSelectedObject.rotation.x,this.previousSelectedObject.rotation.y,this.previousSelectedObject.rotation.z), newrotation.clone());
-        }
+  changeControls_total(newPosition: THREE.Vector3, milliseconds: number , newRotation?: THREE.Euler, done?: () => void) {
+    if (this.previousSelectedObject.position === undefined || this.previousSelectedObject.rotation === undefined) {
+      return;
+    }
+    try{
+      const currentRotation = new THREE.Quaternion().setFromEuler(this.previousSelectedObject.rotation);
+      const targetRotation = new THREE.Quaternion().setFromEuler(newRotation);
+    
+      if (this.previousSelectedObject.position.equals(newPosition) && currentRotation.equals(targetRotation)) {
+        return;
       }
     
-      changeControls_total(newPosition: THREE.Vector3, milliseconds: number , newRotation?: THREE.Euler, done?: () => void) {
-        if (this.previousSelectedObject.position === undefined || this.previousSelectedObject.rotation === undefined) {
-          return;
+      if (milliseconds <= 0) {
+        this.previousSelectedObject.position.copy(newPosition);
+        this.previousSelectedObject.rotation.copy(newRotation);
+      } else {
+        if (this.changeTimeout !== undefined) {
+          clearInterval(this.changeTimeout);
+          this.changeTimeout = undefined;
         }
-      
-        const currentRotation = new THREE.Quaternion().setFromEuler(this.previousSelectedObject.rotation);
-        const targetRotation = new THREE.Quaternion().setFromEuler(newRotation);
-      
-        if (this.previousSelectedObject.position.equals(newPosition) && currentRotation.equals(targetRotation)) {
-          return;
-        }
-      
-        if (milliseconds <= 0) {
-          this.previousSelectedObject.position.copy(newPosition);
-          this.previousSelectedObject.rotation.copy(newRotation);
-        } else {
-          if (this.changeTimeout !== undefined) {
+    
+        this.toPosition = newPosition;
+        this.toRotation = targetRotation;
+        let changeTime = 0;
+        const delta = 30 / milliseconds;
+    
+        this.changeTimeout = setInterval(() => {
+          const t = changeTime;
+          const interPolateTime = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    
+          const nextPosition = this.previousSelectedObject.position.clone().lerp(newPosition, interPolateTime);
+          const nextQuaternion = currentRotation.clone().slerp(targetRotation, interPolateTime);
+          const nextRotation = new THREE.Euler().setFromQuaternion(nextQuaternion);
+    
+          this.previousSelectedObject.position.copy(nextPosition);
+          this.previousSelectedObject.rotation.set(nextRotation.x, nextRotation.y, nextRotation.z);
+    
+          changeTime += delta;
+    
+          if (changeTime > 1.0) {
+            this.previousSelectedObject.position.copy(newPosition);
+            this.previousSelectedObject.rotation.copy(newRotation);
             clearInterval(this.changeTimeout);
             this.changeTimeout = undefined;
-          }
-      
-          this.toPosition = newPosition;
-          this.toRotation = targetRotation;
-          let changeTime = 0;
-          const delta = 30 / milliseconds;
-      
-          this.changeTimeout = setInterval(() => {
-            const t = changeTime;
-            const interPolateTime = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-      
-            const nextPosition = this.previousSelectedObject.position.clone().lerp(newPosition, interPolateTime);
-            const nextQuaternion = currentRotation.clone().slerp(targetRotation, interPolateTime);
-            const nextRotation = new THREE.Euler().setFromQuaternion(nextQuaternion);
-      
-            this.previousSelectedObject.position.copy(nextPosition);
-            this.previousSelectedObject.rotation.set(nextRotation.x, nextRotation.y, nextRotation.z);
-      
-            changeTime += delta;
-      
-            if (changeTime > 1.0) {
-              this.previousSelectedObject.position.copy(newPosition);
-              this.previousSelectedObject.rotation.copy(newRotation);
-              clearInterval(this.changeTimeout);
-              this.changeTimeout = undefined;
-              if (done) {
-                done();
-              }
+            if (done) {
+              done();
             }
-          }, 30);
-        }
+          }
+        }, 30);
       }
+    } catch (e) {
+      alert('Load Objects before loading the Provenance Graph');
+    };
+  }
       
 
 
@@ -522,11 +396,11 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     }
 
     setSelection(newSelection) {
-
-        this.previousSelectedObject = newSelection[0]; // new
-        this.pastSelectedObject = newSelection[1]; // old
+        this.previousSelectedObject = this.objects.children.find(mesh => mesh.name ===newSelection[0]); // new
+        this.pastSelectedObject = this.objects.children.find(mesh => mesh.name ===newSelection[1]); // old
         this.previousColor = newSelection[2]; // color
         this.pastColor = newSelection[3]; //color past
+        this.canvas.selectedobj = this.previousSelectedObject;
 
         // console.log(this.previousSelectedObject);
         // console.log(this.pastSelectedObject);
@@ -546,61 +420,29 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
             const asMesh = <THREE.Mesh>this.previousSelectedObject;
             const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
             if (asMesh.material instanceof THREE.MeshLambertMaterial) {
-                const asMeshPongMaterial = <THREE.MeshLambertMaterial>asMesh.material;
-                const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
-                if(asMeshPongMaterial.color.getHex() != 0x0000ff )
+                if(this.previousSelectedObject == this.pastSelectedObject)
                 {
-                    if(this.pastSelectedObject.name != undefined){
-                        asMeshPongMaterial2.color.setHex(this.pastColor); 
-                        this.pastColor = this.previousColor;
-                    }
-
-                    this.previousColor = asMeshPongMaterial.color.getHex();
-                    this.pastSelectedObject = this.previousSelectedObject;
-                    asMeshPongMaterial.color.setHex(0x0000ff); // blue
-                    // asMeshPongMaterial2.color.setHex(this.previousColor);
+                  this.canvas.outlinePass.selectedObjects = [];
                 }
-                else if(this.previousSelectedObject == this.pastSelectedObject)
-                {
-                    if(asMeshPongMaterial.color.getHex() == 0x0000ff){
-                      asMeshPongMaterial.color.setHex(this.pastColor);
-                      this.previousColor = this.pastColor;
-                      this.pastColor = this.previousColor;
-
-                      this.pastSelectedObject = this.previousSelectedObject;
-                    }
-                    else{
-                      asMeshPongMaterial.color.setHex(0x0000ff);
-                      
-                    }
-                        
-                }
-                else
-                {
-                    asMeshPongMaterial.color.setHex(0x0000ff);
-                    const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>this.pastSelectedObject.material;
-                    asMeshPongMaterial2.color.setHex(this.previousColor);
+                else{
+                  this.canvas.outlinePass.selectedObjects = [this.previousSelectedObject];
                 }
 
             }
         }
         else if (this.pastSelectedObject){
-            const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
-            const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
-            const temp_obj = this.pastSelectedObject;
-            const temp_color = this.pastColor;
-            asMeshPongMaterial2.color.setHex(temp_color);
+
             this.pastSelectedObject = this.previousSelectedObject;
             this.previousSelectedObject = undefined;
             this.pastColor = this.previousColor;
             this.previousColor = undefined;
+            this.canvas.outlinePass.selectedObjects = [];
         }
-        else{ // go to root node
-            const asMesh2 = <THREE.Mesh>this.previousSelectedObject;
-            const asMeshPongMaterial2 = <THREE.MeshLambertMaterial>asMesh2.material;
-            asMeshPongMaterial2.color.setHex(0x0000ff);
-            this.pastSelectedObject = this.previousSelectedObject;
-            this.pastColor = this.previousColor;
+        else if(this.previousSelectedObject){ // go to root node
+            this.canvas.outlinePass.selectedObjects = [this.previousSelectedObject];
+        }
+        else{
+            this.canvas.outlinePass.selectedObjects = [];
         }
         // this.state = modes.Cammode;
     }
