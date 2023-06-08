@@ -6,7 +6,7 @@ import { ProvenanceNode } from "@visualstorytelling/provenance-core";
  * @param b {IGroupedTreeNode<ProvenanceNode>} -
  * @returns Returns true if the nodes has passed the test.
  */
-export declare type NodeGroupTest<T> = (a: IGroupedTreeNode<T>, b: IGroupedTreeNode<T>) => boolean;
+export type NodeGroupTest<T> = (a: IGroupedTreeNode<T>, b: IGroupedTreeNode<T>) => boolean;
 /**
  * @description Type for the data aggregation algorithms
  * @param currentNode {IGroupedTreeNode<ProvenanceNode>} - Selected node.
@@ -15,7 +15,7 @@ export declare type NodeGroupTest<T> = (a: IGroupedTreeNode<T>, b: IGroupedTreeN
  * @param mainBranch {Array<String>} - List of node's id which belong to the master branch.
  * @param par {any} - Optional parameter required for the algorithm
  */
-export declare type NodeAggregationAlgorithm = (currentNode: IGroupedTreeNode<ProvenanceNode>, node: IGroupedTreeNode<ProvenanceNode>, tests: NodeGroupTest<ProvenanceNode>[], mainBranch?: Array<string>, par?: any) => void;
+export type NodeAggregationAlgorithm = (currentNode: IGroupedTreeNode<ProvenanceNode>, node: IGroupedTreeNode<ProvenanceNode>, tests: NodeGroupTest<ProvenanceNode>[], mainBranch?: Array<string>, par?: any) => void;
 /**
  * @description Interface defines aggregation strategy.
  * @param name {string} - Name of the procedure

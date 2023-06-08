@@ -29,4 +29,10 @@ export class ProvenanceService {
     w.tracker = this.tracker;
     w.traverser = this.traverser;
   }
+  updateProvenanceObjects(graph, registry, tracker, traverser) {
+    this.graph = graph;
+    this.registry = registry;
+    this.tracker = tracker;
+    this.traverser = traverser;
+  }
 }

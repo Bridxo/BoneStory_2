@@ -1,8 +1,6 @@
 import * as d3 from 'd3';
 import { ProvenanceTreeVisualization } from './provenance-tree-visualization';
 import { addLegend} from './legend';
-import { StateNode } from '@visualstorytelling/provenance-core';
-
 /**
  * @description Show the title of the data aggregation algorithm used.
  */
@@ -92,7 +90,7 @@ const upwardButton = provenanceTreeVisualization.container
       real_traverser
       .filter((d: any) => {
         const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
-        if(ref){
+        if(ref && d.data.label != 'Root'){
           parent_id = d.parent.data.wrappedNodes[0].id;
         }
       });
@@ -203,6 +201,11 @@ const HidecameraButton = provenanceTreeVisualization.container
   if (provenanceTreeVisualization.traverser.graph.root) {
     provenanceTreeVisualization.camerahide();
   }
+
+  if(provenanceTreeVisualization.camera_show)
+    HidecameraButton.style('color','#3f51b5')
+  else
+    HidecameraButton.style('color','gray')
 });
 
 HidecameraButton
@@ -234,44 +237,31 @@ HidecameraButton
   .attr('style', 'position: absolute; z-index: 1; top: 22%;')
   .attr('ng-reflect-color', 'primary')
   .attr('title', 'Delete Node(s)')
-  .attr('disabled', provenanceTreeVisualization.groupnumber >= 1 ? 'disabled' : null) // Add the disabled attribute conditionally
   .on('mousedown', () => {
-    var real_traverser = provenanceTreeVisualization.real_traverser;
-    real_traverser
-      .filter((d: any) => {
-        const ref = d.data.wrappedNodes.includes(provenanceTreeVisualization.traverser.graph.current);
-        if (ref) {
-          if (d.data.wrappedNodes.length == 1)
-            provenanceTreeVisualization.deleteNode();
-        }
-      });
+    const event = new CustomEvent('deleteButtonClicked', { detail: { id: 'delete-trigger' } });
+    window.dispatchEvent(event);
+        // Dispatch a custom event that the button was clicked
+
   });
-
-const buttonWrapper = DeleteNodeButton
+  DeleteNodeButton
   .append('span')
-  .attr('class', 'mat-button-wrapper');
-
-buttonWrapper
+  .attr('class', 'mat-button-wrapper')
   .append('mat-icon')
   .attr('class', 'mat-icon notranslate material-icons mat-icon-no-color')
   .attr('role', 'img')
   .attr('aria-hidden', 'true')
   .text('delete_forever');
 
-buttonWrapper
+  DeleteNodeButton
   .append('div')
   .attr('class', 'mat-button-ripple mat-ripple mat-button-ripple-round')
   .attr('ng-reflect-centered', 'true')
   .attr('ng-reflect-disabled', 'false')
   .attr('ng-reflect-trigger', '[object HTMLButtonElement]');
 
-buttonWrapper
+  DeleteNodeButton
   .append('div')
   .attr('class', 'mat-button-focus-overlay');
-
-// Add CSS class to the button and icon when disabled
-DeleteNodeButton.classed('disabled', provenanceTreeVisualization.groupnumber >= 1);
-DeleteNodeButton.select('.mat-icon').classed('disabled', provenanceTreeVisualization.groupnumber >= 1);
 // Add a window resize event listener
 window.addEventListener('resize', () => {
   // Get the container element where the legend will be appended

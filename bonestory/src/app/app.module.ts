@@ -23,6 +23,9 @@ import { ProvenanceSlidesComponent } from './provenance-slides/provenance-slides
 import { SlideAnnotationsComponent } from './slide-annotations/slide-annotations.component';
 import { HttpClientModule } from '@angular/common/http';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialogModule } from '@angular/material/dialog';
+import { ConfirmationDialogComponent } from './provenance-visualization/confirmation-dialog.component';
+
 
 
 
@@ -33,6 +36,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     ProvenanceSlidesComponent,
     ProvenanceVisualizationComponent,
     SlideAnnotationsComponent,
+    ConfirmationDialogComponent
     // CpuGpuUsageComponent
   ],
   imports: [
@@ -46,7 +50,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatFormFieldModule,
     MatIconModule,
     HttpClientModule,
-    MatSliderModule
+    MatSliderModule,
+    MatDialogModule
   ],
   providers: [ProvenanceService],
   bootstrap: [AppComponent]

@@ -125,6 +125,6 @@ export function serializeSlide(slide: IProvenanceSlide) : SerializedProvenanceSl
     name: slide.name, 
     transitionTime: slide.transitionTime,
     duration: slide.duration,
-    mainAnnotation: ""
+    mainAnnotation: slide.annotations
   }
 }

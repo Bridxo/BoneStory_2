@@ -54,15 +54,15 @@ export class AnnotationDisplayContainer {
                 this.add(annotation as SlideAnnotation<PositionedString>);
             }
         }
-        // slide.annotations.forEach(annotation => {
-        //     if (
-        //         annotation.data &&
-        //         annotation.data.value &&
-        //         annotation.data.x &&
-        //         annotation.data.y
-        //     ) {
-        //         this.add(annotation as SlideAnnotation<PositionedString>);
-        //     }
-        // });
+        slide.annotations.forEach(annotation => {
+            if (
+                annotation.data &&
+                annotation.data.value &&
+                annotation.data.x &&
+                annotation.data.y
+            ) {
+                this.add(annotation as SlideAnnotation<PositionedString>);
+            }
+        });
     }
 }

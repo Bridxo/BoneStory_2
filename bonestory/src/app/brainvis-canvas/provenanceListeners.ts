@@ -133,7 +133,7 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
 
   canvas.addEventListener('transStart', (startEvent) => {
       const transEndListener =  debounce ((event) => {
-        if(startEvent.position.distanceTo(event.position)>0){
+        if(startEvent.position[0].distanceTo(event.position[0])>0){
           tracker.applyAction({
             metadata: {userIntent: 'selection'},
             do: 'TranslateObject',
@@ -149,10 +149,11 @@ export const addListeners = (tracker: ProvenanceTracker, canvas: BrainvisCanvasC
   
   async function handleRotationEnd(startEvent, endEvent) {
     return new Promise<void>((resolve) => {
+      console.log(startEvent.rotation[0], endEvent);
       if (
-        Math.abs(startEvent.rotation.x - endEvent.rotation.x) > 0 ||
-        Math.abs(startEvent.rotation.y - endEvent.rotation.y) > 0 ||
-        Math.abs(startEvent.rotation.z - endEvent.rotation.z) > 0
+        Math.abs(startEvent.rotation[0].x - endEvent.rotation[0].x) > 0 ||
+        Math.abs(startEvent.rotation[0].y - endEvent.rotation[0].y) > 0 ||
+        Math.abs(startEvent.rotation[0].z - endEvent.rotation[0].z) > 0
       ) {
         tracker.applyAction({
           metadata: { userIntent: "selection" },

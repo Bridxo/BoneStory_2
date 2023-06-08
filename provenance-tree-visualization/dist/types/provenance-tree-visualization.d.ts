@@ -3,8 +3,8 @@ import { HierarchyPointNode } from 'd3';
 import { ProvenanceGraphTraverser, ProvenanceNode } from '@visualstorytelling/provenance-core';
 import { IGroupedTreeNode } from './utils';
 import { NodeAggregator } from './aggregation/aggregation-implementations';
-export declare type D3SVGSelection = d3.Selection<SVGSVGElement, any, null, undefined>;
-export declare type D3SVGGSelection = d3.Selection<SVGGElement, any, null, undefined>;
+export type D3SVGSelection = d3.Selection<SVGSVGElement, any, null, undefined>;
+export type D3SVGGSelection = d3.Selection<SVGGElement, any, null, undefined>;
 export interface IAggregation {
     aggregator: NodeAggregator<ProvenanceNode>;
     arg: any;
@@ -60,6 +60,7 @@ export declare class ProvenanceTreeVisualization {
     getFullsizeview(): void;
     setTraverser(traverser: ProvenanceGraphTraverser): void;
     removeNodesAndLinkChildren<T>(tree: IGroupedTreeNode<T>, condition: (node: IGroupedTreeNode<T>) => boolean): IGroupedTreeNode<T>;
+    deletesingleNode(): Promise<void>;
     deleteNode(): Promise<void>;
     Grouping_hierarchy<T>(wraproot: IGroupedTreeNode<ProvenanceNode>): d3.HierarchyNode<IGroupedTreeNode<ProvenanceNode>>;
     /**

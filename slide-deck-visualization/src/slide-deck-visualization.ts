@@ -30,7 +30,7 @@ export class SlideDeckVisualization {
     private _slideTable: d3.Selection<SVGElement, undefined, null, undefined>;
     private _tableHeight = 125;
     private _tableWidth = 1800;
-    private _minimumSlideDuration = 1000;
+    private _minimumSlideDuration = 500;
     private _barWidthTimeMultiplier = 0.05;
     private _barPadding = 5;
     private _resizebarwidth = 5;
@@ -848,7 +848,7 @@ export class SlideDeckVisualization {
             .append("text") // appended previous slides_text
             .attr("class", "slides_text")
             .attr("y", this._resizebarwidth + 2 * this._barPadding)
-            .attr("font-size", 12)
+            .attr("font-size", 9)
             .attr("dy", ".35em");
 
         slideGroup
@@ -863,7 +863,7 @@ export class SlideDeckVisualization {
             .append("text") // removed slides_delaytext
             .attr("class", "slides_transitionTimetext")
             .attr("y", textPosition)
-            .attr("font-size", 16)
+            .attr("font-size", 10)
             .attr("dy", "-.65em");
         // Ends --TransitionTime Text --Lorenzo
         let toolbar = slideGroup.append("g").attr("class", "slide_toolbar");
@@ -900,7 +900,7 @@ export class SlideDeckVisualization {
             .append("text")
             .attr("class", "slides_durationtext")
             .attr("y", textPosition)
-            .attr("font-size", 16)
+            .attr("font-size", 10)
             .attr("dy", "-.65em");
 
         newNodes

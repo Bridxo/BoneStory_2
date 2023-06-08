@@ -3,6 +3,7 @@
  */
 
 import { ProvenanceGraph } from "./ProvenanceGraph";
+import { SlideAnnotation } from './SlideAnnotation';
 
 export type NodeIdentifier = string;
 
@@ -390,7 +391,7 @@ export type SerializedProvenanceSlide = {
   name: string;
   duration: number;
   transitionTime: number;
-  mainAnnotation: string;
+  mainAnnotation: SlideAnnotation<any>[];
 }
 
 export type SerializedSlidedeck = {
@@ -404,7 +405,7 @@ export interface IProvenanceSlide {
   name: string;
   duration: number;
   transitionTime: number;
-  annotations: ISlideAnnotation<any>[];
+  annotations: SlideAnnotation<any>[];
   xPosition: number;
   metadata: any;
 

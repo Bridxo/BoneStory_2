@@ -308,9 +308,46 @@ export class ProvenanceTreeVisualization {
   
     return tree;
   }
+  public async deletesingleNode(): Promise<void> {
+    if (this.traverser.graph.current.label === "root") return;
 
+    else {
+      const current_node = this.traverser.graph.current as any;
+      const parent_node = current_node.parent;
+      const parent_children = parent_node.children;
+      const current_index = parent_children.indexOf(current_node);
+      if(cam_test(current_node.label)){
+        this.numberofnodeswocam--;
+        this.numberofnodeswcam--;
+      }
+      else
+        this.numberofnodeswcam--;
+      
+      this.traverser.toStateNode(parent_node.id, 0);
+      if(current_node.metadata.bookmarked)
+        (window as any).slideDeckViz.onDelete(null);
+      
+      parent_children.splice(current_index, 1);
+      this.traverser.graph.current = parent_node;
+      parent_node.children.push(...current_node.children);
+      current_node.children.forEach((child: any) => {
+        child.parent = parent_node;
+      });
+      if(current_node.children.length > 0){
+        this.traverser.toStateNode(current_node.children[0].id, 0);
+      }
+
+      else
+      {
+        if(parent_node.children.length > 0)
+          this.traverser.toStateNode(parent_node.children[0].id, 0);
+        this.traverser.toStateNode(parent_node.id, 0);
+      }
+
+
+    } 
+  }
   public async deleteNode(): Promise<void> {
-    this.traverser.graph.current;
     if (this.traverser.graph.current.label === "root") return;
   
     if (this.traverser.graph.current.label !== 'root') {

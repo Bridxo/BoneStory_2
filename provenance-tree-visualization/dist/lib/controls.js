@@ -123,7 +123,6 @@ function provGraphControls(provenanceTreeVisualization) {
             //         (window as any).slideDeck.onAdd(node);
             //     }
             // }
-            provenanceTreeVisualization.update();
         });
     }
     // ngAfterViewChecked() {

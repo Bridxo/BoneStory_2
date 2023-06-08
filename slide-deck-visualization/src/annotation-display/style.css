@@ -27,7 +27,7 @@
     min-height: 0;
     border: 1px dashed black;
 }
-.provenanceAnnotation.editable > .CodeMirror {
+.provenanceAnnotation.editable > .CodeMirror-cursor {
     border: 2px solid black;
 }
 .provenanceAnnotation:not(.editable) .CodeMirror-lines {

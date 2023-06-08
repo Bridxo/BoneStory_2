@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>Choose an option</h2>
+<mat-dialog-content class="mat-typography">
+  <p>Are you sure you want to permanently delete this node(s)?</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onOptionA()">Only selected node</button>
+  <button mat-button (click)="onOptionB()">Selected node and all its descendants</button>
+  <button mat-button (click)="onCancel()">Cancel</button>
+
+</mat-dialog-actions>

@@ -110,7 +110,11 @@ export class ProvenanceTracker implements IProvenanceTracker {
 
     //Object group part
     if ((window as any).canvas.selectedobj != undefined) {
-      newNode.metadata.O_group = (window as any).canvas.selectedobj.name;
+      newNode.metadata.O_group = '';
+      (window as any).canvas.outlinePass.selectedObjects.forEach((obj: any) => {
+        newNode.metadata.O_group = newNode.metadata.O_group + ',' + obj.name;
+      });
+      newNode.metadata.O_group = newNode.metadata.O_group.slice(1);
   } else {
       console.log("selectedobj or selectedobj.name is undefined");
   }
@@ -213,19 +217,25 @@ export class ProvenanceTracker implements IProvenanceTracker {
     const undoArgs = NewNode.action.undoArguments;
 
 
-    if (doArgs && undoArgs && NewNode.label !=='SelectObject' && NewNode.label !=='Measurement' && NewNode.label !=='Annotation' && NewNode.label !=='RotateObject') {
+    if (doArgs && undoArgs && NewNode.label !=='SelectObject' && NewNode.label !=='Measurement' && NewNode.label !=='Annotation' && NewNode.label !=='RotateObject' && NewNode.label !=='TranslateObject') {
       const do_position = doArgs[0].position || doArgs[1];
       const undo_position = undoArgs[0].position || undoArgs[1];
       const diff = this.calculateDifference(do_position, undo_position);
       const maxValue = NewNode.label === 'TranslateObject' ? 1000 : 5000;
       const normalizedValue = this.normalizeValue(diff, 0, maxValue, 0, 1023);
       H_val += normalizedValue;
-    } else if (NewNode.label === 'RotateObject') {
+    } else if (NewNode.label === 'RotateObject' || NewNode.label==='TranslateObject') {
       const do_position = doArgs;
       const undo_position = undoArgs;
-      const diff = Math.abs(do_position[0]._x - undo_position[0]._x) + Math.abs(do_position[0]._y - undo_position[0]._y) + Math.abs(do_position[0]._z - undo_position[0]._z);
-      const diff2 = this.calculateDifference(do_position[1], undo_position[1]);
-      const normalizedValue = this.normalizeValue(diff+diff2, 0, 540+1500, 0, 1023);
+      const num_of_objects = do_position.length;
+      let diff = 0;
+      let diff2 = 0;
+      for (let i = 0; i < num_of_objects; i++) {
+        diff+= Math.abs(do_position[0][i]._x - undo_position[0][i]._x) + Math.abs(do_position[0][i]._y - undo_position[0][i]._y) + Math.abs(do_position[0][i]._z - undo_position[0][i]._z);
+        diff2+= this.calculateDifference(do_position[1][i], undo_position[1][i]);
+      }
+      const total_diff = (diff + diff2)/num_of_objects;
+      const normalizedValue = this.normalizeValue(total_diff, 0, 540+1500, 0, 1023);
       H_val += normalizedValue;
     } else {
       H_val += 1023;

@@ -22,9 +22,9 @@ import mitt from './mitt';
  */
 export class ProvenanceGraph implements IProvenanceGraph {
   public application: Application;
-  public readonly root: RootNode;
+  public root: RootNode;
   private _current: ProvenanceNode;
-  private _mitt: any;
+  public _mitt: any;
   private _nodes: { [key: string]: ProvenanceNode } = {};
 
   constructor(application: Application, userid: string = 'Unknown', rootNode?: RootNode) {
@@ -54,7 +54,12 @@ export class ProvenanceGraph implements IProvenanceGraph {
 
   }
   id!: string;
-
+  clearGraph() {
+    // Clears all events of all types
+    this._mitt.clear();
+    // Rest of the clearing code...
+    this._nodes = {};
+  }
   addNode(node: ProvenanceNode): void {
     if (this._nodes[node.id]) {
       throw new Error('Node already added');
@@ -127,6 +132,8 @@ export class ProvenanceGraph implements IProvenanceGraph {
   }
 }
 
+
+
 /* Beware that deeply nested properties in serializedProvenanceGraph is mutated in the process */
 export function restoreProvenanceGraph(
   serializedProvenanceGraph: SerializedProvenanceGraph
@@ -170,7 +177,7 @@ export function serializeProvenanceGraph(graph: ProvenanceGraph): SerializedProv
   return {
     nodes,
     root: graph.root.id,
-    application: graph.application,
+    application: { name: 'bonestory_loaded', version: '2.0.0' },
     current: graph.current.id
   };
 }

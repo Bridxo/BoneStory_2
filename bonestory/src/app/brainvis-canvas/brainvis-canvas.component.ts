@@ -24,11 +24,12 @@ import { AppComponent } from '../app.component';
 import {updateModeDisplay} from '../util/Displaywidget';
 
 import { DragControls } from 'three/examples/jsm/controls/DragControls';
-import { ProvenanceVisualizationComponent } from '../provenance-visualization/provenance-visualization.component';
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass';
+import { position } from 'html2canvas/dist/types/css/property-descriptors/position';
+import { StateNode } from '@visualstorytelling/provenance-core';
  
 
 
@@ -93,7 +94,8 @@ export class BrainvisCanvasComponent {
   relativePos: THREE.Vector3;
   rotate_counter = 0;
   rotate_prev_intersect: THREE.Vector3;
-  ctrl_down= false;
+  trans_counter = 0;
+  middle_point: THREE.Vector3;
 
   @Input() set showObjects(showObjects: boolean) {
     this._showObjects = showObjects;
@@ -205,7 +207,7 @@ onWindowResize() {
 
   // Render the scene
   this.composer.render();
-  this.renderer.render();
+  this.render();
 }
 
   @HostListener('window:resize', ['$event'])
@@ -240,6 +242,7 @@ onWindowResize() {
 
     // this.elem = ElementRef.nativeElement;
     (window as any).canvas = this;
+
     this.width = this.elem.clientWidth;
     this.height = this.elem.clientHeight;
 
@@ -389,10 +392,36 @@ onWindowResize() {
       keydown_coordinate = e;
       // const have = this.intersectionManager.intersectObjects(e,this.objects.children);
   }, false);
-  
-    window.addEventListener('keydown', (event) => {
-      if(event.key == 'Control'){
-        this.ctrl_down = true;
+    
+    window.addEventListener('keyup', async (event) => {
+      if(event.key == 'Shift' && !(window as any).istyping && this.outlinePass.selectedObjects.length > 0){//안변하면 유지하는거 구현해야함
+        const past = this.objectSelector.pastSelectedObjects;
+        const pastname = past.length>0?past[0].name:undefined;
+        let prev_names = '';
+        let past_names = '';
+        this.objectSelector.previousSelectedObjects.map(obj => {prev_names = prev_names + obj.name});
+        this.objectSelector.pastSelectedObjects.map(obj => {past_names = past_names + obj.name});
+        let temp = [this.outlinePass.selectedObjects[0].name,pastname,prev_names, past_names];
+        const cur_node = this.service.traverser.graph.current as StateNode;
+        console.log(this.service.graph.application);
+        console.log(temp[2].includes(cur_node.action.doArguments[0][2]));
+        if(!temp[2].includes(cur_node.action.doArguments[0][2])){
+          this.objectSelector.setSelection(temp);
+          this.eventdispatcher.dispatchEvent({
+            type: 'objsel',
+            val: temp
+          });
+        }
+        else{
+          cur_node.metadata.O_group = '';
+          this.outlinePass.selectedObjects.forEach((obj: any) => {
+            cur_node.metadata.O_group = cur_node.metadata.O_group + ',' + obj.name;
+          });
+          cur_node.metadata.O_group = cur_node.metadata.O_group.slice(1);
+          cur_node.action.doArguments[0][2] = temp[2];
+          cur_node.metadata.screenshot = await this.ScreenShot();
+        }
+
       }
       this.objectSelector.setkey(event, keydown_coordinate);
       this.mode = this.objectSelector.getmode();
@@ -408,6 +437,32 @@ onWindowResize() {
       // this.controls.update();
       });
     
+    
+    // window.addEventListener('keyup', (event) => {
+    //   if(event.key == 'Control'){
+    //     this.ctrl_down = false;
+    //     this.objectSelector.pastSelectedObjects = this.objectSelector.previousSelectedObjects
+    //     this.objectSelector.previousSelectedObjects = this.outlinePass.selectedObjects;
+    //     // this.eventdispatcher.dispatchEvent({
+    //     //   type: 'objectSelection',
+    //     //   newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
+    //     // });
+    //   }
+    //   this.objectSelector.setkey(event, keydown_coordinate);
+    //   this.mode = this.objectSelector.getmode();
+    //   if(this.mode == modes.Cammode) // camera
+    //     this.controls.enabled = true;
+    //   else{
+    //     this.controls.enabled = false;
+    //     if(this.mode == modes.Translation)
+    //       this.ModeText_add = '\nTranslate';
+    //     else if(this.mode == modes.Rotation)
+    //       this.ModeText_add = '\nRotate';
+    //   }
+    //   // this.controls.update();
+    //   });
+
+
     // window.addEventListener('keyup', (event) => {
     //   if(event.key == 'Control'){
     //     this.ctrl_down = false;
@@ -508,8 +563,8 @@ onWindowResize() {
     this.objectSelector.addEventListener('t_start', (event:any) => {
       this.eventdispatcher.dispatchEvent({
         type: 'transStart',
-        rotation: event.rotation.clone(),
-        position: event.position.clone()
+        rotation: event.rotation,
+        position: event.position
       });
       this.mode = modes.Translation;
       this.ModeText_add = '\nTranslate';
@@ -517,18 +572,19 @@ onWindowResize() {
     this.objectSelector.addEventListener('t_end', (event:any) => {
       this.eventdispatcher.dispatchEvent({
         type: 'transEnd',
-        rotation: this.selectedobj.rotation.clone(),
-        position: this.selectedobj.position.clone()
+        rotation: event.rotation,
+        position: event.position
       });
       this.mode = modes.Cammode;
       this.ModeText_add = '';
     });
 
     this.objectSelector.addEventListener('r_start', (event:any) => {
+      event.position.forEach((element:any) => {element.add(this.pivot_group.position.clone())});
       this.eventdispatcher.dispatchEvent({
         type: 'rotationStart',
         rotation: event.rotation,
-        position: event.position.add(this.pivot_group.position.clone())
+        position: event.position
       });
       this.mode = modes.Rotation;
       this.ModeText_add = '\nRotate';
@@ -537,8 +593,8 @@ onWindowResize() {
 
       this.eventdispatcher.dispatchEvent({
         type: 'rotationEnd',
-        rotation: this.selectedobj.rotation.clone(),
-        position: this.selectedobj.position.clone()
+        rotation: event.rotation,
+        position: event.position
       });
       this.mode = modes.Cammode;
       this.ModeText_add = '';
@@ -551,24 +607,24 @@ onWindowResize() {
       this.setInteractive(inter);
       if (mode == 0 && this.selectedobj!=undefined){ // Translation 
         this.mm.setMode('translate');
-        this.mm.position.set(0,0,0);
-        this.mm.attach(this.selectedobj);
-        this.mm.traverse((node) => {
-          node.layers.enable(this.gizmoLayer.mask);
-        });
+
         this.controls.enabled = false;
       }
       else if (mode == 1 && this.selectedobj!=undefined){ //Rotation
         this.mm.setMode('rotate');
         if(event.intersect!=undefined){
-          if(this.rotate_counter>0){
-            this.selectedobj.position.add(this.rotate_prev_intersect);
-          }
-          this.pivot_group.position.set(0,0,0);
-          this.pivot_group.rotation.set(0,0,0);
-          this.pivot_group.add(this.selectedobj);
-          this.pivot_group.position.copy(event.intersect);
-          this.selectedobj.position.sub(event.intersect);
+
+            this.pivot_group.position.set(0,0,0);
+            this.pivot_group.rotation.set(0,0,0);
+            this.outlinePass.selectedObjects.forEach((obj) => 
+            {
+              if(this.rotate_counter>0){
+                obj.position.add(this.rotate_prev_intersect);
+              }
+              this.pivot_group.add(obj);
+              this.pivot_group.position.copy(event.intersect);
+              obj.position.sub(event.intersect);
+            });
           this.rotate_prev_intersect = event.intersect;
           this.mm.attach(this.pivot_group);
           this.mm.traverse((node) => {
@@ -580,10 +636,23 @@ onWindowResize() {
       }
       else {
         if(this.rotate_counter>0){
-          this.objects.add(this.selectedobj);
-          this.selectedobj.position.add(this.pivot_group.position);
+          this.outlinePass.selectedObjects.forEach((obj) => 
+            {
+              this.objects.add(obj);
+              obj.position.add(this.pivot_group.position);
+            });
+
           this.pivot_group.position.set(0,0,0);
           this.rotate_counter = 0;
+        }
+        if(this.trans_counter>0){
+          this.outlinePass.selectedObjects.forEach((obj) => 
+            {
+              this.objects.add(obj);
+              obj.position.add(this.pivot_group.position);
+            });
+          this.pivot_group.position.set(0,0,0);
+          this.trans_counter = 0;
         }
         this.mm.detach();
         this.controls.enabled = true;
@@ -648,6 +717,7 @@ onWindowResize() {
   }
 
   async ObjectTrans(newargs: any, newpos:any ,within: number) {
+    this.trans_counter = 0;
     await this.objectSelector.changeControls_total(newpos, within, newargs);
   }
 
@@ -727,6 +797,7 @@ onWindowResize() {
       undo: false
     });
   }
+
   Annotation(text: string, intersect: any, undo?: boolean) {
     if(undo === true){
       intersect[0].object.children.forEach (function (child) {
@@ -783,12 +854,14 @@ onWindowResize() {
       depthTest: false,
       depthWrite: false}));
     sprite.name = text;
-    sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
+
     const scaler= this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
     const scale_value = scaler/2;
     sprite.scale.set(scale_value/5, scale_value/5, 1);
+    sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
     sprite.material.map = text_plane;
     sprite.material.opacity = 0.5;
+    sprite.name = text;
     intersect[0].object.add(sprite); //add annotation on the object
 
     this.eventdispatcher.dispatchEvent({
@@ -799,6 +872,79 @@ onWindowResize() {
     this.mode = modes.Cammode;
     this.ModeText_add = "";
   }
+
+  // Annotation(text: string, intersect: any, undo?: boolean) {
+  //   if(undo === true){
+  //     intersect[0].object.children.forEach (function (child) {
+  //       if(child.name === text){
+  //         child.material.dispose();
+  //         intersect[0].object.remove(child);
+  //       }
+  //     });
+  //     return;
+  //   }
+  //   var text_plane =  new THREE.CanvasTexture(function () {
+      
+  //     var plane = document.createElement('canvas');
+
+  //     var context = plane.getContext('2d');
+  //     var planeLength = 160, textHeight = 80; // Increase textHeight to 80
+  //     plane.width = 512;
+  //     var words = text.split(' ');
+  //     var line = '';
+  //     var lineCount = 0;
+  //     var lines = [];
+  //     for (var n = 0; n < words.length; n++) {
+  //       var testLine = line + words[n] + ' ';
+  //       var testWidth = context.measureText(testLine).width;
+  //       if (testWidth > planeLength) {
+  //         lines.push(line);
+  //         line = words[n] + ' ';
+  //         lineCount++;
+  //       } else {
+  //         line = testLine;
+  //       }
+  //     }
+  //     lineCount++;
+  //     lines.push(line);
+  //     plane.height = textHeight + lineCount * textHeight;
+  //     context.fillStyle = 'white';
+  //     context.fillRect(0, 0, 512, textHeight + (lineCount * textHeight));
+  //     context.font = '40px Arial'; // Decrease font size to 40px
+  //     context.fillStyle = 'black';
+  //     context.textAlign = 'left';
+  //     context.textBaseline = 'middle';
+  //     context.imageSmoothingEnabled = true;
+  //     context.arc(32,32,30,0,Math.PI*2);
+  //     for (var i = 0; i < lineCount; i++) {
+  //       context.fillText(lines[i], 0, textHeight + (i * textHeight), 512);
+  //     }
+  //     return plane;
+  //   }());
+  //   text_plane.needsUpdate = true;
+  //   var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+  //     color: 0xffffff,
+  //     alphaTest: 0.5,
+  //     transparent: true,
+  //     depthTest: false,
+  //     depthWrite: false}));
+  //   sprite.name = text;
+  //   sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
+  //   const scaler= this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+  //   const scale_value = scaler/2;
+  //   sprite.scale.set(scale_value/5, scale_value/5, 1);
+  //   sprite.material.map = text_plane;
+  //   sprite.material.opacity = 0.5;
+  //   intersect[0].object.add(sprite); //add annotation on the object
+
+  //   this.eventdispatcher.dispatchEvent({
+  //     type: 'annotation',
+  //     text: text,
+  //     inter: intersect
+  //   });
+  //   this.mode = modes.Cammode;
+  //   this.ModeText_add = "";
+  // }
 
   animate = () => {
     requestAnimationFrame(this.animate);
@@ -833,7 +979,8 @@ onWindowResize() {
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera);
+    // this.renderer.render(this.scene, this.camera);
+    this.composer.render();
   }
   getrender() {
     return this.renderer.render(this.scene, this.camera);
@@ -1029,7 +1176,23 @@ onWindowResize() {
         let uis = this.ui;
         if(this.firstload){
           fragment_folder = uis.addFolder('Fragments');
-          fragment_folder.add(this.viewpoint_button, "toggleAllSprites").name("Toggle Labels");  
+          const labelsettings = { toggleAllSprites: true };
+          fragment_folder.add(labelsettings, "toggleAllSprites").name("Toggle Labels")
+          .onChange((value) => {
+            if (value) {
+              this.spriteMap.forEach((spriteObject) => {
+                spriteObject.sprite.visible = true;
+                spriteObject.line.visible = true;
+              });
+            }
+            else
+            {
+              this.spriteMap.forEach((spriteObject) => {
+                spriteObject.sprite.visible = false;
+                spriteObject.line.visible = false;
+              });
+            }
+          });
         }
         else
           fragment_folder = uis.__folders['Fragments'];
@@ -1058,12 +1221,29 @@ onWindowResize() {
           centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
           centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
           mesh.name = name.toString();
+
           geometry.center();
 
           mesh.position.copy(centroid);
           mesh.rotation.set(0,0,0);
           const sprite = this.makeTextSprite(name, {});
-          this.spriteMap.set(name, { sprite: sprite, visible: true });
+          sprite.position.set(0, 30, 0);
+          // Create the line geometry
+          const geometry_line = new THREE.BufferGeometry();
+          const vertices = new Float32Array([
+              0,0,0,
+              sprite.position.x, sprite.position.y, sprite.position.z
+          ]);
+          geometry_line.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+          // create a red line material
+          const material_line = new THREE.LineBasicMaterial({ color: 0x5B5C73 });
+
+          // create the line
+          const line = new THREE.Line(geometry_line, material_line);
+
+          // add the line to the mesh
+          mesh.add(line);
+          this.spriteMap.set(name, { sprite: sprite, line: line});
           mesh.add(sprite);
           this.objects.add(mesh); // Add this line to update this.objects
 
@@ -1072,13 +1252,13 @@ onWindowResize() {
         const applyNameChange = (mesh, oldName, newName) => {
           const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
           arrayFromObj.forEach((node) => {
-              if(node.metadata.O_group == oldName)
-                node.metadata.O_group = newName;
+              node.metadata.O_group.replace(oldName, newName);
             });
             const get_sprite = this.spriteMap.get(oldName);
             mesh.name = newName;
             const newSprite = this.makeTextSprite(newName, {});
             mesh.remove(get_sprite.sprite);
+            newSprite.position.set(0, 30, 0);
             mesh.add(newSprite);
             this.spriteMap.delete(oldName);
             this.spriteMap.set(newName, { sprite: newSprite, visible: sprite.visible });
@@ -1125,6 +1305,7 @@ onWindowResize() {
           this.model_centering();
         }
         this.objstat = this.Extractobjinfo(this.objects);
+
         this.service.graph.current.artifacts = JSON.parse(JSON.stringify(this.objstat));
   }
   model_centering = () => {
@@ -1197,12 +1378,14 @@ onWindowResize() {
       if (value) {
         this.spriteMap.forEach((spriteObject) => {
           spriteObject.sprite.visible = true;
+          spriteObject.line.visible = true;
         });
       }
       else
       {
         this.spriteMap.forEach((spriteObject) => {
           spriteObject.sprite.visible = false;
+          spriteObject.line.visible = false;
         });
       }
     });
@@ -1231,10 +1414,31 @@ onWindowResize() {
                 geometry.center();
                 mesh.position.copy(centroid);
                 mesh.position.sub(new THREE.Vector3(57.5, 29.2, 86.5));
+
+
                 mesh.rotation.set(0, 0, 0);
+
                 const sprite = this.makeTextSprite(name, {});
-                this.spriteMap.set(name, { sprite: sprite, visible: true });
+                sprite.position.set(0, 30, 0);
                 mesh.add(sprite);
+
+                // Create the line geometry
+                const geometry_line = new THREE.BufferGeometry();
+                const vertices = new Float32Array([
+                    0,0,0,
+                    sprite.position.x, sprite.position.y, sprite.position.z
+                ]);
+                geometry_line.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                // create a red line material
+                const material_line = new THREE.LineBasicMaterial({ color: 0x5B5C73 });
+
+                // create the line
+                const line = new THREE.Line(geometry_line, material_line);
+
+                // add the line to the mesh
+                mesh.add(line);
+                this.spriteMap.set(name, { sprite: sprite, line: line});
+
                 this.objects.add(mesh);
 
                 const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
@@ -1242,8 +1446,7 @@ onWindowResize() {
                 const applyNameChange = (mesh, oldName, newName) => {
                   const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
                   arrayFromObj.forEach((node) => {
-                      if(node.metadata.O_group == oldName)
-                        node.metadata.O_group = newName;
+                      node.metadata.O_group.replace(oldName, newName);
                     });
                     const get_sprite = this.spriteMap.get(oldName);
                     mesh.name = newName;
@@ -1251,7 +1454,7 @@ onWindowResize() {
                     mesh.remove(get_sprite.sprite);
                     mesh.add(newSprite);
                     this.spriteMap.delete(oldName);
-                    this.spriteMap.set(newName, { sprite: newSprite, visible: sprite.visible });
+                    this.spriteMap.set(newName, { sprite: newSprite, visible: mesh.children[1]});
                 };
                 const n_s = this.number_of_stl - 1;
                 fragment_folder
@@ -1361,7 +1564,11 @@ onWindowResize() {
     context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
     context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
     context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
-    context.fillText(message, borderThickness, fontsize + borderThickness);
+    context.fillText(
+      message, 
+      canvas.width / 2 - textWidth / 2, 
+      canvas.height / 2 + fontsize / 2
+  );
   
     var texture = new THREE.Texture(canvas) 
     texture.needsUpdate = true;
@@ -1409,13 +1616,21 @@ onWindowResize() {
       }
     });
     i= 0;
-    this.ui.__folders['Fragments'].__controllers.forEach((controller) => {
-      if(controller.property == 'hidden'){
-        this.hidden_refresh = true;
-        controller.setValue(hide_val[i]); 
-        i++
+    try{
+      if(this.ui.__folders['Fragments'] != undefined){
+        this.ui.__folders['Fragments'].__controllers.forEach((controller) => {
+
+          if(controller.property == 'hidden'){
+            this.hidden_refresh = true;
+            controller.setValue(hide_val[i]); 
+            i++
+          }
+        });
       }
-    });
+
+     } catch(e){
+        confirm("Please refresh the page or load the STL file first.");
+      }
     this.ui.updateDisplay();
   }
 

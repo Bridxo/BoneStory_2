@@ -8,7 +8,9 @@
     <div id="side-container">
       <div id="side-child"><app-provenance-visualization id="provcomp" #provvis z-index="997"></app-provenance-visualization></div>
       <mat-slider
+      #slider
       class="provslider"
+      id = "provslider"
       [max]= "provvis.getnodenumber()"
       [min]="0"
       [step]="1"
@@ -19,7 +21,7 @@
       style="height: 300px; left: -1%;"
       matTooltip="Provenance-Grouping Slider"
       userselect="none"
-      (change)="provvis.setgroupnumber(); provvis.getfullsizeview()"
+      (input)="provvis.slider_value = slider.value; provvis.setgroupnumber(); provvis.getfullsizeview();"
     ></mat-slider>
     </div>
     <div style="height:0px;">
@@ -48,7 +50,7 @@
         <button mat-icon-button id="saveprov_btn_1" title="Save Prov files(json)" style="cursor: pointer;">
           <mat-icon>cloud_download</mat-icon> <!-- Replace with the icon you want -->
         </button>
-        <button mat-icon-button id="saveprov_btn_20" title="Load Prov file(json)" style="cursor: pointer;"> <!-- Replace with the function you want -->
+        <button mat-icon-button id="saveprov_btn_2" title="Load Prov file(json)" style="cursor: pointer;">
           <mat-icon>cloud_upload</mat-icon> <!-- Replace with the icon you want -->
         </button>
       </div>
@@ -69,7 +71,7 @@
       R-click (cam mode): Rotate camera <br />
       Wheel-click (cam mode): Pan camera <br />
       Wheel-move (cam mode): Zoom camera <br />
-      L-click: Select object <br />
+      L-click + (shift): Select/Deselect object(s) <br />
       <strong>[Keyboard]</strong> <br />
       C: Camera mode<br />
       R (object mode) : Rotate object<br />
