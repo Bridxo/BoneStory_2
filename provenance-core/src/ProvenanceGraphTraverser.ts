@@ -90,33 +90,6 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
     this.tracker = tracker;
     this._mitt = mitt();
   }
-  // async executeFunctions(functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], artifactsToLoad: any[], transitionTimes: number[]): Promise<ProvenanceNode | undefined> {
-  //   const promises = functionsToDo.map(async (funcWithThis, i) => {
-  //     return new Promise<ProvenanceNode>((resolve) => {
-  //       if (this.tracker && this.tracker.acceptActions && !this.trackingWhenTraversing) {
-  //         this.tracker.acceptActions = false;
-  //         // Fix problem with going back to a node (time correction)
-  //         if (funcWithThis.func.name !== "SelectObject" && funcWithThis.func.name !== "Annotation" && funcWithThis.func.name !== "Measurement") {
-  //           const argWithThis = argumentsToDo[i];
-  //           const durationIndex = argWithThis.length - 1;
-  //           if(i==argumentsToDo.length-1)
-  //             argumentsToDo[i][durationIndex] = transitionTimes[i];
-  //         }
-  //         const result = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i])
-  //         .then((window as any).canvas.Returnobjinfo(artifactsToLoad[i]));
-  //         this.tracker.acceptActions = true;
-  //         resolve(result);
-  //       } else {
-  //         const result = funcWithThis.func.apply(funcWithThis.thisArg, argumentsToDo[i])          .then((window as any).canvas.Returnobjinfo(artifactsToLoad[i]));
-
-  //         resolve(result);
-  //       }
-  //     });
-  //   });
-  
-  //   const results = await Promise.all(promises);
-  //   return results[results.length - 1];
-  // }
 
   async executeFunctions(functionsToDo: ActionFunctionWithThis[], argumentsToDo: any[], artifactsToLoad: any[], transitionTimes: number[]) {
     let result;

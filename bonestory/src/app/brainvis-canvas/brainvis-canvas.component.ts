@@ -2,7 +2,8 @@ import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output,
 import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import * as THREE from 'three';
 import * as dat from 'dat.gui';
-import html2canvas from 'html2canvas';
+// import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+
 
 
 import { IOrientation } from './types';
@@ -19,7 +20,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { ProvenanceService } from '../provenance.service';
 import { registerActions } from './provenanceActions';
 import { addListeners } from './provenanceListeners';
-
+ 
 import { AppComponent } from '../app.component';
 import {updateModeDisplay} from '../util/Displaywidget';
 
@@ -1252,7 +1253,14 @@ onWindowResize() {
         const applyNameChange = (mesh, oldName, newName) => {
           const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
           arrayFromObj.forEach((node) => {
-              node.metadata.O_group.replace(oldName, newName);
+              const groupArray = node.metadata.O_group.split(",");
+              for (let i = 0; i < groupArray.length; i++) {
+                if (groupArray[i] === oldName) {
+                  groupArray[i] = newName;
+                  break; // Assuming you only want to replace the first occurrence
+                }
+              }
+              node.metadata.O_group = groupArray.join(",");
             });
             const get_sprite = this.spriteMap.get(oldName);
             mesh.name = newName;
@@ -1446,8 +1454,14 @@ onWindowResize() {
                 const applyNameChange = (mesh, oldName, newName) => {
                   const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
                   arrayFromObj.forEach((node) => {
-                      node.metadata.O_group.replace(oldName, newName);
-                    });
+                    const groupArray = node.metadata.O_group.split(",");
+                    for (let i = 0; i < groupArray.length; i++) {
+                      if (groupArray[i] === oldName) {
+                        groupArray[i] = newName;
+                        break; // Assuming you only want to replace the first occurrence
+                      }
+                    }
+                    node.metadata.O_group = groupArray.join(",");                    });
                     const get_sprite = this.spriteMap.get(oldName);
                     mesh.name = newName;
                     const newSprite = this.makeTextSprite(newName, {});
