@@ -137,17 +137,17 @@
             return __awaiter(this, void 0, void 0, function* () {
                 var evtobj = window.event ? event : e;
                 // ctrl + Z  / undo
-                if (evtobj.ctrlKey && evtobj.key === 'z' && graph.current.parent) {
+                if (evtobj.ctrlKey && evtobj.key.toLowerCase() === 'z' && graph.current.parent) {
                     handleControlZ();
                 }
                 // ctrl + X  / go to the root
-                else if (evtobj.ctrlKey && evtobj.key === 'x') {
+                else if (evtobj.ctrlKey && evtobj.key.toLowerCase() === 'x') {
                     yield traverser.toStateNode(graph.root.id, 0);
                     setTimeout(() => {
                     }, 250);
                 }
                 // ctrl + y  / redo
-                else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
+                else if (evtobj.ctrlKey && evtobj.key.toLowerCase() === 'y' && graph.current.children[0]) {
                     handleControlY();
                     setTimeout(() => {
                     }, 250);
@@ -304,7 +304,10 @@
      */
     const groupNodeLabel = (node) => {
         if (node.wrappedNodes.length === 1) {
-            return node.wrappedNodes[0].label;
+            if (node.wrappedNodes[0].label === "SelectObject")
+                return "SelectObject(" + node.wrappedNodes[0].metadata.O_group + ")";
+            else
+                return node.wrappedNodes[0].label;
         }
         else {
             const label_arr = node.wrappedNodes.map(n => n.label);
@@ -1442,8 +1445,10 @@
                 if (!cam_test(event.label)) {
                     this.numberofnodeswocam++;
                 }
-                else
+                else {
                     this.camera_show = true;
+                    d3.select('#camera-trigger').style('color', '#3f51b5');
+                }
             });
             this.update();
             this.zoomer = d3.zoom();
@@ -1517,6 +1522,9 @@
             });
         }
         camerahide() {
+            const sliderElement = document.getElementById('provslider');
+            sliderElement.value = '0';
+            this.update();
             function find_noncameranode(c_trav) {
                 let traverser = c_trav.graph.current;
                 if (traverser.label === "root")

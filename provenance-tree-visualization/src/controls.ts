@@ -71,11 +71,11 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
     async function keyPress(e: any) {
         var evtobj = window.event ? event : e;
         // ctrl + Z  / undo
-        if (evtobj.ctrlKey && evtobj.key === 'z' && (graph.current as StateNode).parent) {
+        if (evtobj.ctrlKey && evtobj.key.toLowerCase() === 'z' && (graph.current as StateNode).parent) {
         handleControlZ();
         }
         // ctrl + X  / go to the root
-        else if (evtobj.ctrlKey && evtobj.key === 'x') {
+        else if (evtobj.ctrlKey && evtobj.key.toLowerCase() === 'x') {
             isProcessingKey = true;
             await traverser.toStateNode(graph.root.id, 0);
             setTimeout(() => {
@@ -83,7 +83,7 @@ export function provGraphControls(provenanceTreeVisualization: ProvenanceTreeVis
             }, 250);
         }
         // ctrl + y  / redo
-        else if (evtobj.ctrlKey && evtobj.key === 'y' && graph.current.children[0]) {
+        else if (evtobj.ctrlKey && evtobj.key.toLowerCase() === 'y' && graph.current.children[0]) {
             handleControlY();
             setTimeout(() => {
               isProcessingKey = false;

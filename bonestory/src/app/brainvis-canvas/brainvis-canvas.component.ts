@@ -87,7 +87,7 @@ export class BrainvisCanvasComponent {
   private _randerorder = 1;
   private objectSelector: ObjectSelector;
   private appcomponent: AppComponent;
-  public mm;
+  public mm: TransformControls;
   private mode;
   public intersection_info;
   public keydown_coordinate: THREE.Vector2;
@@ -400,12 +400,14 @@ onWindowResize() {
         const pastname = past.length>0?past[0].name:undefined;
         let prev_names = '';
         let past_names = '';
-        this.objectSelector.previousSelectedObjects.map(obj => {prev_names = prev_names + obj.name});
-        this.objectSelector.pastSelectedObjects.map(obj => {past_names = past_names + obj.name});
+        this.objectSelector.previousSelectedObjects.map(obj => {prev_names = prev_names + ',' + obj.name});
+        this.objectSelector.pastSelectedObjects.map(obj => {past_names = past_names + ','  + obj.name});
+        prev_names = prev_names.substring(1);
+        past_names = past_names.substring(1);
         let temp = [this.outlinePass.selectedObjects[0].name,pastname,prev_names, past_names];
         const cur_node = this.service.traverser.graph.current as StateNode;
         console.log(this.service.graph.application);
-        console.log(temp[2].includes(cur_node.action.doArguments[0][2]));
+        console.log(temp[2]);
         if(!temp[2].includes(cur_node.action.doArguments[0][2])){
           this.objectSelector.setSelection(temp);
           this.eventdispatcher.dispatchEvent({
@@ -414,12 +416,9 @@ onWindowResize() {
           });
         }
         else{
-          cur_node.metadata.O_group = '';
-          this.outlinePass.selectedObjects.forEach((obj: any) => {
-            cur_node.metadata.O_group = cur_node.metadata.O_group + ',' + obj.name;
-          });
-          cur_node.metadata.O_group = cur_node.metadata.O_group.slice(1);
+          cur_node.metadata.O_group = prev_names;
           cur_node.action.doArguments[0][2] = temp[2];
+          cur_node.action.undoArguments[0][3] = temp[2];
           cur_node.metadata.screenshot = await this.ScreenShot();
         }
 
@@ -608,7 +607,6 @@ onWindowResize() {
       this.setInteractive(inter);
       if (mode == 0 && this.selectedobj!=undefined){ // Translation 
         this.mm.setMode('translate');
-
         this.controls.enabled = false;
       }
       else if (mode == 1 && this.selectedobj!=undefined){ //Rotation
@@ -627,6 +625,7 @@ onWindowResize() {
               obj.position.sub(event.intersect);
             });
           this.rotate_prev_intersect = event.intersect;
+          
           this.mm.attach(this.pivot_group);
           this.mm.traverse((node) => {
             node.layers.enable(this.gizmoLayer.mask);
@@ -636,29 +635,31 @@ onWindowResize() {
         this.controls.enabled = false;
       }
       else {
-        if(this.rotate_counter>0){
-          this.outlinePass.selectedObjects.forEach((obj) => 
+        if(this.trans_counter>0 || this.rotate_counter>0){
+            this.outlinePass.selectedObjects.forEach((element) => 
             {
-              this.objects.add(obj);
-              obj.position.add(this.pivot_group.position);
-            });
+              let tempQuaternion = new THREE.Quaternion();
+              let tempVector = new THREE.Vector3();
+              element.getWorldQuaternion(tempQuaternion);
+              element.getWorldPosition(tempVector);
+              this.objects.add(element);
+              element.setRotationFromQuaternion(tempQuaternion);
+              element.position.set(tempVector.x,tempVector.y ,tempVector.z);
+              element.updateMatrixWorld();
+              this.objects.add(element);
 
-          this.pivot_group.position.set(0,0,0);
-          this.rotate_counter = 0;
-        }
-        if(this.trans_counter>0){
-          this.outlinePass.selectedObjects.forEach((obj) => 
-            {
-              this.objects.add(obj);
-              obj.position.add(this.pivot_group.position);
             });
           this.pivot_group.position.set(0,0,0);
-          this.trans_counter = 0;
+          if(this.trans_counter>0)
+            this.trans_counter = 0;
+          if(this.rotate_counter>0)
+            this.rotate_counter = 0;
         }
         this.mm.detach();
         this.controls.enabled = true;
-        this.mode = modes.Cammode;
+        this.mode = modes.Cammode;  
       }
+
     });
 
     this.objectSelector.addEventListener('objectSelection', (event: any) => {
@@ -757,6 +758,7 @@ onWindowResize() {
       const middlePoint = new THREE.Vector3();
       middlePoint.addVectors(this.measure_counter[0], intersect[0].point);
       middlePoint.multiplyScalar(0.5);
+
       cylinder.position.copy(middlePoint);
       // Change the height of the cylinder
       const newHeight = distance; // New height in units
@@ -1205,7 +1207,7 @@ onWindowResize() {
         {
           let name = 'f' + this.number_of_stl.toString();
           const color = this.selectColor(this.number_of_stl);
-          let material = new THREE.MeshLambertMaterial({ color: color, transparent: true,  depthTest: true});
+          let material = new THREE.MeshLambertMaterial({ color: color, transparent: true,  depthTest: true, flatShading: true});
           material.polygonOffset = true;
           material.polygonOffsetFactor = 1;
           material.polygonOffsetUnits = 1;
@@ -1249,27 +1251,36 @@ onWindowResize() {
           this.objects.add(mesh); // Add this line to update this.objects
 
         const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
-        
+        const replaceInArray = (arr, oldVal, newVal) => {
+          for(let i = 0; i < arr.length; i++) {
+            if(typeof arr[i] === "string") {
+              arr[i] = arr[i].replace(new RegExp(oldVal, 'g'), newVal);
+            }
+          }
+        }
         const applyNameChange = (mesh, oldName, newName) => {
           const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
           arrayFromObj.forEach((node) => {
-              const groupArray = node.metadata.O_group.split(",");
-              for (let i = 0; i < groupArray.length; i++) {
-                if (groupArray[i] === oldName) {
-                  groupArray[i] = newName;
-                  break; // Assuming you only want to replace the first occurrence
-                }
+            const groupArray = node.metadata.O_group.split(",");
+            for (let i = 0; i < groupArray.length; i++) {
+              if (groupArray[i] === oldName) {
+                groupArray[i] = newName;
+                break; // Assuming you only want to replace the first occurrence
               }
-              node.metadata.O_group = groupArray.join(",");
-            });
+            }
+            if(node.label == 'SelectObject' && 'action' in node){
+              replaceInArray(node.action.doArguments[0], oldName, newName);
+              replaceInArray(node.action.undoArguments[0], oldName, newName);
+            }
+            node.metadata.O_group = groupArray.join(",");                    });
             const get_sprite = this.spriteMap.get(oldName);
             mesh.name = newName;
             const newSprite = this.makeTextSprite(newName, {});
-            mesh.remove(get_sprite.sprite);
             newSprite.position.set(0, 30, 0);
+            mesh.remove(get_sprite.sprite);
             mesh.add(newSprite);
             this.spriteMap.delete(oldName);
-            this.spriteMap.set(newName, { sprite: newSprite, visible: sprite.visible });
+            this.spriteMap.set(newName, { sprite: newSprite, visible: mesh.children[1]});
         };
         const n_s = this.number_of_stl - 1;
         fragment_folder
@@ -1404,7 +1415,7 @@ onWindowResize() {
             const color = this.selectColor(this.number_of_stl);
             let loaderSTL = new STLLoader();
 
-            let material = new THREE.MeshLambertMaterial({ color: color, transparent: true });
+            let material = new THREE.MeshLambertMaterial({ color: color, transparent: true, flatShading: false });
             material.polygonOffset = true;
             material.polygonOffsetFactor = 1;
             material.polygonOffsetUnits = 1;
@@ -1450,6 +1461,14 @@ onWindowResize() {
                 this.objects.add(mesh);
 
                 const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
+
+                const replaceInArray = (arr, oldVal, newVal) => {
+                  for(let i = 0; i < arr.length; i++) {
+                    if(typeof arr[i] === "string") {
+                      arr[i] = arr[i].replace(new RegExp(oldVal, 'g'), newVal);
+                    }
+                  }
+                }
                 
                 const applyNameChange = (mesh, oldName, newName) => {
                   const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
@@ -1461,10 +1480,15 @@ onWindowResize() {
                         break; // Assuming you only want to replace the first occurrence
                       }
                     }
+                    if(node.label == 'SelectObject'){
+                      replaceInArray(node.action.doArguments[0], oldName, newName);
+                      replaceInArray(node.action.undoArguments[0], oldName, newName);
+                    }
                     node.metadata.O_group = groupArray.join(",");                    });
                     const get_sprite = this.spriteMap.get(oldName);
                     mesh.name = newName;
                     const newSprite = this.makeTextSprite(newName, {});
+                    newSprite.position.set(0, 30, 0);
                     mesh.remove(get_sprite.sprite);
                     mesh.add(newSprite);
                     this.spriteMap.delete(oldName);

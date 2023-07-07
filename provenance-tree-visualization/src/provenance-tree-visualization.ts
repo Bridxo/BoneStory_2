@@ -132,8 +132,10 @@ export class ProvenanceTreeVisualization {
       if(!cam_test(event.label)){
         this.numberofnodeswocam++;
       }
-      else
+      else{
         this.camera_show = true;
+        d3.select('#camera-trigger').style('color','#3f51b5');
+      }
 
     });
 
@@ -233,6 +235,9 @@ export class ProvenanceTreeVisualization {
   }
 
   public camerahide(): void {
+    const sliderElement = document.getElementById('provslider') as HTMLInputElement;
+    sliderElement.value = '0';
+    this.update();
     function find_noncameranode(c_trav : any) {
       let traverser = c_trav.graph.current;
       if(traverser.label === "root")
@@ -859,6 +864,7 @@ export class ProvenanceTreeVisualization {
     updateNodes.nodes().slice().reverse().forEach(node => {
       d3.select(node).raise();
     });
+
 
     const oldLinks = this.g
       .selectAll('path.link')

@@ -209,7 +209,7 @@ export class SlideDeckVisualization {
             node = this._slideDeck.graph.current;
         node.metadata.isSlideAdded = false;
         node.metadata.bookmarked = false;
-        node.metadata.H_value-=30000;
+        // node.metadata.H_value-=70000;
         this._slideDeck.graph.emitNodeChangedEvent(node);
         for(const slidedecks of this._slideDocker){
             if(slide){
@@ -359,10 +359,10 @@ export class SlideDeckVisualization {
 
         if (!existingSlide) {
             // If there is no existing slide with the same node, create and add a new slide
-            const slide = new ProvenanceSlide(node.label, 1500, 0, [], node);
+            const slide = new ProvenanceSlide(node.label, 1000, 1000, [], node);
             slideDeck.addSlide(slide, slideDeck.slides.length);
             node.metadata.bookmarked = true;
-            node.metadata.H_value+=30000;
+            // node.metadata.H_value+=70000;
             slideDeck.graph.emitNodeChangedEvent(node);
 
             this.selectSlide(slide);
@@ -382,7 +382,7 @@ export class SlideDeckVisualization {
 
         if (!existingSlide) {
             // If there is no existing slide with the same node, create and add a new slide
-            const slide = new ProvenanceSlide(node.label, 1500, 0, [], node);
+            const slide = new ProvenanceSlide(node.label, 1000, 1000, [], node);
             slideDeck.addSlide(slide, slideDeck.slides.length);
             node.metadata.bookmarked = true;
             this.selectSlide(null);

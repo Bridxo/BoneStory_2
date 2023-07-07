@@ -70,7 +70,7 @@ export class ProvenanceSlidedeck implements IProvenanceSlidedeck {
     }
     if (!slide) {
       const node = this._graph.current;
-      slide = new ProvenanceSlide(node.label, 1, 0, [], node);
+      slide = new ProvenanceSlide(node.label, 1, 1, [], node);
     }
     if (this.autoScreenShot && this.screenShotProvider) {
       try {

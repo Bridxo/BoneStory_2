@@ -14,6 +14,11 @@ import { ConfirmationDialogComponent } from './confirmation-dialog.component';
 export class ProvenanceVisualizationComponent implements OnInit {
   private _viz: ProvenanceTreeVisualization;
   public slider_value = 0;
+  private grouping_text = {
+    0: 'Actionwise grouping',
+    1: 'Typewise grouping',
+    2: 'Fragmentwise grouping',
+  }
   @Input() provenances: ProvenanceService; // Move @Input() inside the class.
   constructor(private elementRef: ElementRef, private provenance: ProvenanceService, public dialog: MatDialog) {
     window.addEventListener('deleteButtonClicked', this.openDialog.bind(this));
@@ -66,8 +71,8 @@ export class ProvenanceVisualizationComponent implements OnInit {
           .filter((d: any) => {
             const ref = d.data.wrappedNodes.includes(this._viz.traverser.graph.current);
             if (ref) {
-              if (d.data.wrappedNodes.length == 1)
                 this._viz.deletesingleNode();
+                this._viz.update();
             }
           });
       } else if (result === 'Delete the selected node and all its descendants') {

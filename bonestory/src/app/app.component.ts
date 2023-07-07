@@ -61,26 +61,6 @@ export class AppComponent implements OnInit {
           return results;
       });
   }
-    // for (let img of this.multipleImages) {
-    //   //store form name as files with file data
-    //   var reader = new FileReader();
-    //   reader.readAsArrayBuffer(img);
-
-    //   reader.addEventListener("load", () => {
-    //     console.log(reader.result);
-    //     cb(reader.result);
-    //   }, false);
-    // }
-
-    // this.http.post<any>('gs://radiant-voyage-171301.appspot.com/multiplefiles', this.formdata)
-    //   .subscribe((res) => {
-    //     this.imgspath = res.path;
-    //     console.log(this.imgspath);
-    //     this.multipleInput.nativeElement.value = "";
-    //     cb(this.imgspath);
-    // }
-    
-    // )
 
   toggle_upload(){
     this.upload_show = !this.upload_show;

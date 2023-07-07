@@ -89,7 +89,7 @@ export default class ObjectSelector  implements IIntersectionListener  {
         return vec;
     }
 
-    onMouseDown(intersection: THREE.Intersection, pointer: MouseEvent) {
+  onMouseDown(intersection: THREE.Intersection, pointer: MouseEvent) {
         this.isdragging = true;
         if(pointer.button == 0 && this.state == modes.Cammode){
           this.onMouseDoubleclick(intersection, pointer);
@@ -118,30 +118,12 @@ export default class ObjectSelector  implements IIntersectionListener  {
             type: 'interactive'
             // newObject: this.previousSelectedObject
         });
-    }
-    onMouseMove(intersection: THREE.Intersection, pointer: MouseEvent) {
-    //     // save the trajectory & animate the move, rotation
-    //     if(pointer.buttons== 1 && this.previousSelectedObject.name != undefined && this.state == modes.Translation){ // moving the object
-    //         if (this.isdragging && !this.interactive)
-    //         {
-    //             this.isobjmoving = true;
-    //             this.interactive = false;
-    //         }
-    //         // console.log(this.previousSelectedObject.position);
-    //         // this.eventdispatcher.dispatchEvent({type:'transEnd_origin', position: this.previousSelectedObject.position});
-    //     }
-    //     // dragging, Rotation the MESH --- quaternion rotation (angle)
-    //     else if(pointer.buttons==1 && this.previousSelectedObject.name != undefined && this.state == modes.Rotation){
-    //         // window.console.log('right_click: object-' + this._selected + 'interactive-' + this.interactive);
-    //         if(this.isdragging && !this.interactive)
-    //         {
-    //             this.isobjrotating = true;
-    //             this.interactive = false;
-    //         }
-    //         // this.eventdispatcher.dispatchEvent({type:'rotateEnd_origin', rotation_x: this.previousSelectedObject.rotateX, rotation_y: this.previousSelectedObject.rotateY, rotation_z: this.previousSelectedObject.rotateZ});
-    //     }
-    }
-onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
+  }
+
+  onMouseMove(intersection: THREE.Intersection, pointer: MouseEvent) {
+  }
+
+  onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
     this.isdragging = false;
     
     if (this.isobjmoving) {
@@ -159,6 +141,9 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
           element.position.set(tempVector.x,tempVector.y ,tempVector.z);
           element.updateMatrixWorld();
         });
+      }
+      else{
+        console.log("no change");
       }
 
       this.temp_pos = this.previousSelectedObjects.map(obj => obj.position.clone());
@@ -194,16 +179,41 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
   }
   
   async setkey(event: any, keydown_coordinate_: any) {
-    switch (event.key) {
+    if(this.canvas.rotate_counter>0 || this.canvas.trans_counter>0)
+    {
+      this.canvas.outlinePass.selectedObjects.forEach((element) => 
+      {
+        let tempQuaternion = new THREE.Quaternion();
+        let tempVector = new THREE.Vector3();
+        element.getWorldQuaternion(tempQuaternion);
+        element.getWorldPosition(tempVector);
+        this.objects.add(element);
+        element.setRotationFromQuaternion(tempQuaternion);
+        element.position.set(tempVector.x,tempVector.y ,tempVector.z);
+        element.updateMatrixWorld();
+        this.objects.add(element);
+
+      });
+    this.canvas.pivot_group.position.set(0,0,0);
+    if(this.canvas.trans_counter>0)
+      this.canvas.trans_counter = 0;
+    if(this.canvas.rotate_counter>0)
+      this.canvas.rotate_counter = 0;
+    }
+    switch (event.key.toLowerCase()) {
       case 't':
-        if(!(window as any).istyping && this.previousSelectedObject != undefined){
+        if(!(window as any).istyping && this.previousSelectedObject != undefined && this.canvas.trans_counter == 0){
           this.state = modes.Translation;
-          this.temp_pos = this.previousSelectedObjects.map(obj => obj.position.clone());          this.canvas.pivot_group.position.set(0,0,0);
+          this.temp_pos = this.previousSelectedObjects.map(obj => obj.position.clone());          
+          this.canvas.pivot_group.position.set(0,0,0);
           this.canvas.pivot_group.rotation.set(0,0,0);
           this.canvas.middle_point = new THREE.Vector3(0,0,0);
 
           this.canvas.outlinePass.selectedObjects.forEach((obj) => 
-          this.canvas.middle_point.add(obj.position.clone()));
+          {
+            this.canvas.middle_point.add(obj.position.clone());
+          }
+          );
           this.canvas.middle_point.divideScalar(this.canvas.outlinePass.selectedObjects.length);
 
           this.canvas.outlinePass.selectedObjects.forEach((obj) =>{
@@ -212,9 +222,7 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
             obj.position.sub(this.canvas.middle_point);
           }
           );
-          // this.canvas.pivot_group.updateMatrixWorld(true);
           this.canvas.mm.attach(this.canvas.pivot_group);
-          // this.canvas.mm.position.copy(this.canvas.pivot_group.position.clone());
           this.canvas.mm.traverse((node) => {
             node.layers.enable(this.canvas.gizmoLayer.mask);
           });
@@ -310,8 +318,10 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
 
       let prev_names = '';
       let past_names = '';
-      this.previousSelectedObjects.map(obj => {prev_names = prev_names + obj.name});
-      this.pastSelectedObjects.map(obj => {past_names = past_names + obj.name});
+      this.previousSelectedObjects.map(obj => {prev_names = prev_names + ',' + obj.name});
+      this.pastSelectedObjects.map(obj => {past_names = past_names + ',' + obj.name});
+      prev_names = prev_names.substring(1);
+      past_names = past_names.substring(1);
       if (!pointer.shiftKey) {
 
           if(this.pastSelectedObject==undefined){
@@ -339,8 +349,8 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
   }
     
   changeControls_total(newPosition: THREE.Vector3, milliseconds: number , newRotation?: THREE.Euler, done?: () => void) {
-    if (this.previousSelectedObject.position === undefined || this.previousSelectedObject.rotation === undefined) {
-      return;
+    if (this.previousSelectedObject  === undefined || this.previousSelectedObject === undefined) {
+      confirm('Graph is disrupted, please reload the page and try again');
     }
     try{
       let currentRotation = [];
@@ -392,111 +402,88 @@ onMouseUp(intersection: THREE.Intersection, pointer: MouseEvent) {
         }, 30);
       }
     } catch (e) {
-      alert('Load Objects before loading the Provenance Graph');
+      alert('Graph is disrupted. Please save the stories and reload the page.');
     };
   }
       
 
 
-    toRadians(angle) {
-        return angle * (Math.PI / 180);
-    }
-    settransobj(position) {
-        this.previousSelectedObject.position.set(position[0],position[1],position[2]);
-    } 
+  toRadians(angle) {
+      return angle * (Math.PI / 180);
+  }
+  settransobj(position) {
+      this.previousSelectedObject.position.set(position[0],position[1],position[2]);
+  } 
 
-    setrotateobj(rotation) {
-        this.previousSelectedObject.rotation.set(rotation.x,rotation.y,rotation.z);
-    }
-    toDegrees(angle) {
-        return angle * (180 / Math.PI);
-    }
+  setrotateobj(rotation) {
+      this.previousSelectedObject.rotation.set(rotation.x,rotation.y,rotation.z);
+  }
+  toDegrees(angle) {
+      return angle * (180 / Math.PI);
+  }
 
-    getpastcurrentobject() {
-        return [this.previousSelectedObject,this.pastSelectedObject, this.previousColor, this.pastColor];
-    }
+  getpastcurrentobject() {
+      return [this.previousSelectedObject,this.pastSelectedObject, this.previousColor, this.pastColor];
+  }
 
-    getObjects() {
-        return this.objects.children;
-    }
-    gettranslateObject() {
-        return this.previousSelectedObject;
-    }
+  getObjects() {
+      return this.objects.children;
+  }
+  gettranslateObject() {
+      return this.previousSelectedObject;
+  }
 
-    getinteractive(){
-        return this.interactive;
-    }
+  getinteractive(){
+      return this.interactive;
+  }
 
-    getmode(){
-        return this.state;
-    }
+  getmode(){
+      return this.state;
+  }
 
-    getintersection_point(){
-        return this.intersection_point;
-    }
+  getintersection_point(){
+      return this.intersection_point;
+  }
 
-    getcurrobject(){
-        return this.previousSelectedObject;
-    }
+  getcurrobject(){
+      return this.previousSelectedObject;
+  }
 
-    isEnabled() {
-        return this.objects.visible;
-    }
+  isEnabled() {
+      return this.objects.visible;
+  }
 
-    setSelection(newSelection) {
-        this.previousSelectedObject = this.objects.children.find(mesh => mesh.name ===newSelection[0]); // new
-        this.pastSelectedObject = this.objects.children.find(mesh => mesh.name ===newSelection[1]); // old
+  setSelection(newSelection) {
+      this.previousSelectedObject = this.objects.children.find(mesh => mesh.name === newSelection[0]); // new
+      this.pastSelectedObject = this.objects.children.find(mesh => mesh.name === newSelection[1]); // old
 
-        this.previousSelectedObjects = [];
-        this.pastSelectedObjects = [];
-        this.objects.children.forEach(mesh => {
-          if (newSelection[2].includes(mesh.name)) {
-            this.previousSelectedObjects.push(mesh);
-          }
-          if (newSelection[3].includes(mesh.name)) {
-            this.pastSelectedObjects.push(mesh);
-          }
-        });
-        this.canvas.selectedobj = this.previousSelectedObject;
-        if(this.previousColor == this.canvas.outlinePass.selectedObjects){
-          //do nothing
-        }
-        else{
-          if(this.previousSelectedObjects.length > 0)
-            this.canvas.outlinePass.selectedObjects = this.previousSelectedObjects;
-          else 
-            this.canvas.outlinePass.selectedObjects = [];
-        }
-        // if (this.previousSelectedObject && this.pastSelectedObject) {
-        //     const asMesh = <THREE.Mesh>this.previousSelectedObject;
-        //     const asMesh2 = <THREE.Mesh>this.pastSelectedObject;
-        //     if(this.previousSelectedObject == this.pastSelectedObject && this.previousColor.length > 1){
-        //       this.canvas.outlinePass.selectedObjects = [this.previousSelectedObject];
-        //     }
-        //     else {
-        //           this.canvas.outlinePass.selectedObjects = [];
-        //     }
-        // }
-        // else if (this.pastSelectedObject){
+      this.previousSelectedObjects = [];
+      this.pastSelectedObjects = [];
+      let temparr = [];
+      let pasttemparr = [];
+      if(newSelection[2] != '')
+        temparr = newSelection[2].split(',');
+      if(newSelection[3] != '')
+        pasttemparr = newSelection[3].split(',');
 
-        //     this.pastSelectedObject = this.previousSelectedObject;
-        //     this.previousSelectedObject = undefined;
-        //     this.pastColor = this.previousColor;
-        //     this.previousColor = undefined;
-        //     this.canvas.outlinePass.selectedObjects = [];
-        // }
-        // else if(this.previousSelectedObject){ // go to root node
-        //     this.canvas.outlinePass.selectedObjects = [this.previousSelectedObject];
-        // }
-        // else{
-        //     this.canvas.outlinePass.selectedObjects = [];
-        // }
-        // this.state = modes.Cammode;
-    }
-    setAnnotations(annotations) {
-    }
-    getAnnotations() {
-      return '';
-    }
+      for (let i = 0; i < temparr.length; i++) {
+        this.previousSelectedObjects.push(this.objects.children.find(mesh => mesh.name === temparr[i]));
+      }
+
+      for (let i = 0; i < pasttemparr.length; i++) {
+        this.pastSelectedObjects.push(this.objects.children.find(mesh => mesh.name === pasttemparr[i]));
+      }
+
+      this.canvas.selectedobj = this.previousSelectedObject;
+      if(this.previousSelectedObjects.length > 0)
+        this.canvas.outlinePass.selectedObjects = this.previousSelectedObjects;
+      else 
+        this.canvas.outlinePass.selectedObjects = [];
+  }
+  setAnnotations(annotations) {
+  }
+  getAnnotations() {
+    return '';
+  }
 
 }

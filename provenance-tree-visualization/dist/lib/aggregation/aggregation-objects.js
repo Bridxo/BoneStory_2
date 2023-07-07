@@ -50,7 +50,10 @@ exports.isKeyNode = isKeyNode;
  */
 const groupNodeLabel = (node) => {
     if (node.wrappedNodes.length === 1) {
-        return node.wrappedNodes[0].label;
+        if (node.wrappedNodes[0].label === "SelectObject")
+            return "SelectObject(" + node.wrappedNodes[0].metadata.O_group + ")";
+        else
+            return node.wrappedNodes[0].label;
     }
     else {
         const label_arr = node.wrappedNodes.map(n => n.label);

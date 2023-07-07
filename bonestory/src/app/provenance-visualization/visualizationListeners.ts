@@ -1,7 +1,9 @@
-import {restoreProvenanceGraph, ActionFunctionRegistry, ProvenanceTracker, ProvenanceGraphTraverser} from '@visualstorytelling/provenance-core';
+import {restoreProvenanceGraph, ActionFunctionRegistry, ProvenanceTracker, ProvenanceGraphTraverser, ProvenanceSlidedeck} from '@visualstorytelling/provenance-core';
 import {ProvenanceTreeVisualization} from '@visualstorytelling/provenance-tree-visualization';
 import { kebabCase } from 'lodash';
 import {ProvenanceService} from '../provenance.service';
+import { SlideDeckVisualization } from '@visualstorytelling/slide-deck-visualization';
+import { addListenersSlides } from '../provenance-slides/slidesListeners';
 
 /** These are the listeners I used for the importing and exporting of the graph. They mostly come down to two `click` listeners I created for
  * two imput buttons.
@@ -76,8 +78,10 @@ async function getFileWithConfirm(message: string, acceptType: string, listener:
 }
 function restoreGraph(e: Event, input: string) : Promise<void>{
   return new Promise((resolve, reject) => {
+      const w = window as any;
       let data_in = JSON.parse(input);
       console.log("We're here");
+      w.graph.setNodes(data_in.nodes);
       let graph = restoreProvenanceGraph(data_in);
       console.log("Hello");  
       let registry = new ActionFunctionRegistry();
@@ -86,13 +90,21 @@ function restoreGraph(e: Event, input: string) : Promise<void>{
       service.updateProvenanceObjects(graph, registry, tracker,traverser);
       tree.setTraverser(traverser);
 
-      const w = window as any;
+
+
       w.graph = service.graph;
       w.tracker = service.tracker;
       w.traverser = service.traverser; 
       w.registry = service.registry;
       tree.update();
       let elem = document.getElementById('fake');
+      
+      // let _deck = new ProvenanceSlidedeck(graph.application, traverser);
+      // let _deckViz = new SlideDeckVisualization(_deck, this.elementRef.nativeElement.children[0]);
+      // (window as any).listenerslide = addListenersSlides(_deckViz, _deck, this.provenance);
+      // (window as any).slideDeck = this._deck;
+      // (window as any).slideDeckViz = this._deckViz;
+
       elem.click();
       resolve();
   });

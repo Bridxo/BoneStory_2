@@ -140,7 +140,8 @@ export class ProvenanceTracker implements IProvenanceTracker {
   }
 
   normalizeValue(value: number, minValue: number, maxValue: number, newMinValue: number, newMaxValue: number): number {
-    return (value - minValue) / (maxValue - minValue) * (newMaxValue - newMinValue) + newMinValue;
+    let return_val = (value - minValue) / (maxValue - minValue) * (newMaxValue - newMinValue) + newMinValue
+    return Math.round(return_val);
   }
   ScreenShot = async () => {
     let dataURL;
@@ -172,46 +173,82 @@ export class ProvenanceTracker implements IProvenanceTracker {
   }
 
   H_value(NewNode: StateNode): number {
+
+
     let H_val = 0;
     type ActionLabels = keyof typeof onehot_action;
     const onehot_action = {
       'Root':10,
       'CameraMove': 1,
-      'CameraPan': 1,
-      'CameraZoom': 1,
-      'ViewpointFront': 1,
-      'ViewpointBack': 1,
-      'ViewpointLeft': 1,
-      'ViewpointRight': 1,
-      'ViewpointTop': 1,
-      'ViewpointBottom': 1,
-      'SelectObject': 2,
-      'TranslateObject': 3.1,
-      'RotateObject': 3.6,
-      'Measurement': 6.6,
-      'Annotation': 7.6
+      'CameraPan': 2,
+      'CameraZoom': 3,
+      'ViewpointFront': 4,
+      'ViewpointBack': 4,
+      'ViewpointLeft': 4,
+      'ViewpointRight': 4,
+      'ViewpointTop': 4,
+      'ViewpointBottom': 4,
+      'SelectObject': 5,
+      'TranslateObject': 6,
+      'RotateObject': 7,
+      'Measurement': 8,
+      'Annotation': 9
     };
-  if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group
-    && NewNode.label === NewNode.parent.label)//같같
+    const gettype = (node: ProvenanceNode): string => {
+      if(node.metadata.bookmarked === true)
+        return 'Bookmarked';
+      if(onehot_action[node.label as ActionLabels] <= 4)
+        return 'Camera';
+      else if(onehot_action[node.label as ActionLabels] === 5)
+        return 'Selection';
+      else if(onehot_action[node.label as ActionLabels] === 6)
+        return 'Transformation';
+      else if(onehot_action[node.label as ActionLabels] === 7)
+        return 'Transformation';
+      else if(onehot_action[node.label as ActionLabels] === 8)
+        return 'Measurement';
+      else
+        return 'Root';
+    };
+    const gettype_between = (node1: ProvenanceNode, node2: ProvenanceNode): number => {
+      if(gettype(node1) === gettype(node2))
+        return 0;
+      if((gettype(node1) === 'Camera' && gettype(node2) === 'Selection') || (gettype(node2) === 'Camera' && gettype(node1) === 'Selection'))
+        return 2;
+      else if((gettype(node1) === 'Camera' && gettype(node2) === 'Transformation') || (gettype(node2) === 'Camera' && gettype(node1) === 'Transformation'))
+        return 1;
+      else if((gettype(node1) === 'Camera' && gettype(node2) === 'Measurement') || (gettype(node2) === 'Camera' && gettype(node1) === 'Measurement'))
+        return 4;
+      else if((gettype(node1) === 'Transformation' && gettype(node2) === 'Bookmarked') || (gettype(node2) === 'Transformation' && gettype(node1) === 'Bookmarked'))
+        return 7;
+      else if ((gettype(node1) === 'Transformation' && gettype(node2) === 'Measurement') || (gettype(node2) === 'Transformation' && gettype(node1) === 'Measurement'))
+        return 5;
+      else if ((gettype(node1) === 'Transformation' && gettype(node2) === 'Selection') || (gettype(node2) === 'Transformation' && gettype(node1) === 'Selection'))
+        return 3;
+      else if ((gettype(node1) === 'Selection' && gettype(node2) === 'Measurement') || (gettype(node2) === 'Selection' && gettype(node1) === 'Measurement'))
+        return 5;
+      else if ((gettype(node1) === 'Selection' && gettype(node2) === 'Bookmarked') || (gettype(node2) === 'Selection' && gettype(node1) === 'Bookmarked'))
+        return 7;
+      else if ((gettype(node1) === 'Measurement' && gettype(node2) === 'Bookmarked') || (gettype(node2) === 'Measurement' && gettype(node1) === 'Bookmarked'))
+        return 8;
+      else
+        return 9;
+    };
+  //Object group
+  if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group)//
   {
     H_val += 0;
   }
-  else if(NewNode.metadata.O_group === NewNode.parent.metadata.O_group
-    && NewNode.label !== NewNode.parent.label)//같다
+  else
   {
-    H_val += (Math.abs(onehot_action[NewNode.label as ActionLabels]-onehot_action[NewNode.parent.label as ActionLabels]) + 0.1) * 10000;
+    H_val += 1000000;
   }
-  else // 다다
-  {
-    H_val += 100000;
-  }
-  // // Find general value of the node.
-  // H_val += onehot_general['idle'];
-
-  // // Find action value of the node.
-  // H_val += onehot_action[NewNode.label as ActionLabels];
-
-  // Calculate difference value of the node (parent comparison)
+  // Type
+  H_val += gettype_between(NewNode, NewNode.parent) * 100000;
+  // Action
+  if (NewNode.label !== NewNode.parent.label)
+    H_val += onehot_action[NewNode.label as ActionLabels] * 10000;
+  // difference
   try {
     const doArgs = NewNode.action.doArguments;
     const undoArgs = NewNode.action.undoArguments;
