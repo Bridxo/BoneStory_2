@@ -54,6 +54,7 @@ class ProvenanceTreeVisualization {
         this.mergingEnabled = false;
         this.transferringEnabled = false;
         this.copyingEnabled = false;
+        this.group_text_value = 1000;
         /**
          * @description Update the tree layout.
          */
@@ -121,6 +122,7 @@ class ProvenanceTreeVisualization {
             updateNodes.selectAll('.circle-text').remove();
             updateNodes.selectAll('.circle-label').remove();
             updateNodes.selectAll('.circle-img').remove();
+            updateNodes.selectAll('.plan-label').remove();
             const getNodeSize = (node) => {
                 let counter = 0;
                 const countWrappedNodesRecursively = (currentNode) => {
@@ -424,6 +426,14 @@ class ProvenanceTreeVisualization {
             updateNodes.nodes().slice().reverse().forEach(node => {
                 d3.select(node).raise();
             });
+            updateNodes.filter(function (d) { return !d.children; })
+                .append('text')
+                .attr('class', 'plan-label')
+                .attr('dy', '2.0em')
+                .style('fill', 'red')
+                .attr('visibility', 'visible')
+                .attr('text-anchor', function (d) { return d.children ? 'end' : 'start'; })
+                .text(function (d) { return d.children ? '' : 'Plan ' + (d.data.wrappedNodes[0].metadata.branchnumber + 1); });
             const oldLinks = this.g
                 .selectAll('path.link')
                 .data(tree.links()
@@ -747,7 +757,10 @@ class ProvenanceTreeVisualization {
             }
         }
         hierarchyRoot = d3.hierarchy(wraproot); // Updated the treeRoot
+        const g_nodes = groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.H_value);
+        this.group_text_value = Math.max(...g_nodes);
         console.log('======After======');
+        console.log('HVALUE: ' + this.group_text_value);
         console.log(groupslicenodes);
         console.log(groupslicenodes.map(node => node.depth));
         console.log(groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.H_value));

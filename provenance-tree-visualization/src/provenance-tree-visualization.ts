@@ -87,6 +87,7 @@ export class ProvenanceTreeVisualization {
   public transferringEnabled: boolean = false;
   public copyingEnabled: boolean = false;
   public activeleave: any;
+  public group_text_value: number = 1000;
 
   constructor(traverser: ProvenanceGraphTraverser, elm: HTMLDivElement) {
     this.traverser = traverser;
@@ -452,7 +453,10 @@ export class ProvenanceTreeVisualization {
     }
 
     hierarchyRoot = d3.hierarchy(wraproot); // Updated the treeRoot
+    const g_nodes = groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.H_value);
+    this.group_text_value = Math.max(...g_nodes);
     console.log('======After======')
+    console.log('HVALUE: ' + this.group_text_value);
     console.log(groupslicenodes);
     console.log(groupslicenodes.map(node => node.depth));
     console.log(groupslicenodes.map(node => node.data.wrappedNodes[0].metadata.H_value));
@@ -537,6 +541,7 @@ export class ProvenanceTreeVisualization {
     updateNodes.selectAll('.circle-text').remove();
     updateNodes.selectAll('.circle-label').remove();
     updateNodes.selectAll('.circle-img').remove();
+    updateNodes.selectAll('.plan-label').remove();
     const getNodeSize = (node: any) => {
       let counter = 0;
       const countWrappedNodesRecursively = (currentNode: ProvenanceNode[]) => {
@@ -865,6 +870,14 @@ export class ProvenanceTreeVisualization {
       d3.select(node).raise();
     });
 
+    updateNodes.filter(function(d) { return !d.children; })
+    .append('text')
+    .attr('class', 'plan-label')
+    .attr('dy', '2.0em')
+    .style('fill', 'red')
+    .attr('visibility', 'visible')
+    .attr('text-anchor', function(d) { return d.children ? 'end' : 'start'; })
+    .text(function(d) { return d.children ? '' : 'Plan ' + (d.data.wrappedNodes[0].metadata.branchnumber + 1); });
 
     const oldLinks = this.g
       .selectAll('path.link')

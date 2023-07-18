@@ -460,7 +460,9 @@ export default class Trackball{
     if (this.enabled === false) {
       return;
     }
-
+    if(event.ctrlKey && event.key === 'z') {
+      event.preventDefault();
+    }
     window.removeEventListener('keydown', this.keydown);
 
     this.previousState = this.state;

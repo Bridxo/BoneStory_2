@@ -19,7 +19,8 @@
       [(ngModel)]="provvis.slider_value"
       [vertical]="true"
       style="height: 300px; left: -1%;"
-      matTooltip="Provenance-Grouping Slider"
+      matTooltip="{{provvis.getTooltipText()}}"
+      matTooltipPosition="right"
       userselect="none"
       (input)="provvis.slider_value = slider.value; provvis.setgroupnumber(); provvis.getfullsizeview();"
     ></mat-slider>

@@ -60,6 +60,22 @@ export class ProvenanceVisualizationComponent implements OnInit {
   setviz(viz: ProvenanceTreeVisualization) {
     this._viz = viz;
   }
+
+  getTooltipText(): string {
+    // here is a very basic example, you can replace it with your own logic
+    if (this._viz.group_text_value == -Infinity) {
+      return 'Original';
+    }
+    if (this._viz.group_text_value%100000 < 10000 && this._viz.group_text_value < 100000) {
+      return 'Action Grouping';
+    } else if (this._viz.group_text_value < 100000) {
+      return 'Type Grouping';
+    }
+    else {
+      return 'Fragment Grouping';
+    }
+  }
+
   openDialog(event: CustomEvent): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent);
     

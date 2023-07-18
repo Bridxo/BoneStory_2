@@ -246,20 +246,20 @@ export class ProvenanceTracker implements IProvenanceTracker {
   // Type
   H_val += gettype_between(NewNode, NewNode.parent) * 100000;
   // Action
-  if (NewNode.label !== NewNode.parent.label)
-    H_val += onehot_action[NewNode.label as ActionLabels] * 10000;
+  H_val += onehot_action[NewNode.label as ActionLabels] * 1000;
+  if (NewNode.label !== NewNode.parent.label)    
+    H_val += 10000;
   // difference
   try {
     const doArgs = NewNode.action.doArguments;
     const undoArgs = NewNode.action.undoArguments;
-
 
     if (doArgs && undoArgs && NewNode.label !=='SelectObject' && NewNode.label !=='Measurement' && NewNode.label !=='Annotation' && NewNode.label !=='RotateObject' && NewNode.label !=='TranslateObject') {
       const do_position = doArgs[0].position || doArgs[1];
       const undo_position = undoArgs[0].position || undoArgs[1];
       const diff = this.calculateDifference(do_position, undo_position);
       const maxValue = NewNode.label === 'TranslateObject' ? 1000 : 5000;
-      const normalizedValue = this.normalizeValue(diff, 0, maxValue, 0, 1023);
+      const normalizedValue = this.normalizeValue(diff, 0, maxValue, 0, 999);
       H_val += normalizedValue;
     } else if (NewNode.label === 'RotateObject' || NewNode.label==='TranslateObject') {
       const do_position = doArgs;
@@ -271,11 +271,11 @@ export class ProvenanceTracker implements IProvenanceTracker {
         diff+= Math.abs(do_position[0][i]._x - undo_position[0][i]._x) + Math.abs(do_position[0][i]._y - undo_position[0][i]._y) + Math.abs(do_position[0][i]._z - undo_position[0][i]._z);
         diff2+= this.calculateDifference(do_position[1][i], undo_position[1][i]);
       }
-      const total_diff = (diff + diff2)/num_of_objects;
-      const normalizedValue = this.normalizeValue(total_diff, 0, 540+1500, 0, 1023);
+      const total_diff = (diff + diff2);
+      const normalizedValue = this.normalizeValue(total_diff, 0, 540+1500, 0, 999);
       H_val += normalizedValue;
     } else {
-      H_val += 1023;
+      H_val += 999;
     }
   } catch (e) {
     console.log(e);

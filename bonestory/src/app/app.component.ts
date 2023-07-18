@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, EventEmitter, Output, ViewEncapsulation  } from '@angular/core';
 import { ProvenanceService } from './provenance.service';
 import { HttpClient} from '@angular/common/http';
 import * as THREE from 'three';
@@ -7,7 +7,8 @@ import { MatSidenav } from '@angular/material/sidenav';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class AppComponent implements OnInit {
   title = 'app';
@@ -61,6 +62,8 @@ export class AppComponent implements OnInit {
           return results;
       });
   }
+
+
 
   toggle_upload(){
     this.upload_show = !this.upload_show;

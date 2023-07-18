@@ -184,7 +184,7 @@ app-brainvis-canvas {
 
 .provslider {
   top: 27%;
-  left: -3%;
+  left: 0%;
   display: flex;
   flex-direction: column;
   overflow-x: visible;
@@ -196,24 +196,10 @@ app-brainvis-canvas {
   -ms-user-select: none; /* For IE 10+ */
   user-select: none; /* Standard syntax */
 }
-.mat-tooltip-component {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-.mat-slider-thumb-label {
-  transform: translateY(50%) rotate(-90deg) !important;
-  transform-origin: right center !important;
-  z-index: 9999;
-  user-select: none;
-  -moz-user-select: none; /* For Firefox */
-  -webkit-user-select: none; /* For Safari */
-  -ms-user-select: none; /* For IE 10+ */
-  user-select: none; /* Standard syntax */
-}
 
-
+.mat-tooltip {
+  font-size: 18px; /* your desired font size */
+}
 
 
 .annotation {
