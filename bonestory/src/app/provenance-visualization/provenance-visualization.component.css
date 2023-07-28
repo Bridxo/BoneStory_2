@@ -169,7 +169,7 @@ app-provenance-visualization {
     stroke-width: 0;
     font-family: sans-serif;
     font-size: 4px!important;
-    z-index: 9999;
+    z-index: 1;
 }
 
   .depth-label {

@@ -9,7 +9,7 @@ import {
   IProvenanceTracker,
   Handler
 } from './api';
-import { isReversibleAction, isStateNode } from './utils';
+import { isReversibleAction, isStateNode, cam_test } from './utils';
 import mitt from './mitt';
 
 function isNextNodeInTrackUp(currentNode: ProvenanceNode, nextNode: ProvenanceNode): boolean {
@@ -78,6 +78,7 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
   public trackingWhenTraversing = false;
   private registry: IActionFunctionRegistry;
   private _mitt: any;
+  private up: any;
 
   constructor(
     registry: IActionFunctionRegistry,
@@ -152,12 +153,20 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
       functionsToDo = arg.functionsToDo;
       argumentsToDo = arg.argumentsToDo;
       artifactsToLoad = arg.artifactsToLoad;
+      // functionsToDo.forEach((func: any) => {
+      //   transitionTimes.push(transitionTime || 0);
+      // });
+      let last_cam = 0;
+      let calcy = this.up? 0 : 1;
       functionsToDo.forEach((func: any, i) => {
-        if(trackToTarget[i].metadata.O_group != targetNode.metadata.O_group)
+        if(cam_test(trackToTarget[i + calcy].label))
+          last_cam = i + calcy;
+        if((trackToTarget[i + calcy].metadata.O_group != targetNode.metadata.O_group))
           transitionTimes.push(0);
         else
-        transitionTimes.push(transitionTime || 0);
+          transitionTimes.push(transitionTime || 0);
       });
+      transitionTimes[last_cam] = transitionTime || 0;
     } catch (error) {
       const customError = error as CustomError;
       if (customError.invalidTraversal) {
@@ -187,9 +196,9 @@ export class ProvenanceGraphTraverser implements IProvenanceGraphTraverser {
     for (let i = 0; i < track.length - 1; i++) {
       const thisNode = track[i];
       const nextNode = track[i + 1];
-      const up = isNextNodeInTrackUp(thisNode, nextNode);
+      this.up = isNextNodeInTrackUp(thisNode, nextNode);
 
-      if (up) {
+      if (this.up) {
         /* istanbul ignore else */
         if (isStateNode(thisNode)) {
           if (!isReversibleAction(thisNode.action)) {

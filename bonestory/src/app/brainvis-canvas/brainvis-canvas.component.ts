@@ -1075,6 +1075,7 @@ onWindowResize() {
       let cc_3 = new THREE.Vector3(-1,0,1);
       this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
   
+      
       position = cc_1.toArray();
       target =  cc_2.toArray();
       up = cc_3.toArray();

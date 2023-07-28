@@ -42,3 +42,11 @@ export function isStateNode(node: ProvenanceNode): node is StateNode {
 export function isReversibleAction(action: Action): action is ReversibleAction {
   return 'undo' in action;
 }
+
+export const cam_test = <T>(label: any) => {
+  const searchpattern = /Camera|View/;
+  if(searchpattern.test(label))
+    return true;
+  else
+    return false;
+};

@@ -199,6 +199,7 @@ class ProvenanceTreeVisualization {
                 yield this.traverser.toStateNode(d.data.wrappedNodes[0].id, 0);
                 this.traverser.graph.current = this.traverser.graph.getNode(d.data.wrappedNodes[0].id);
                 d.data.wrappedNodes[0].metadata.bookmarked = !d.data.wrappedNodes[0].metadata.bookmarked;
+                d.data.bookmarked = !d.data.bookmarked;
                 if (!d.data.wrappedNodes[0].metadata.bookmarked) {
                     window.slideDeckViz.onDelete(null);
                 }
@@ -317,6 +318,7 @@ class ProvenanceTreeVisualization {
                                 yield this.traverser.toStateNode(data[index].label.id, 0);
                                 this.traverser.graph.current = this.traverser.graph.getNode(data[index].label.id);
                                 data[index].label.metadata.bookmarked = !data[index].label.metadata.bookmarked;
+                                data[index].bookmarked = !data[index].bookmarked;
                                 if (!data[index].label.metadata.bookmarked) {
                                     window.slideDeckViz.onDelete(null);
                                 }
@@ -616,7 +618,8 @@ class ProvenanceTreeVisualization {
         const removeNodes = (node) => {
             for (let i = 0; i < node.children.length; i++) {
                 const child = node.children[i];
-                if (condition(child) && !child.bookmarked) {
+                const books = node.children[i].wrappedNodes[0];
+                if (condition(child) && !books.metadata.bookmarked) {
                     // Remove the node from the children array
                     node.children.splice(i, 1);
                     // Append the children of the removed node to the parent
