@@ -3,8 +3,7 @@
   <h1 align="center">BoneStory: Visual Storytelling in 3D Virtual Surgical Planning</h1>
   <h2 align="center">CGI 2024 Conference Proceedings</h2>
   <div align="center">
-    Demo Video will be updated soon
-![제목 없는 동영상 - Clipchamp로 제작 (17)](https://github.com/Bridxo/BoneStory_2/assets/7121963/784f562f-68e7-48f7-96a6-18ea1cee7ae3)
+    ![제목 없는 동영상 - Clipchamp로 제작 (17)](https://github.com/Bridxo/BoneStory_2/assets/7121963/5561d3b3-2c42-426d-aa3e-d0300ed4c6ea)
   </div>
   
 ## Abstract
