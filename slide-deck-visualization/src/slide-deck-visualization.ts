@@ -122,7 +122,7 @@ export class SlideDeckVisualization {
         this._slideTable
             .append("line")
             .attr("class", "vertical-line-seek")
-            .attr("x1", this._originPosition)
+            .attr("x1", this._originPosition) 
             .attr("y1", 65)
             .attr("x2", this._originPosition)
             .attr("y2", 0)

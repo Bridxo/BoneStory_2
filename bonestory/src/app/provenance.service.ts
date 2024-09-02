@@ -34,5 +34,10 @@ export class ProvenanceService {
     this.registry = registry;
     this.tracker = tracker;
     this.traverser = traverser;
+    const w = window as any;
+    w.graph = this.graph;
+    w.registry = this.registry;
+    w.tracker = this.tracker;
+    w.traverser = this.traverser;
   }
 }

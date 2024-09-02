@@ -4,6 +4,8 @@ import { kebabCase } from 'lodash';
 import {ProvenanceService} from '../provenance.service';
 import { SlideDeckVisualization } from '@visualstorytelling/slide-deck-visualization';
 import { addListenersSlides } from '../provenance-slides/slidesListeners';
+import { ProvenanceStateService } from '../provenance-state.service';
+
 
 /** These are the listeners I used for the importing and exporting of the graph. They mostly come down to two `click` listeners I created for
  * two imput buttons.
@@ -14,12 +16,18 @@ import { addListenersSlides } from '../provenance-slides/slidesListeners';
 export const addVisualizationListeners = (tree: ProvenanceTreeVisualization, service: ProvenanceService) => {
 
     let exportButton = document.getElementById('saveprov_btn_1');
-    exportButton.addEventListener("click", (e: Event) => downloadJson(e, service.tracker.getGraph()));
+    // exportButton.addEventListener("click", (e: Event) => downloadJson(e, service.tracker.getGraph()));
+    exportButton.addEventListener("click", async (e: Event) => {
+      const graphJson = service.tracker.getGraph(); // Method to get graph JSON
+      const slideDeckJson = (window as any).slideDeck._slides; // Method to get slide deck JSON
+      downloadCombinedJson(graphJson, slideDeckJson);
+  });
 
     let importButton = document.getElementById('saveprov_btn_2');
     importButton.addEventListener('click', async (e: Event) => {
-      await getFileWithConfirm('Load provenance graph Json file (1/2)', '.json', importJson);
-      await getFileWithConfirm("Load story-slide Json file (2/2)", ".json", (e) => (window as any).listenerslide.importJson(e));});
+      await getFileWithConfirm('Load Json file', '.json', importJson);// load the file with the importJson function - provenance graph and slide deck
+      // await getFileWithConfirm("Load story-slide Json file (2/2)", ".json", (e) => (window as any).listenerslide.importJson(e));
+    });
 
     // let importButton = document.getElementById('importButton');
     // importButton.addEventListener('click', (e: Event) => importJson(e));
@@ -45,7 +53,7 @@ async function getFileWithConfirm(message: string, acceptType: string, listener:
       });
         element.click(); // simulate click
       });
-    }
+    } 
   }
 
   async function importJson(e: Event): Promise<void> {
@@ -69,47 +77,85 @@ async function getFileWithConfirm(message: string, acceptType: string, listener:
         reader.onload = function (e) {
             var target: any = e.target;
             var data = target.result;
-            restoreGraph(e, data).then(() => {
+            restoreGraphandSlide(e, data).then(() => {
                 resolve();
             });
         };
         reader.readAsText(f);
     });
 }
-function restoreGraph(e: Event, input: string) : Promise<void>{
+async function restoreGraphandSlide(e: Event, input: string): Promise<void> {
   return new Promise((resolve, reject) => {
-      const w = window as any;
-      let data_in = JSON.parse(input);
-      console.log("We're here");
-      w.graph.setNodes(data_in.nodes);
-      let graph = restoreProvenanceGraph(data_in);
-      console.log("Hello");  
-      let registry = new ActionFunctionRegistry();
-      let tracker = new ProvenanceTracker(registry, graph, "Unknown");
-      let traverser = new ProvenanceGraphTraverser(registry, graph, tracker);
-      service.updateProvenanceObjects(graph, registry, tracker,traverser);
-      tree.setTraverser(traverser);
+      try {
+          const w = window as any;
+          let data_in = JSON.parse(input);
 
+          // Extract graph and slide deck data
+          const graphData = data_in.graphData;
+          const slideDeckData = data_in.slideDeckData;
 
+          // Restore provenance graph
+          w.graph.setNodes(graphData.nodes);
+          let graph = restoreProvenanceGraph(graphData);
 
-      w.graph = service.graph;
-      w.tracker = service.tracker;
-      w.traverser = service.traverser; 
-      w.registry = service.registry;
-      tree.update();
-      let elem = document.getElementById('fake');
-      
-      // let _deck = new ProvenanceSlidedeck(graph.application, traverser);
-      // let _deckViz = new SlideDeckVisualization(_deck, this.elementRef.nativeElement.children[0]);
-      // (window as any).listenerslide = addListenersSlides(_deckViz, _deck, this.provenance);
-      // (window as any).slideDeck = this._deck;
-      // (window as any).slideDeckViz = this._deckViz;
+          // Initialize registry, tracker, and traverser
+          let registry = service.registry;
+          let tracker = new ProvenanceTracker(registry, graph, "Unknown");
+          let traverser = new ProvenanceGraphTraverser(registry, graph, tracker);
 
-      elem.click();
-      resolve();
+          // Update provenance objects in the service
+          service.updateProvenanceObjects(graph, registry, tracker, traverser);
+          tree.setTraverser(traverser);
+          tree.update();
+
+          // Update global state references
+          w.graph = service.graph;
+          w.tracker = service.tracker;
+          w.traverser = service.traverser;
+          w.registry = service.registry;
+
+          // Update the tree visualization
+          tree.update();
+
+          // Restore slide deck
+          let _deck = new ProvenanceSlidedeck(graph.application, traverser);
+          let _deckViz = new SlideDeckVisualization(_deck, this.elementRef.nativeElement.children[0]);
+
+          // Attach listeners and update global state references for slide deck
+          w.listenerslide = addListenersSlides(_deckViz, _deck, service);
+          w.slideDeck = _deck;
+          w.slideDeckViz = _deckViz;
+
+          // Ensure UI elements are correctly initialized
+          let elem = document.getElementById('fake');
+          elem.click();
+
+          resolve();
+      } catch (error) {
+          console.error("Error restoring graph and slide deck: ", error);
+          reject(error);
+      }
   });
 }
-  
+  // Assuming both pieces of JSON data are available as `graphJson` and `slideDeckJson`
+function downloadCombinedJson(graphJson: any, slideDeckJson: any) {
+  const combinedData = {
+      graphData: graphJson, // Assuming this comes from your provenance graph
+      slideDeckData: slideDeckJson // Assuming this comes from your slide deck data
+  };
+
+  const jsonString = JSON.stringify(combinedData, null, 2);
+  const blob = new Blob([jsonString], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+
+  const element = document.createElement('a');
+  element.setAttribute('href', url);
+  element.setAttribute('download', "combined-data.json");
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click(); // simulate click
+  document.body.removeChild(element);
+}
 /** The following function takes a graph object, serialize it into JSON form and downloads it on the host machine */
 
 function downloadJson(e: Event, myJson: any) {
