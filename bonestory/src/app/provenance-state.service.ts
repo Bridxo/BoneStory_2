@@ -5,7 +5,7 @@ import { ProvenanceGraph } from '@visualstorytelling/provenance-core';
 import { ProvenanceSlidedeck } from '@visualstorytelling/provenance-core';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'any'
 })
 export class ProvenanceStateService {
   private provenanceGraphSource = new BehaviorSubject<ProvenanceGraph>(null);

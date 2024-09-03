@@ -66,7 +66,7 @@ enum modes {
   styleUrls: ['./brainvis-canvas.component.css']
 })
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'any'
 })
 
 export class BrainvisCanvasComponent {

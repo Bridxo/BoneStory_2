@@ -8,7 +8,7 @@ import {
 } from '@visualstorytelling/provenance-core';
 4
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'any'
 })
 export class ProvenanceService {
   public graph: ProvenanceGraph;
