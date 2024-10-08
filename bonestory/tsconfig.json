@@ -16,11 +16,9 @@
     "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
-    "target": "es2017",
+    "target": "es2022",
     "module": "es2020",
-    "types": [
-      "@types/babel__traverse"
-    ],
+    "typeRoots": ["node_modules/@types"],
     "lib": [
       "es2020",
       "dom"
