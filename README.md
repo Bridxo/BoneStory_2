@@ -34,5 +34,10 @@ MIT
 ## BibTeX
 
 ```bibtex
-TBD
+@incollection{lee2024bonestory,
+  title={BoneStory: Visual Storytelling in 3D Virtual Surgical Planning for Bone Fracture Reduction},
+  author={Lee, Heejun and Pijpker, Peter and Kraeima, Joep and Amabili, Lorenzo and Cnossen, Fokie and Roerdink, JBTM and van Ooijen, Peter and Kosinka, Jiri},
+  booktitle={Proceedings of Computer Graphics International 2024},
+  year={2024}
+}
 ```
