@@ -20,9 +20,7 @@
 ## Run BoneStory
 Before you build the docker container, make sure you have cloned this repo.
 ```sh
-cd bonestory
-docker build -t bonestory .
-docker run -p 8080:80 bonestory
+TBD
 ```
 From Chrome/Edge 
 ```
