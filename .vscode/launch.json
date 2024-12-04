@@ -11,7 +11,9 @@
           "url": "http://localhost:4200",
           "webRoot": "${workspaceFolder}/*",
           "sourceMapPathOverrides": {
-              "webpack:///*": "${workspaceRoot}/*"
+            "webpack:///./*": "${webRoot}/*",
+            "webpack:///*": "${webRoot}/*",
+            "webpack:///src/*": "${webRoot}/bonestory/src/*"
           },
           "smartStep": true,
           "skipFiles":["${workspaceFolder}/bonestory/node_modules/**"]

@@ -8,7 +8,7 @@ import {
 } from '@visualstorytelling/provenance-core';
 4
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'any'
 })
 export class ProvenanceService {
   public graph: ProvenanceGraph;
@@ -34,5 +34,10 @@ export class ProvenanceService {
     this.registry = registry;
     this.tracker = tracker;
     this.traverser = traverser;
+    const w = window as any;
+    w.graph = this.graph;
+    w.registry = this.registry;
+    w.tracker = this.tracker;
+    w.traverser = this.traverser;
   }
 }

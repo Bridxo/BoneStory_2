@@ -4,14 +4,16 @@ import {SlideDeckVisualization} from '@visualstorytelling/slide-deck-visualizati
 import { ProvenanceService } from '../provenance.service';
 import { ProvenanceSlidedeck } from '@visualstorytelling/provenance-core';
 import {ProvenanceSlidesComponent} from './provenance-slides.component';
+import { ProvenanceStateService } from '../provenance-state.service';
+
 import { merge } from 'rxjs';
 
 export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: ProvenanceSlidedeck, service: ProvenanceService) => {
 
     let exportButton = document.getElementById("saveprov_btn_1");
-    exportButton.addEventListener("click", (e: Event) => exportJson(e));
+    // exportButton.addEventListener("click", (e: Event) => exportJson(e));
 
-    // let importButton = document.getElementById("saveprov_btn_2");
+    let importButton = document.getElementById("saveprov_btn_2");
     // importButton.addEventListener("click", (e: Event)  => importJson(e).then((window as any)listener));
 
     // let importButton = document.getElementById("slidesImportButton");
@@ -52,6 +54,14 @@ export const addListenersSlides = (slideDeck: SlideDeckVisualization, deck: Prov
     function exportJson(e:Event) : void {
         let myJson = deck.serializeSelf();
         downloadJson(myJson);
+    }
+
+    function setupDeck(){
+        let deck = new ProvenanceSlidedeck(service.graph.application, service.traverser);
+        let deckViz = new SlideDeckVisualization(deck, this.elementRef.nativeElement.children[0]);
+        (window as any).listenerslide = addListenersSlides(deckViz, deck, service);
+        (window as any).slideDeck = deck;
+        (window as any).slideDeckViz = deckViz;
     }
 
     function downloadJson(myJson: any){

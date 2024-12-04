@@ -153,8 +153,27 @@ export class ProvenanceTracker implements IProvenanceTracker {
     dataURL = (window as any).canvas.renderer.domElement.toDataURL('image/png');
     (window as any).canvas.gridHelper.visible = grid_temp;
     (window as any).canvas.AxesHelper.visible = axes_temp;
-    // console.log(dataURL);
-    return dataURL;
+    const img = new Image();
+    img.src = dataURL;
+    return new Promise((resolve) => {
+      img.onload = () => {
+          const offscreenCanvas = document.createElement('canvas');
+          offscreenCanvas.width = 50;
+          offscreenCanvas.height = 50;
+          const ctx = offscreenCanvas.getContext('2d');
+
+          if (ctx) {
+              // Draw the original image scaled down to 50x50
+              ctx.drawImage(img, 0, 0, 50, 50);
+
+              // Get the new data URL
+              const smallDataURL = offscreenCanvas.toDataURL('image/webp',0.5);
+              resolve(smallDataURL);
+          } else {
+              resolve(null);
+          }
+      };
+    });
   }
   
   calculateDifference(pos1: any, pos2: any): number {

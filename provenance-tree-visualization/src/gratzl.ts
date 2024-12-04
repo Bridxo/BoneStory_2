@@ -26,7 +26,7 @@ export interface IHierarchyPointNodeWithMaxDepth<T>
   maxDescendantDepth: number;
   data: any;
   // xOffset: number;
-  // x, y, links()
+  // x, y, links()  
 }
 
 export default function GratzlLayout<T>(

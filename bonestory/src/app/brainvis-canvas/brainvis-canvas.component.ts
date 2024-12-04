@@ -66,7 +66,7 @@ enum modes {
   styleUrls: ['./brainvis-canvas.component.css']
 })
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'any'
 })
 
 export class BrainvisCanvasComponent {
@@ -1691,7 +1691,7 @@ onWindowResize() {
 
 
     // Capture the screenshot
-    dataURL = this.renderer.domElement.toDataURL('image/png');
+    dataURL = this.renderer.domElement.toDataURL('image/png', 0.3);
     
     this.renderer.autoClear = true;  // Restore automatic clearing
     this.outlinePass.edgeStrength = 1.0;

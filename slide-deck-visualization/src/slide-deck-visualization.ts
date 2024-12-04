@@ -122,7 +122,7 @@ export class SlideDeckVisualization {
         this._slideTable
             .append("line")
             .attr("class", "vertical-line-seek")
-            .attr("x1", this._originPosition)
+            .attr("x1", this._originPosition) 
             .attr("y1", 65)
             .attr("x2", this._originPosition)
             .attr("y2", 0)
@@ -256,19 +256,23 @@ export class SlideDeckVisualization {
         this.update();
     }
 
-    private onMouseEnter() {
-        let toolbar = d3.event.target.parentElement.querySelector(
-            ".slide_toolbar"
-        );
-        toolbar.style.display = "block";
+    private onMouseEnter(event: MouseEvent, slide: IProvenanceSlide) {
+        const target = event.target as HTMLElement;
+        const toolbar = target.parentElement?.querySelector(".slide_toolbar") as HTMLElement;
+    
+        if (toolbar) {
+            toolbar.style.display = "block";
+        }
     }
-    private onMouseLeave() {
-        let toolbar = d3.event.target.parentElement.querySelector(
-            ".slide_toolbar"
-        );
-        toolbar.style.display = "none";
+    
+    private onMouseLeave(event: MouseEvent, slide: IProvenanceSlide) {
+        const target = event.target as HTMLElement;
+        const toolbar = target.parentElement?.querySelector(".slide_toolbar") as HTMLElement;
+    
+        if (toolbar) {
+            toolbar.style.display = "none";
+        }
     }
-
     private provchanged = (node: ProvenanceNode) => { // annotation 구분을 위해서 쓴다
         let slideDeck = this._slideDeck;
         if(slideDeck != undefined){
@@ -413,12 +417,12 @@ export class SlideDeckVisualization {
     private moveDragged = (that: any, draggedObject: any) => {
         d3.select<any, any>(that).attr(
             "transform",
-            (slide: IProvenanceSlide) => {
+            (slide: IProvenanceSlide, index: number) => {
                 const originalX =
                     this.previousSlidesWidth(slide) - this._timelineShift;
                 const draggedX = d3.event.x;
                 const myIndex = this._slideDeck.slides.indexOf(slide);
-
+    
                 if (draggedX < originalX && myIndex > 0) {
                     // check upwards
                     const previousSlide = this._slideDeck.slides[myIndex - 1];
@@ -426,7 +430,7 @@ export class SlideDeckVisualization {
                         this.previousSlidesWidth(previousSlide) -
                         this._timelineShift +
                         this.barTotalWidth(previousSlide) / 2;
-
+    
                     if (draggedX < previousSlideCenterY) {
                         this._slideDeck.moveSlide(myIndex, myIndex - 1);
                     }
@@ -440,12 +444,12 @@ export class SlideDeckVisualization {
                         this.previousSlidesWidth(nextSlide) -
                         this._timelineShift +
                         this.barTotalWidth(nextSlide) / 2;
-
+    
                     if (draggedX > nextSlideCenterY) {
                         this._slideDeck.moveSlide(myIndex, myIndex + 1);
                     }
                 }
-
+    
                 if (this._draggedSlideReAdjustmentFactor === 0) {
                     this._draggedSlideReAdjustmentFactor =
                         draggedX - slide.xPosition;
@@ -457,7 +461,7 @@ export class SlideDeckVisualization {
                 return "translate(" + slidePosition + ", 0)";
             }
         );
-    }
+    };
 
     private moveDragended = (that: any, draggedObject: any) => {
         d3.select<any, any>(that)
@@ -827,8 +831,12 @@ export class SlideDeckVisualization {
             .append("g")
             .attr("transform", "translate(5,0)")
             .attr("class", "slide_group")
-            .on("mouseenter", this.onMouseEnter)
-            .on("mouseleave", this.onMouseLeave);
+            .on("mouseenter", (event, d) => {
+                this.onMouseEnter(event as unknown as MouseEvent, d as unknown as IProvenanceSlide);
+              })
+            .on("mouseleave", (event, d) => {
+            this.onMouseLeave(event as unknown as MouseEvent, d as unknown as IProvenanceSlide);
+            });
 
         slideGroup
             .append("rect")

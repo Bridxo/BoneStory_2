@@ -122,11 +122,11 @@ export class ProvenanceTreeVisualization {
       (window as any).slideDeckViz.provchanged(traverser.graph.current);
     });
 
-    traverser.graph.on('nodeChanged', () => {
-      this.update();
+    traverser.graph.on('nodeChanged', async () => {
+      await this.update();
     });
 
-    traverser.graph.on('nodeAdded', (event) => {
+    traverser.graph.on('nodeAdded', async (event) => {
       this.currentHierarchyNodelength += 1.0;
       this.scaleToFit();
       this.numberofnodeswcam++;
@@ -137,7 +137,7 @@ export class ProvenanceTreeVisualization {
         this.camera_show = true;
         d3.select('#camera-trigger').style('color','#3f51b5');
       }
-
+      await this.update();
     });
 
     this.update();
@@ -170,7 +170,7 @@ export class ProvenanceTreeVisualization {
     const scaleFactor = Math.min(
       maxScale,
       (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale),
-      (magicNum * this.sizeX) / (this.TreeWidth * -xScale)
+      (magicNum * this.sizeX) / (this.TreeWidth * -xScale)//max scaling
     );
 
     this.svg
@@ -423,7 +423,7 @@ export class ProvenanceTreeVisualization {
     this.numberOfUniqueValues = uniqueValues.length + branches;
     // console.log('uniqueValues', uniqueValues);
     // console.log('branches', branches);
-
+    // console.log('this.numberOfUniqueValues', this.numberOfUniqueValues);
 
     const groupslicenodes = allnodes.slice(0, this.groupnumber);
     groupslicenodes.sort((a, b) => {return b.depth - a.depth});

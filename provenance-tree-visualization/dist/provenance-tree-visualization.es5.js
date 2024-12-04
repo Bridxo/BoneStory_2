@@ -1481,7 +1481,8 @@ class ProvenanceTreeVisualization {
         const node_width = (this.TreeWidth) * xScale * maxScale;
         const node_max = Math.floor(this.sizeY / (yScale * maxScale));
         const trans_y = (node_length > this.sizeY) ? (this.currentHierarchyNodelength - node_max + margin) * yScale * maxScale : -20;
-        const scaleFactor = Math.min(maxScale, (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale), (magicNum * this.sizeX) / (this.TreeWidth * -xScale));
+        const scaleFactor = Math.min(maxScale, (magicNum * this.sizeY) / (this.currentHierarchyNodelength * yScale), (magicNum * this.sizeX) / (this.TreeWidth * -xScale) //max scaling
+        );
         this.svg
             .transition()
             .duration(0)
@@ -1695,6 +1696,7 @@ class ProvenanceTreeVisualization {
         this.numberOfUniqueValues = uniqueValues.length + branches;
         // console.log('uniqueValues', uniqueValues);
         // console.log('branches', branches);
+        // console.log('this.numberOfUniqueValues', this.numberOfUniqueValues);
         const groupslicenodes = allnodes.slice(0, this.groupnumber);
         groupslicenodes.sort((a, b) => { return b.depth - a.depth; });
         groupslicenodes.sort((a, b) => { return a.data.wrappedNodes[0].metadata.branchnumber - b.data.wrappedNodes[0].metadata.branchnumber; });
