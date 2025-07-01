@@ -1,2 +1,12 @@
 node_modules
 provenance-tree-visualization/.rpt2_cache/*
+provenance-core/dist/*
+provenance-tree-visualization/dist/*
+provenance-tree-visualization/node_modules/*
+bonestone/node_modules/*
+provenance-core/node_modules/*
+provenance-core/.rpt2_cache/*
+provenance-core/.cache/*
+slide-deck-visualization/node_modules/*
+slide-deck-visualization/.rpt2_cache/*
+slide-deck-visualization/dist/*
