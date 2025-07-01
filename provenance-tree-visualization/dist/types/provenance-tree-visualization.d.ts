@@ -46,6 +46,7 @@ export declare class ProvenanceTreeVisualization {
     copyingEnabled: boolean;
     activeleave: any;
     group_text_value: number;
+    private renumberBranchPlans;
     constructor(traverser: ProvenanceGraphTraverser, elm: HTMLDivElement);
     setZoomExtent(): void;
     scaleToFit(): void;

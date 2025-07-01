@@ -61,7 +61,7 @@ export class AnnotationDisplayContainer {
                 annotation.data.x &&
                 annotation.data.y
             ) {
-                this.add(annotation as SlideAnnotation<PositionedString>);
+                this.add(annotation as SlideAnnotation<PositionedString>, false);
             }
         });
     }

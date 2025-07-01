@@ -99,7 +99,6 @@ export class AnnotationDisplay {
             };
             this._rootElement.addEventListener("dragend", dragEndHandler);
         });
-
         /* This is triggered immediately after creation because it's e.g. from a button press
          *  That's why there is the setTimeout below..
          * */

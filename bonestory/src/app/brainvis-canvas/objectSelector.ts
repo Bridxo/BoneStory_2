@@ -16,6 +16,10 @@ enum modes {
   Measure = 5
 }
 
+enum spaceModes {
+  World = 0,
+  View = 1
+}
 export default class ObjectSelector  implements IIntersectionListener  {
     private objects = new THREE.Object3D;
     private canvas: BrainvisCanvasComponent;
@@ -23,6 +27,8 @@ export default class ObjectSelector  implements IIntersectionListener  {
     public previousSelectedObjects: THREE.Mesh[] = [];
     private pastSelectedObject: THREE.Mesh = undefined;
     public pastSelectedObjects: THREE.Mesh[] = [];
+    private spaceMode = spaceModes.World;
+
 
     private pastColor: [];
     private previousColor: [];
@@ -72,6 +78,30 @@ export default class ObjectSelector  implements IIntersectionListener  {
         const pointerVector = new THREE.Vector2((x * 2) - 1, - (y * 2) + 1);
         this.raycaster.setFromCamera(pointerVector, this.canvas.camera);
         return pointerVector;
+    }
+    toggleSpaceMode() {
+        if (this.spaceMode === spaceModes.World) {
+            this.spaceMode = spaceModes.View;
+            this.canvas.mm.spaceMode = 'View';
+        } else {
+            this.spaceMode = spaceModes.World;
+            this.canvas.mm.spaceMode = 'World';
+        }
+        this.eventdispatcher.dispatchEvent({ type: 'spaceMode', mode: this.spaceMode });
+    }
+    public toggleSpaceModeUI() {
+      this.spaceMode = this.spaceMode === spaceModes.World ? spaceModes.View : spaceModes.World;
+      console.log("Space Mode:", this.spaceMode === spaceModes.World ? "World" : "View");
+    
+      // Optional: reorient pivot immediately
+      if (this.canvas.pivot_group && this.spaceMode === spaceModes.View) {
+        this.canvas.pivot_group.quaternion.copy(this.canvas.camera.quaternion);
+      } else {
+        this.canvas.pivot_group.quaternion.set(0, 0, 0, 1);
+      }
+    }
+    public getSpaceMode(): string {
+      return this.spaceMode === spaceModes.World ? 'World' : 'View';
     }
     setxy_norm(x_: any, y_: any) {
         var vec = new THREE.Vector3(); // create once and reuse
@@ -162,6 +192,18 @@ export default class ObjectSelector  implements IIntersectionListener  {
           element.getWorldPosition(tempVector);
           this.objects.add(element);
           element.setRotationFromQuaternion(tempQuaternion);
+
+          if (this.spaceMode === spaceModes.View) {
+            const viewMatrix = new THREE.Matrix4().copy(this.canvas.camera.matrixWorld);
+            const viewQuat = new THREE.Quaternion().setFromRotationMatrix(viewMatrix);
+          
+            tempVector.applyMatrix4(viewMatrix);
+            tempQuaternion.premultiply(viewQuat);
+          }
+          
+          element.setRotationFromQuaternion(tempQuaternion);
+          element.position.copy(tempVector);
+
           element.position.set(tempVector.x,tempVector.y ,tempVector.z);
           element.updateMatrixWorld();
         });
@@ -188,8 +230,17 @@ export default class ObjectSelector  implements IIntersectionListener  {
         element.getWorldQuaternion(tempQuaternion);
         element.getWorldPosition(tempVector);
         this.objects.add(element);
+        if (this.spaceMode === spaceModes.View) {
+          this.canvas.pivot_group.quaternion.copy(this.canvas.camera.quaternion);
+          const viewMatrix = new THREE.Matrix4().copy(this.canvas.camera.matrixWorld);
+          const viewQuat = new THREE.Quaternion().setFromRotationMatrix(viewMatrix);
+        
+          tempVector.applyMatrix4(viewMatrix);
+          tempQuaternion.premultiply(viewQuat);
+        }
+        
         element.setRotationFromQuaternion(tempQuaternion);
-        element.position.set(tempVector.x,tempVector.y ,tempVector.z);
+        element.position.copy(tempVector);
         element.updateMatrixWorld();
         this.objects.add(element);
 
@@ -202,34 +253,45 @@ export default class ObjectSelector  implements IIntersectionListener  {
     }
     switch (event.key.toLowerCase()) {
       case 't':
-        if(!(window as any).istyping && this.previousSelectedObject != undefined && this.canvas.trans_counter == 0){
+        if (!(window as any).istyping && this.previousSelectedObject && this.canvas.trans_counter === 0) {
           this.state = modes.Translation;
-          this.temp_pos = this.previousSelectedObjects.map(obj => obj.position.clone());          
-          this.canvas.pivot_group.position.set(0,0,0);
-          this.canvas.pivot_group.rotation.set(0,0,0);
-          this.canvas.middle_point = new THREE.Vector3(0,0,0);
-
-          this.canvas.outlinePass.selectedObjects.forEach((obj) => 
-          {
-            this.canvas.middle_point.add(obj.position.clone());
-          }
-          );
-          this.canvas.middle_point.divideScalar(this.canvas.outlinePass.selectedObjects.length);
-
-          this.canvas.outlinePass.selectedObjects.forEach((obj) =>{
+          this.temp_pos = this.previousSelectedObjects.map(obj => obj.position.clone());
+      
+          // Reset pivot group
+          this.canvas.pivot_group.position.set(0, 0, 0);
+          this.canvas.pivot_group.rotation.set(0, 0, 0);
+      
+          // Get bounding sphere to estimate offset distance
+          const bbox = new THREE.Box3().setFromObject(this.previousSelectedObject);
+          const sphere = bbox.getBoundingSphere(new THREE.Sphere());
+      
+          // Get camera-facing direction
+          const cameraDir = new THREE.Vector3();
+          this.canvas.camera.getWorldDirection(cameraDir);
+      
+          // Position the pivot slightly in front of the object's surface toward the camera
+          const pivotPosition = sphere.center.clone().add(cameraDir.clone().multiplyScalar(-sphere.radius * 1.1));
+          this.canvas.pivot_group.position.copy(pivotPosition);
+      
+          // Reparent selected objects
+          this.previousSelectedObjects.forEach((obj) => {
+            const worldPos = new THREE.Vector3();
+            obj.getWorldPosition(worldPos);
+            const localPos = worldPos.sub(pivotPosition); // make relative
             this.canvas.pivot_group.add(obj);
-            this.canvas.pivot_group.position.copy(this.canvas.middle_point);
-            obj.position.sub(this.canvas.middle_point);
-          }
-          );
+            obj.position.copy(localPos);
+          });
+      
+          // Show gizmo
           this.canvas.mm.attach(this.canvas.pivot_group);
           this.canvas.mm.traverse((node) => {
             node.layers.enable(this.canvas.gizmoLayer.mask);
-          });
-        this.canvas.trans_counter++;
-          this.eventdispatcher.dispatchEvent({ type: 'interactive'});
+          }); 
+          this.canvas.trans_counter++;
+          this.eventdispatcher.dispatchEvent({ type: 'interactive' });
         }
         break;
+
       case 'r':
         if(!(window as any).istyping && this.previousSelectedObjects.length != 0){
           this.setUpRaycaster(keydown_coordinate_);
@@ -274,6 +336,9 @@ export default class ObjectSelector  implements IIntersectionListener  {
         if(Measure_intersect.length != 0){
           await this.canvas.Measure(Measure_intersect, false);
         }
+        break;
+      case 'v':
+        this.toggleSpaceMode();
         break;
       default:
         this.state = modes.Cammode;

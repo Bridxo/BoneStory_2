@@ -123,13 +123,23 @@ export class ProvenanceTracker implements IProvenanceTracker {
     newNode.metadata.H_value = this.H_value(newNode);
 
      //multiple story part
-     if(currentNode.children.length>=1)
-     {
-       bnum = bnum + 1;
-       newNode.metadata.branchnumber = bnum;
-     }
-     else 
-       newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
+     if (currentNode.children.length >= 1) {
+      const used = new Set<number>();
+      const collect = (node: ProvenanceNode) => {
+        if (node.metadata?.branchnumber != null) {
+          used.add(node.metadata.branchnumber);
+        }
+        node.children.forEach(collect);
+      };
+      collect(this.graph.root);
+    
+      let nextAvailable = 0;
+      while (used.has(nextAvailable)) nextAvailable++;
+    
+      newNode.metadata.branchnumber = nextAvailable;
+    } else {
+      newNode.metadata.branchnumber = currentNode.metadata.branchnumber;
+    }
     // When the node is created, we need to update the graph.
     currentNode.children.push(newNode);
     this.graph.addNode(newNode);

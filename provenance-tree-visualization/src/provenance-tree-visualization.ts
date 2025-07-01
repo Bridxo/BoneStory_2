@@ -89,6 +89,28 @@ export class ProvenanceTreeVisualization {
   public activeleave: any;
   public group_text_value: number = 1000;
 
+  private renumberBranchPlans(): void {
+    const root = this.traverser.graph.root;
+    const branchRoots: ProvenanceNode[] = [];
+  
+    // Treat each direct child of root as a branch root
+    root.children.forEach((child) => {
+      branchRoots.push(child);
+    });
+  
+    // Sort for consistent order
+    branchRoots.sort((a, b) => a.metadata.branchnumber - b.metadata.branchnumber);
+  
+    // Assign branchnumbers recursively
+    branchRoots.forEach((branchRoot, index) => {
+      const reassign = (node: ProvenanceNode) => {
+        node.metadata.branchnumber = index;
+        node.children.forEach(reassign);
+      };
+      reassign(branchRoot);
+    });
+  }
+
   constructor(traverser: ProvenanceGraphTraverser, elm: HTMLDivElement) {
     this.traverser = traverser;
     this.colorScheme = d3.scaleOrdinal(d3.schemeAccent);
@@ -350,7 +372,8 @@ export class ProvenanceTreeVisualization {
           this.traverser.toStateNode(parent_node.children[0].id, 0);
         this.traverser.toStateNode(parent_node.id, 0);
       }
-
+      await this.renumberBranchPlans();
+      await this.update();
 
     } 
   }
@@ -385,6 +408,8 @@ export class ProvenanceTreeVisualization {
       if(parent_node.children.length > 0)
         this.traverser.toStateNode(parent_node.children[0].id, 0);
       this.traverser.toStateNode(parent_node.id, 0);
+      await this.renumberBranchPlans(); 
+      await this.update();
     }
   }
   
@@ -880,7 +905,8 @@ export class ProvenanceTreeVisualization {
     .style('fill', 'red')
     .attr('visibility', 'visible')
     .attr('text-anchor', function(d) { return d.children ? 'end' : 'start'; })
-    .text(function(d) { return d.children ? '' : 'Plan ' + (d.data.wrappedNodes[0].metadata.branchnumber + 1); });
+    .text(d => d.children ? '' : 'Plan ' + (d.data.wrappedNodes[0].metadata.branchnumber + 1));
+
 
     const oldLinks = this.g
       .selectAll('path.link')
@@ -919,3 +945,4 @@ export class ProvenanceTreeVisualization {
     return this.traverser;
   }
 }
+

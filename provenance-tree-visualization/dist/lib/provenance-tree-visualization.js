@@ -32,6 +32,24 @@ const fontSize = 8;
  * @param caterpillarActivated {boolean} - True if this feature is enable.
  */
 class ProvenanceTreeVisualization {
+    renumberBranchPlans() {
+        const root = this.traverser.graph.root;
+        const branchRoots = [];
+        // Treat each direct child of root as a branch root
+        root.children.forEach((child) => {
+            branchRoots.push(child);
+        });
+        // Sort for consistent order
+        branchRoots.sort((a, b) => a.metadata.branchnumber - b.metadata.branchnumber);
+        // Assign branchnumbers recursively
+        branchRoots.forEach((branchRoot, index) => {
+            const reassign = (node) => {
+                node.metadata.branchnumber = index;
+                node.children.forEach(reassign);
+            };
+            reassign(branchRoot);
+        });
+    }
     constructor(traverser, elm) {
         this.camera_show = true;
         this.numberofnodes = 1;
@@ -435,7 +453,7 @@ class ProvenanceTreeVisualization {
                 .style('fill', 'red')
                 .attr('visibility', 'visible')
                 .attr('text-anchor', function (d) { return d.children ? 'end' : 'start'; })
-                .text(function (d) { return d.children ? '' : 'Plan ' + (d.data.wrappedNodes[0].metadata.branchnumber + 1); });
+                .text(d => d.children ? '' : 'Plan ' + (d.data.wrappedNodes[0].metadata.branchnumber + 1));
             const oldLinks = this.g
                 .selectAll('path.link')
                 .data(tree.links()
@@ -668,6 +686,8 @@ class ProvenanceTreeVisualization {
                         this.traverser.toStateNode(parent_node.children[0].id, 0);
                     this.traverser.toStateNode(parent_node.id, 0);
                 }
+                yield this.renumberBranchPlans();
+                yield this.update();
             }
         });
     }
@@ -699,6 +719,8 @@ class ProvenanceTreeVisualization {
                 if (parent_node.children.length > 0)
                     this.traverser.toStateNode(parent_node.children[0].id, 0);
                 this.traverser.toStateNode(parent_node.id, 0);
+                yield this.renumberBranchPlans();
+                yield this.update();
             }
         });
     }

@@ -201,6 +201,13 @@ app-brainvis-canvas {
   font-size: 18px; /* your desired font size */
 }
 
+.space-toggle {
+  position: absolute;
+  top: 500px;
+  left: 10px;
+  z-index: 10;
+}
+
 
 .annotation {
   position: absolute;

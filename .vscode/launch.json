@@ -9,9 +9,10 @@
           "request": "launch",
           "name": "Launch Chrome against localhost",
           "url": "http://localhost:4200",
-          "webRoot": "${workspaceFolder}/*",
+          "webRoot": "${workspaceFolder}/BoneStory_2",
           "sourceMapPathOverrides": {
-              "webpack:///*": "${workspaceRoot}/*"
+            "webpack:///*": "${webRoot}/*",
+            "webpack:///src/*": "${webRoot}/*"
           },
           "smartStep": true,
           "skipFiles":["${workspaceFolder}/bonestory/node_modules/**"]
