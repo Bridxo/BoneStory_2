@@ -1,7 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProvenanceSlidesComponent } from '../provenance-slides/provenance-slides.component';
 import { SlideAnnotation } from '@visualstorytelling/provenance-core';
-import { toScreenCoordinates, registry, fromScreenCoordinates } from '../annotate';
+import {
+  toScreenCoordinates,
+  registry,
+  fromScreenCoordinates
+} from '../annotate';
 
 @Component({
   selector: 'app-slide-annotations',
@@ -33,7 +37,10 @@ export class SlideAnnotationsComponent implements OnInit {
   // }
 
   dragEnd(annotation, event) {
-    const annotatedCoordinates = fromScreenCoordinates({x: event.clientX, y: event.clientY});
+    const annotatedCoordinates = fromScreenCoordinates({
+      x: event.clientX,
+      y: event.clientY
+    });
     if (annotatedCoordinates) {
       annotation.data.coordinates = annotatedCoordinates;
     }
@@ -48,8 +55,7 @@ export class SlideAnnotationsComponent implements OnInit {
 
   newAnnotation() {
     this.slides.deck.selectedSlide.addAnnotation(
-      new SlideAnnotation({text: ''})
+      new SlideAnnotation({ text: '' })
     );
   }
-
 }

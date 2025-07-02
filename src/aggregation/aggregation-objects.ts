@@ -8,11 +8,11 @@ import {
   prune,
   areNeighbours,
   plotTrimmerFuncC,
-  plotTrimmerFuncG,
+  plotTrimmerFuncG
 } from "./aggregation-implementations";
 import {
   ProvenanceNode,
-  isStateNode,
+  isStateNode
 } from "@visualstorytelling/provenance-core";
 import { IGroupedTreeNode } from "../utils";
 
@@ -69,66 +69,50 @@ export function isKeyNode(node: ProvenanceNode): boolean {
  */
 export const groupNodeLabel = (node: IGroupedTreeNode<ProvenanceNode>) => {
   if (node.wrappedNodes.length === 1) {
-    if (node.wrappedNodes[0].label === "SelectObject")
+    if(node.wrappedNodes[0].label === "SelectObject")
       return "SelectObject(" + node.wrappedNodes[0].metadata.O_group + ")";
-    else return node.wrappedNodes[0].label;
-  } else {
-    const label_arr = node.wrappedNodes.map((n) => n.label);
+
+    else
+      return node.wrappedNodes[0].label;
+  } 
+  else {
+    const label_arr =node.wrappedNodes.map(n => n.label);
     const unique_label_arr = new Set(label_arr);
-    if (unique_label_arr.size === 1)
-      if (node.wrappedNodes.length >= 2)
-        //all labels are the same
-        return (
-          node.wrappedNodes[0].label +
-          "(" +
-          node.wrappedNodes[0].metadata.O_group +
-          ")"
-        );
-      else return node.wrappedNodes[0].label;
-    else {
-      // labels are different
+    if(unique_label_arr.size === 1)//all labels are the same
+      if(node.wrappedNodes.length >= 2)
+        return node.wrappedNodes[0].label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+      else
+        return node.wrappedNodes[0].label;
+    else{ // labels are different
       let label = "";
       const searchpattern = /Camera|View/;
       const searchpattern_2 = /Object/;
       const searchpattern_3 = /Annotation/;
       const searchpattern_4 = /Measure/;
       for (let u_label of unique_label_arr.values()) {
-        if (searchpattern.test(u_label) && label.search("Camera") === -1)
+        if(searchpattern.test(u_label) && label.search('Camera') === -1)
           label = label + "Camera,";
-        else if (searchpattern_2.test(u_label) && label.search("Object") === -1)
+        else if(searchpattern_2.test(u_label) && label.search('Object') === -1)
           label = label + "Object,";
-        else if (
-          searchpattern_3.test(u_label) &&
-          label.search("Annotation") === -1
-        )
+        else if(searchpattern_3.test(u_label) && label.search('Annotation') === -1)
           label = label + "Annotation,";
-        else if (
-          searchpattern_4.test(u_label) &&
-          label.search("Measure") === -1
-        )
+        else if(searchpattern_4.test(u_label) && label.search('Measure') === -1)
           label = label + "Measure,";
       }
       label = label.slice(0, -1);
-      if (
-        label.includes("Camera") &&
-        label.includes("Object") &&
-        node.wrappedNodes.length >= 2
-      )
+      if(label.includes('Camera') && label.includes('Object') && node.wrappedNodes.length >= 2)
         label = node.wrappedNodes[0].metadata.O_group;
-      else if (label == "Object")
+      else if(label == 'Object')
         label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
-      else if (label == "SelectObject")
-        label =
-          label.slice(0, -6) +
-          "(" +
-          node.wrappedNodes[0].metadata.O_group +
-          ")";
-      else if (label == "Camera")
+      else if(label == 'SelectObject')
+        label = label.slice(0,-6) + "(" + node.wrappedNodes[0].metadata.O_group + ")";
+      else if(label == 'Camera')
         label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
-      else if (node.wrappedNodes.length >= 2) {
+      else if(node.wrappedNodes.length >= 2){
         label = label + "(" + node.wrappedNodes[0].metadata.O_group + ")";
       }
       return label;
+
     }
   }
 };
@@ -143,14 +127,14 @@ export const wrapNode = (
   node: ProvenanceNode
 ): IGroupedTreeNode<ProvenanceNode> => {
   const searchpattern = /Camera|View/;
-  if (searchpattern.test(node.label))
+  if(searchpattern.test(node.label))
     return {
       wrappedNodes: [node],
       children: node.children.map(wrapNode),
       plotTrimmerValue: -1,
       neighbour: false,
       bookmarked: false,
-      camera: true,
+      camera: true
     };
   else
     return {
@@ -159,7 +143,7 @@ export const wrapNode = (
       plotTrimmerValue: -1,
       neighbour: false,
       bookmarked: false,
-      camera: false,
+      camera: false
     };
 };
 
@@ -211,7 +195,7 @@ export const defaultData: NodeAggregator<ProvenanceNode> = {
   tests: [testNothing],
   algorithm: doNothing,
   arg: false,
-  description: "No algorithm is applied. The full provenance data is shown.",
+  description: "No algorithm is applied. The full provenance data is shown."
 };
 /**
  * @description Object of the interface DataAggregation<ProvenanceNode>.
@@ -221,7 +205,7 @@ export const rawData: NodeAggregator<ProvenanceNode> = {
   tests: [testNothing],
   algorithm: doNothing,
   arg: false,
-  description: "No algorithm is applied. The full provenance data is shown.",
+  description: "No algorithm is applied. The full provenance data is shown."
 };
 
 /**
@@ -234,7 +218,7 @@ export const grouping: NodeAggregator<ProvenanceNode> = {
   arg: false,
   description: `This algorithm groups nodes of the same category (color).
 The remaining nodes represent the last interactions of category groups.
-The grouped nodes must have connectivity equal to two or less (interval nodes or leaves) and must belong to the same category group.`,
+The grouped nodes must have connectivity equal to two or less (interval nodes or leaves) and must belong to the same category group.`
 };
 
 /**
@@ -248,7 +232,7 @@ export const compression: NodeAggregator<ProvenanceNode> = {
   description: `This algorithm groups nodes with connectivity equals to two (interval nodes). However,
 the node which 'absorbs' the grouped nodes and which is still visualized can be of any connectivity
 The remaining nodes are nodes with connectivity different to two (leaves or subroots).
-The nodes are grouped regardless their category.`,
+The nodes are grouped regardless their category.`
 };
 
 /**
@@ -263,7 +247,7 @@ export const pruning: NodeAggregator<ProvenanceNode> = {
 A chosen parameter indicates the minimum height that a subtree must have to be shown.
 E.g., if the chosen parameter is two, the subtrees with height two or less than two will be grouped.
 The grouped subtrees are represented by their subroot.
-The main tree is not considered as a subtree.`,
+The main tree is not considered as a subtree.`
 };
 
 /**
@@ -274,7 +258,7 @@ export const plotTrimmer: NodeAggregator<ProvenanceNode> = {
   tests: [testIsIntervalNode],
   algorithm: plotTrimmerFunc,
   arg: true,
-  description: "Lorem Ipsum",
+  description: "Lorem Ipsum"
 };
 
 /**
@@ -285,7 +269,7 @@ export const plotTrimmerC: NodeAggregator<ProvenanceNode> = {
   tests: [testIsIntervalNode],
   algorithm: plotTrimmerFuncC,
   arg: true,
-  description: "Lorem Ipsum",
+  description: "Lorem Ipsum"
 };
 
 /**
@@ -296,7 +280,7 @@ export const plotTrimmerG: NodeAggregator<ProvenanceNode> = {
   tests: [testIsIntervalNode],
   algorithm: plotTrimmerFuncG,
   arg: true,
-  description: "Lorem Ipsum",
+  description: "Lorem Ipsum"
 };
 
 /**
@@ -312,8 +296,16 @@ export const aggregationObjects = [
   pruning,
   plotTrimmer,
   plotTrimmerC,
-  plotTrimmerG,
+  plotTrimmerG
 ];
 
-export const aggregationObjectsUI1 = [defaultData, rawData, plotTrimmerG];
-export const aggregationObjectsUI2 = [defaultData, rawData, plotTrimmerC];
+export const aggregationObjectsUI1 = [
+  defaultData,
+  rawData,
+  plotTrimmerG
+];
+export const aggregationObjectsUI2 = [
+  defaultData,
+  rawData,
+  plotTrimmerC
+];

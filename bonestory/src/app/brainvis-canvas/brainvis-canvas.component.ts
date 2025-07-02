@@ -1,10 +1,20 @@
-import { Component, Injectable, ElementRef, EventEmitter, Input, OnInit, Output, OnDestroy, HostListener, ViewChild, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  Injectable,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  OnDestroy,
+  HostListener,
+  ViewChild,
+  AfterViewInit
+} from '@angular/core';
 import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import * as THREE from 'three';
 import * as dat from 'dat.gui';
 // import { STLExporter } from 'three/addons/exporters/STLExporter.js';
-
-
 
 import { IOrientation } from './types';
 
@@ -20,9 +30,9 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { ProvenanceService } from '../provenance.service';
 import { registerActions } from './provenanceActions';
 import { addListeners } from './provenanceListeners';
- 
+
 import { AppComponent } from '../app.component';
-import {updateModeDisplay} from '../util/Displaywidget';
+import { updateModeDisplay } from '../util/Displaywidget';
 
 import { DragControls } from 'three/examples/jsm/controls/DragControls';
 
@@ -31,8 +41,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass';
 import { position } from 'html2canvas/dist/types/css/property-descriptors/position';
 import { StateNode } from '@visualstorytelling/provenance-core';
- 
-
 
 (window as any).istyping = false;
 
@@ -68,7 +76,6 @@ enum modes {
 @Injectable({
   providedIn: 'root'
 })
-
 export class BrainvisCanvasComponent {
   @ViewChild('canvas_', { static: true }) canvas_: ElementRef;
   //check user offline, online
@@ -104,7 +111,9 @@ export class BrainvisCanvasComponent {
     this.showObjectsChange.emit(showObjects);
   }
   @Output() showObjectsChange = new EventEmitter<boolean>();
-  get showObjects() { return this._showObjects; }
+  get showObjects() {
+    return this._showObjects;
+  }
 
   private width: number;
   private height: number;
@@ -115,11 +124,15 @@ export class BrainvisCanvasComponent {
 
   // private camera: THREE.PerspectiveCamera;
   public camera: THREE.OrthographicCamera;
-  private renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, preserveDrawingBuffer: true });
+  private renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    logarithmicDepthBuffer: true,
+    preserveDrawingBuffer: true
+  });
 
   // private transform: TransformControls;
   private number_of_stl = 0; //incresase numbers
-  
+
   private controls: Trackball;
   private stackHelper = 1;
   // private sliceManipulator: SliceManipulatorWidget;
@@ -163,7 +176,7 @@ export class BrainvisCanvasComponent {
   private AxesHelper;
   private inter_have;
   private inter_helper;
-  private objstat: { name: string[], opacity: number[], hide_val: boolean[] };
+  private objstat: { name: string[]; opacity: number[]; hide_val: boolean[] };
   private hidden_refresh = false;
   private image_loaded = false;
 
@@ -171,55 +184,56 @@ export class BrainvisCanvasComponent {
   private stl_objs: FormData;
 
   constructor(elem: ElementRef, provenance: ProvenanceService) {
-    
     this.elem = elem.nativeElement;
     this.service = provenance;
     this.eventdispatcher = new THREE.EventDispatcher();
     this.objects = new THREE.Object3D();
-    this.objectSelector = new ObjectSelector(this.objects,this.renderer.domElement, this.camera, this);
+    this.objectSelector = new ObjectSelector(
+      this.objects,
+      this.renderer.domElement,
+      this.camera,
+      this
+    );
 
     // todo: remove object from window
     // registerActions(this.service.registry, this);
     // addListeners(this.service.tracker, this);
   }
-  addEventListener(type, listener){
-      this.eventdispatcher.addEventListener(type,listener);
+  addEventListener(type, listener) {
+    this.eventdispatcher.addEventListener(type, listener);
   }
-  removeEventListener(type, listener){
-    this.eventdispatcher.removeEventListener(type,listener);
-}
-onWindowResize() {
-  this.width = window.innerWidth;
-  this.height = window.innerHeight;
+  removeEventListener(type, listener) {
+    this.eventdispatcher.removeEventListener(type, listener);
+  }
+  onWindowResize() {
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
 
-  // Update pixel ratio
-  const pixelRatio = window.devicePixelRatio || 1;
+    // Update pixel ratio
+    const pixelRatio = window.devicePixelRatio || 1;
 
-  // Orthographic camera
-  this.camera.left = this.width / -2;
-  this.camera.right = this.width / 2;
-  this.camera.top = this.height / 2;
-  this.camera.bottom = this.height / -2;
-  this.camera.updateProjectionMatrix();
+    // Orthographic camera
+    this.camera.left = this.width / -2;
+    this.camera.right = this.width / 2;
+    this.camera.top = this.height / 2;
+    this.camera.bottom = this.height / -2;
+    this.camera.updateProjectionMatrix();
 
-  // Adjust renderer size and pixel ratio
-  this.renderer.setSize(this.width, this.height);
-  this.renderer.setPixelRatio(pixelRatio);
+    // Adjust renderer size and pixel ratio
+    this.renderer.setSize(this.width, this.height);
+    this.renderer.setPixelRatio(pixelRatio);
 
-  // Render the scene
-  this.composer.render();
-  this.render();
-}
+    // Render the scene
+    this.composer.render();
+    this.render();
+  }
 
   @HostListener('window:resize', ['$event'])
   onResize() {
     this.onWindowResize();
   }
 
-
   ngOnInit() {
-
-
     // register actions for provenance
     registerActions(this.service.registry, this);
     addListeners(this.service.tracker, this);
@@ -228,18 +242,21 @@ onWindowResize() {
     this.onlineEvent = fromEvent(window, 'online');
     this.offlineEvent = fromEvent(window, 'offline');
 
-    this.subscriptions.push(this.onlineEvent.subscribe(e => {
-      // this.connectionStatusMessage = 'Back to online';
-      // this.connectionStatus = 'online';
-      console.log('Online...');
-    }));
+    this.subscriptions.push(
+      this.onlineEvent.subscribe(e => {
+        // this.connectionStatusMessage = 'Back to online';
+        // this.connectionStatus = 'online';
+        console.log('Online...');
+      })
+    );
 
-    this.subscriptions.push(this.offlineEvent.subscribe(e => {
-      // this.connectionStatusMessage = 'Connection lost! You are not connected to internet';
-      // this.connectionStatus = 'offline';
-      console.log('Offline...');
-    }));
-
+    this.subscriptions.push(
+      this.offlineEvent.subscribe(e => {
+        // this.connectionStatusMessage = 'Connection lost! You are not connected to internet';
+        // this.connectionStatus = 'offline';
+        console.log('Offline...');
+      })
+    );
 
     // this.elem = ElementRef.nativeElement;
     (window as any).canvas = this;
@@ -248,8 +265,15 @@ onWindowResize() {
     this.height = this.elem.clientHeight;
 
     this.scene.background = new THREE.Color('#a5a29a');
-    
-    this.camera = new THREE.OrthographicCamera(this.width / -2, this.width / 2, this.height / 2, this.height / - 2,0.1,6000);
+
+    this.camera = new THREE.OrthographicCamera(
+      this.width / -2,
+      this.width / 2,
+      this.height / 2,
+      this.height / -2,
+      0.1,
+      6000
+    );
     // this.camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 0.01, 3000);
 
     const canvasElm = this.renderer.domElement;
@@ -260,8 +284,8 @@ onWindowResize() {
     this.controls.reset();
 
     //change starting position of the camera
-    this.camera.position.set(0,600,0);
-    this.camera.up.set(0,0,1);
+    this.camera.position.set(0, 600, 0);
+    this.camera.up.set(0, 0, 1);
     this.camera.frustumCulled = true;
     this.camera.updateMatrix();
     this.camera.zoom = 1;
@@ -272,16 +296,21 @@ onWindowResize() {
     // Set custom layer for the gizmo
     this.gizmoLayer = new THREE.Layers();
     this.gizmoLayer.set(1);
-    
 
-    
-    this.intersectionManager = new IntersectionManager(this.renderer.domElement, this.camera);
+    this.intersectionManager = new IntersectionManager(
+      this.renderer.domElement,
+      this.camera
+    );
     this.intersectionManager.addListener(this.objectSelector);
 
     this.composer = new EffectComposer(this.renderer);
     this.renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(this.renderPass);
-    this.outlinePass = new OutlinePass(new THREE.Vector2(this.width, this.height), this.scene, this.camera);
+    this.outlinePass = new OutlinePass(
+      new THREE.Vector2(this.width, this.height),
+      this.scene,
+      this.camera
+    );
     this.outlinePass.selectedObjects = [];
     this.outlinePass.edgeStrength = 1.0;
     this.outlinePass.edgeGlow = 0.5;
@@ -291,7 +320,6 @@ onWindowResize() {
     this.outlinePass.visibleEdgeColor.set('#ffffff');
     this.outlinePass.hiddenEdgeColor.set('#ffffff');
     this.composer.addPass(this.outlinePass);
-    
 
     this.initScene();
     this.addEventListeners();
@@ -300,16 +328,14 @@ onWindowResize() {
 
   ngOnDestroy(): void {
     /**
-    * Unsubscribe all subscriptions to avoid memory leak
-    */
+     * Unsubscribe all subscriptions to avoid memory leak
+     */
     this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
-
   initScene() {
-
     // Setup lights
-    this.scene.add(new THREE.AmbientLight(0xffffff,0.1));
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.1));
     this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
 
     this.directionalLight.position.set(1, 1, 1).normalize();
@@ -317,7 +343,6 @@ onWindowResize() {
     this.AxesHelper = new THREE.AxesHelper(500);
     var instructions = document.getElementById('instructions');
 
-    
     this.scene.add(this.directionalLight);
     // this.scene.add(directionallight_2);
     this.scene.add(this.mm);
@@ -325,20 +350,23 @@ onWindowResize() {
     this.scene.add(this.AxesHelper);
     this.scene.add(this.pivot_group);
 
-    this.ui = new dat.GUI({autoPlace: false, width: 200});
+    this.ui = new dat.GUI({ autoPlace: false, width: 200 });
     const vis_helper = this.ui.addFolder('Helpers');
-    vis_helper.add(this.gridHelper,'visible').name('Grid');
-    vis_helper.add(this.AxesHelper,'visible').name('Axes');
-    vis_helper.add({ instructions: true }, 'instructions').name('Instructions').onChange((value: boolean) => {
-      instructions.style.display = value ? 'block' : 'none';
-    });
+    vis_helper.add(this.gridHelper, 'visible').name('Grid');
+    vis_helper.add(this.AxesHelper, 'visible').name('Axes');
+    vis_helper
+      .add({ instructions: true }, 'instructions')
+      .name('Instructions')
+      .onChange((value: boolean) => {
+        instructions.style.display = value ? 'block' : 'none';
+      });
     vis_helper.open();
 
     //add camera offset indicator gui
-    const sphereGeometry = new THREE.SphereGeometry( 5, 32, 32 );
-    const sphereMaterial = new THREE.MeshBasicMaterial( {color: 0xffff00} );
-    this.inter_helper = new THREE.Mesh( sphereGeometry, sphereMaterial );
-    this.inter_helper.position.set(0,0,0);
+    const sphereGeometry = new THREE.SphereGeometry(5, 32, 32);
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    this.inter_helper = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    this.inter_helper.position.set(0, 0, 0);
     this.inter_helper.visible = false;
     this.scene.add(this.inter_helper);
 
@@ -351,7 +379,6 @@ onWindowResize() {
     cam_offset.add(this.viewpoint_button, 'click_right').name('Right view');
     cam_offset.open();
 
-
     var customContainer = document.getElementById('gui');
     customContainer.style.overflowY = 'scroll';
     customContainer.style.maxHeight = '50%'; // Adjust max height as needed
@@ -363,105 +390,90 @@ onWindowResize() {
     document.head.appendChild(style);
   }
 
-
-  
   addEventListeners() {
-      // resize event
-    var x = 0, y = 0;
+    // resize event
+    var x = 0,
+      y = 0;
     var keydown_coordinate;
 
-   
-
     this.renderer.domElement.addEventListener(
-      "resize",
+      'resize',
       this.onWindowResize,
       false
     );
-    this.addEventListener('wheel', (event) => {
+    this.addEventListener('wheel', event => {
       console.log('wheel');
     });
-    window.addEventListener("beforeunload", function (e) {
-      var confirmationMessage = "\o/";
+    window.addEventListener('beforeunload', function(e) {
+      var confirmationMessage = 'o/';
       console.log('user terminated');
       (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-      return confirmationMessage;                            //Webkit, Safari, Chrome
+      return confirmationMessage; //Webkit, Safari, Chrome
     });
-    window.addEventListener('mousemove', (e) => {
+    window.addEventListener(
+      'mousemove',
+      e => {
+        x = (e.clientX / this.renderer.domElement.clientWidth) * 2 - 1;
+        y = -(e.clientY / this.renderer.domElement.clientHeight) * 2 + 1;
+        keydown_coordinate = e;
+        // const have = this.intersectionManager.intersectObjects(e,this.objects.children);
+      },
+      false
+    );
 
-      x = ( e.clientX / this.renderer.domElement.clientWidth ) * 2 - 1;
-      y = - ( e.clientY / this.renderer.domElement.clientHeight ) * 2 + 1;
-      keydown_coordinate = e;
-      // const have = this.intersectionManager.intersectObjects(e,this.objects.children);
-  }, false);
-    
-    window.addEventListener('keyup', async (event) => {
-      if(event.key == 'Shift' && !(window as any).istyping && this.outlinePass.selectedObjects.length > 0){//안변하면 유지하는거 구현해야함
+    window.addEventListener('keyup', async event => {
+      if (
+        event.key == 'Shift' &&
+        !(window as any).istyping &&
+        this.outlinePass.selectedObjects.length > 0
+      ) {
+        //안변하면 유지하는거 구현해야함
         const past = this.objectSelector.pastSelectedObjects;
-        const pastname = past.length>0?past[0].name:undefined;
+        const pastname = past.length > 0 ? past[0].name : undefined;
         let prev_names = '';
         let past_names = '';
-        this.objectSelector.previousSelectedObjects.map(obj => {prev_names = prev_names + ',' + obj.name});
-        this.objectSelector.pastSelectedObjects.map(obj => {past_names = past_names + ','  + obj.name});
+        this.objectSelector.previousSelectedObjects.map(obj => {
+          prev_names = prev_names + ',' + obj.name;
+        });
+        this.objectSelector.pastSelectedObjects.map(obj => {
+          past_names = past_names + ',' + obj.name;
+        });
         prev_names = prev_names.substring(1);
         past_names = past_names.substring(1);
-        let temp = [this.outlinePass.selectedObjects[0].name,pastname,prev_names, past_names];
+        let temp = [
+          this.outlinePass.selectedObjects[0].name,
+          pastname,
+          prev_names,
+          past_names
+        ];
         const cur_node = this.service.traverser.graph.current as StateNode;
         console.log(this.service.graph.application);
         console.log(temp[2]);
-        if(!temp[2].includes(cur_node.action.doArguments[0][2])){
+        if (!temp[2].includes(cur_node.action.doArguments[0][2])) {
           this.objectSelector.setSelection(temp);
           this.eventdispatcher.dispatchEvent({
             type: 'objsel',
             val: temp
           });
-        }
-        else{
+        } else {
           cur_node.metadata.O_group = prev_names;
           cur_node.action.doArguments[0][2] = temp[2];
           cur_node.action.undoArguments[0][3] = temp[2];
           cur_node.metadata.screenshot = await this.ScreenShot();
         }
-
       }
       this.objectSelector.setkey(event, keydown_coordinate);
       this.mode = this.objectSelector.getmode();
-      if(this.mode == modes.Cammode) // camera
+      if (this.mode == modes.Cammode)
+        // camera
         this.controls.enabled = true;
-      else{
+      else {
         this.controls.enabled = false;
-        if(this.mode == modes.Translation)
-          this.ModeText_add = '\nTranslate';
-        else if(this.mode == modes.Rotation)
-          this.ModeText_add = '\nRotate';
+        if (this.mode == modes.Translation) this.ModeText_add = '\nTranslate';
+        else if (this.mode == modes.Rotation) this.ModeText_add = '\nRotate';
       }
       // this.controls.update();
-      });
-    
-    
-    // window.addEventListener('keyup', (event) => {
-    //   if(event.key == 'Control'){
-    //     this.ctrl_down = false;
-    //     this.objectSelector.pastSelectedObjects = this.objectSelector.previousSelectedObjects
-    //     this.objectSelector.previousSelectedObjects = this.outlinePass.selectedObjects;
-    //     // this.eventdispatcher.dispatchEvent({
-    //     //   type: 'objectSelection',
-    //     //   newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
-    //     // });
-    //   }
-    //   this.objectSelector.setkey(event, keydown_coordinate);
-    //   this.mode = this.objectSelector.getmode();
-    //   if(this.mode == modes.Cammode) // camera
-    //     this.controls.enabled = true;
-    //   else{
-    //     this.controls.enabled = false;
-    //     if(this.mode == modes.Translation)
-    //       this.ModeText_add = '\nTranslate';
-    //     else if(this.mode == modes.Rotation)
-    //       this.ModeText_add = '\nRotate';
-    //   }
-    //   // this.controls.update();
-    //   });
-
+    });
 
     // window.addEventListener('keyup', (event) => {
     //   if(event.key == 'Control'){
@@ -487,7 +499,31 @@ onWindowResize() {
     //   // this.controls.update();
     //   });
 
-    this.controls.addEventListener('zoom_track_start', (event) => {
+    // window.addEventListener('keyup', (event) => {
+    //   if(event.key == 'Control'){
+    //     this.ctrl_down = false;
+    //     this.objectSelector.pastSelectedObjects = this.objectSelector.previousSelectedObjects
+    //     this.objectSelector.previousSelectedObjects = this.outlinePass.selectedObjects;
+    //     // this.eventdispatcher.dispatchEvent({
+    //     //   type: 'objectSelection',
+    //     //   newObject: [this.previousSelectedObject, this.pastSelectedObject, this.previousColor, this.pastColor]
+    //     // });
+    //   }
+    //   this.objectSelector.setkey(event, keydown_coordinate);
+    //   this.mode = this.objectSelector.getmode();
+    //   if(this.mode == modes.Cammode) // camera
+    //     this.controls.enabled = true;
+    //   else{
+    //     this.controls.enabled = false;
+    //     if(this.mode == modes.Translation)
+    //       this.ModeText_add = '\nTranslate';
+    //     else if(this.mode == modes.Rotation)
+    //       this.ModeText_add = '\nRotate';
+    //   }
+    //   // this.controls.update();
+    //   });
+
+    this.controls.addEventListener('zoom_track_start', event => {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
@@ -500,14 +536,14 @@ onWindowResize() {
       this.ModeText_add = '\nMove';
     });
 
-    this.controls.addEventListener('zoom_track_end', (event) => {
+    this.controls.addEventListener('zoom_track_end', event => {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
       const zoom = this.controls.camera.zoom;
       const orientation = { position, target, up, zoom };
       const state = event.state;
-      updateModeDisplay(this.ModeText[this.mode],'\nMove');
+      updateModeDisplay(this.ModeText[this.mode], '\nMove');
       this.eventdispatcher.dispatchEvent({
         type: 'zoomEnd',
         orientation,
@@ -516,16 +552,19 @@ onWindowResize() {
       this.ModeText_add = '\nMove';
     });
 
-    this.controls.addEventListener('start', (event) => {
-      this.inter_have = this.intersectionManager.intersectObjects(event.mouse,this.objects.children);
+    this.controls.addEventListener('start', event => {
+      this.inter_have = this.intersectionManager.intersectObjects(
+        event.mouse,
+        this.objects.children
+      );
       const position = this.controls.camera.position.toArray();
       let target = this.controls.target.toArray();
-      if(this.inter_have != false){
+      if (this.inter_have != false) {
         const offset = new THREE.Vector3();
         offset.copy(this.camera.position).sub(this.inter_have.point);
         this.controls.target.copy(this.inter_have.point);
         target = this.controls.target.toArray();
-      } 
+      }
       const up = this.controls.camera.up.toArray();
       const zoom = this.controls.camera.zoom;
       const orientation = { position, target, up, zoom };
@@ -539,15 +578,14 @@ onWindowResize() {
       });
       this.mode = modes.Cammode;
       this.ModeText_add = '\nMove';
-
     });
-    
-    this.controls.addEventListener('end', (event) => {
+
+    this.controls.addEventListener('end', event => {
       const position = this.controls.camera.position.toArray();
       const target = this.controls.target.toArray();
       const up = this.controls.camera.up.toArray();
       const zoom = this.controls.camera.zoom;
-      const orientation = { position, target, up, zoom};
+      const orientation = { position, target, up, zoom };
       const state = event.state;
       this.eventdispatcher.dispatchEvent({
         type: 'cameraEnd',
@@ -560,7 +598,7 @@ onWindowResize() {
       this.render();
     });
 
-    this.objectSelector.addEventListener('t_start', (event:any) => {
+    this.objectSelector.addEventListener('t_start', (event: any) => {
       this.eventdispatcher.dispatchEvent({
         type: 'transStart',
         rotation: event.rotation,
@@ -569,7 +607,7 @@ onWindowResize() {
       this.mode = modes.Translation;
       this.ModeText_add = '\nTranslate';
     });
-    this.objectSelector.addEventListener('t_end', (event:any) => {
+    this.objectSelector.addEventListener('t_end', (event: any) => {
       this.eventdispatcher.dispatchEvent({
         type: 'transEnd',
         rotation: event.rotation,
@@ -579,8 +617,10 @@ onWindowResize() {
       this.ModeText_add = '';
     });
 
-    this.objectSelector.addEventListener('r_start', (event:any) => {
-      event.position.forEach((element:any) => {element.add(this.pivot_group.position.clone())});
+    this.objectSelector.addEventListener('r_start', (event: any) => {
+      event.position.forEach((element: any) => {
+        element.add(this.pivot_group.position.clone());
+      });
       this.eventdispatcher.dispatchEvent({
         type: 'rotationStart',
         rotation: event.rotation,
@@ -589,8 +629,7 @@ onWindowResize() {
       this.mode = modes.Rotation;
       this.ModeText_add = '\nRotate';
     });
-    this.objectSelector.addEventListener('r_end', (event:any) => {
-
+    this.objectSelector.addEventListener('r_end', (event: any) => {
       this.eventdispatcher.dispatchEvent({
         type: 'rotationEnd',
         rotation: event.rotation,
@@ -605,69 +644,66 @@ onWindowResize() {
       const mode = this.objectSelector.getmode();
       this.selectedobj = this.objectSelector.getcurrobject();
       this.setInteractive(inter);
-      if (mode == 0 && this.selectedobj!=undefined){ // Translation 
+      if (mode == 0 && this.selectedobj != undefined) {
+        // Translation
         this.mm.setMode('translate');
         this.controls.enabled = false;
-      }
-      else if (mode == 1 && this.selectedobj!=undefined){ //Rotation
+      } else if (mode == 1 && this.selectedobj != undefined) {
+        //Rotation
         this.mm.setMode('rotate');
-        if(event.intersect!=undefined){
-
-            this.pivot_group.position.set(0,0,0);
-            this.pivot_group.rotation.set(0,0,0);
-            this.outlinePass.selectedObjects.forEach((obj) => 
-            {
-              if(this.rotate_counter>0){
-                obj.position.add(this.rotate_prev_intersect);
-              }
-              this.pivot_group.add(obj);
-              this.pivot_group.position.copy(event.intersect);
-              obj.position.sub(event.intersect);
-            });
+        if (event.intersect != undefined) {
+          this.pivot_group.position.set(0, 0, 0);
+          this.pivot_group.rotation.set(0, 0, 0);
+          this.outlinePass.selectedObjects.forEach(obj => {
+            if (this.rotate_counter > 0) {
+              obj.position.add(this.rotate_prev_intersect);
+            }
+            this.pivot_group.add(obj);
+            this.pivot_group.position.copy(event.intersect);
+            obj.position.sub(event.intersect);
+          });
           this.rotate_prev_intersect = event.intersect;
-          
+
           this.mm.attach(this.pivot_group);
-          this.mm.traverse((node) => {
+          this.mm.traverse(node => {
             node.layers.enable(this.gizmoLayer.mask);
           });
           this.rotate_counter++;
         }
         this.controls.enabled = false;
-      }
-      else {
-        if(this.trans_counter>0 || this.rotate_counter>0){
-            this.outlinePass.selectedObjects.forEach((element) => 
-            {
-              let tempQuaternion = new THREE.Quaternion();
-              let tempVector = new THREE.Vector3();
-              element.getWorldQuaternion(tempQuaternion);
-              element.getWorldPosition(tempVector);
-              this.objects.add(element);
-              element.setRotationFromQuaternion(tempQuaternion);
-              element.position.set(tempVector.x,tempVector.y ,tempVector.z);
-              element.updateMatrixWorld();
-              this.objects.add(element);
-
-            });
-          this.pivot_group.position.set(0,0,0);
-          if(this.trans_counter>0)
-            this.trans_counter = 0;
-          if(this.rotate_counter>0)
-            this.rotate_counter = 0;
+      } else {
+        if (this.trans_counter > 0 || this.rotate_counter > 0) {
+          this.outlinePass.selectedObjects.forEach(element => {
+            let tempQuaternion = new THREE.Quaternion();
+            let tempVector = new THREE.Vector3();
+            element.getWorldQuaternion(tempQuaternion);
+            element.getWorldPosition(tempVector);
+            this.objects.add(element);
+            element.setRotationFromQuaternion(tempQuaternion);
+            element.position.set(tempVector.x, tempVector.y, tempVector.z);
+            element.updateMatrixWorld();
+            this.objects.add(element);
+          });
+          this.pivot_group.position.set(0, 0, 0);
+          if (this.trans_counter > 0) this.trans_counter = 0;
+          if (this.rotate_counter > 0) this.rotate_counter = 0;
         }
         this.mm.detach();
         this.controls.enabled = true;
-        this.mode = modes.Cammode;  
+        this.mode = modes.Cammode;
       }
-
     });
 
     this.objectSelector.addEventListener('objectSelection', (event: any) => {
-      if(this.selectedobj != event.newObject[0])
+      if (this.selectedobj != event.newObject[0])
         this.selectedobj = event.newObject[0];
-      else
-        this.selectedobj = undefined;
-      let temp = [event.newObject[0], event.newObject[1], event.newObject[2], event.newObject[3]];
+      else this.selectedobj = undefined;
+      let temp = [
+        event.newObject[0],
+        event.newObject[1],
+        event.newObject[2],
+        event.newObject[3]
+      ];
       this.objectSelector.setSelection(temp);
       this.eventdispatcher.dispatchEvent({
         type: 'objsel',
@@ -677,9 +713,8 @@ onWindowResize() {
       this.setInteractive(inter);
       this.mm.detach();
     });
-    
   }
-  selectedObjectsChange (value) {
+  selectedObjectsChange(value) {
     this.objectSelector.setSelection(value);
   }
 
@@ -695,42 +730,82 @@ onWindowResize() {
 
   CameraZoom(newOrientation: IOrientation, within: number) {
     //monitoring the camera
-    let cc_1 = new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]);
-    let cc_2 = new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]);
-    let cc_3 = new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]);
-    this.controls.changeCamera(cc_1,cc_2,cc_3,newOrientation.zoom,within);
+    let cc_1 = new THREE.Vector3(
+      newOrientation.position[0],
+      newOrientation.position[1],
+      newOrientation.position[2]
+    );
+    let cc_2 = new THREE.Vector3(
+      newOrientation.target[0],
+      newOrientation.target[1],
+      newOrientation.target[2]
+    );
+    let cc_3 = new THREE.Vector3(
+      newOrientation.up[0],
+      newOrientation.up[1],
+      newOrientation.up[2]
+    );
+    this.controls.changeCamera(cc_1, cc_2, cc_3, newOrientation.zoom, within);
   }
 
   CameraMove(newOrientation: IOrientation, within: number) {
     // console.log(this.camera);
-    this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
-      new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
-      new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
+    this.controls.changeCamera(
+      new THREE.Vector3(
+        newOrientation.position[0],
+        newOrientation.position[1],
+        newOrientation.position[2]
+      ),
+      new THREE.Vector3(
+        newOrientation.target[0],
+        newOrientation.target[1],
+        newOrientation.target[2]
+      ),
+      new THREE.Vector3(
+        newOrientation.up[0],
+        newOrientation.up[1],
+        newOrientation.up[2]
+      ),
       newOrientation.zoom,
-      within);
+      within
+    );
   }
 
   CameraPan(newOrientation: IOrientation, within: number) {
-      this.controls.changeCamera(new THREE.Vector3(newOrientation.position[0], newOrientation.position[1], newOrientation.position[2]),
-      new THREE.Vector3(newOrientation.target[0], newOrientation.target[1], newOrientation.target[2]),
-      new THREE.Vector3(newOrientation.up[0], newOrientation.up[1], newOrientation.up[2]),
+    this.controls.changeCamera(
+      new THREE.Vector3(
+        newOrientation.position[0],
+        newOrientation.position[1],
+        newOrientation.position[2]
+      ),
+      new THREE.Vector3(
+        newOrientation.target[0],
+        newOrientation.target[1],
+        newOrientation.target[2]
+      ),
+      new THREE.Vector3(
+        newOrientation.up[0],
+        newOrientation.up[1],
+        newOrientation.up[2]
+      ),
       newOrientation.zoom,
-      within);
+      within
+    );
   }
 
-  async ObjectTrans(newargs: any, newpos:any ,within: number) {
+  async ObjectTrans(newargs: any, newpos: any, within: number) {
     this.trans_counter = 0;
     await this.objectSelector.changeControls_total(newpos, within, newargs);
   }
 
-  async ObjectRotate(newargs: any, newpos:any ,within: number) {
+  async ObjectRotate(newargs: any, newpos: any, within: number) {
     this.rotate_counter = 0;
     await this.objectSelector.changeControls_total(newpos, within, newargs);
   }
   Measure(intersect: any, undo?: boolean) {
-    if(undo === true){
-      intersect[0].object.children.forEach (function (child) {
-        if(child.name === 'measure'){
+    if (undo === true) {
+      intersect[0].object.children.forEach(function(child) {
+        if (child.name === 'measure') {
           child.materiaml.dispose();
           intersect[0].object.remove(child);
         }
@@ -740,7 +815,11 @@ onWindowResize() {
     if (this.measure_counter.length == Measurement.Zero) {
       this.measure_counter.push(intersect[0].point.clone());
       const geometry = new THREE.CylinderGeometry(1, 1, 1, 32);
-      const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: false, depthwrite: true });
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: false,
+        depthwrite: true
+      });
       const cylinder = new THREE.Mesh(geometry, material);
       cylinder.position.copy(this.measure_counter[0]);
       cylinder.renderOrder = this._randerorder;
@@ -748,8 +827,7 @@ onWindowResize() {
       cylinder.name = 'measure';
       this.measure_counter.push(cylinder);
       this.scene.add(cylinder);
-    }
-    else if (this.measure_counter.length == Measurement.Two) {
+    } else if (this.measure_counter.length == Measurement.Two) {
       this.measure_counter.push(intersect[0].point);
       //calulate distance
       const distance = this.measure_counter[0].distanceTo(intersect[0].point);
@@ -769,8 +847,8 @@ onWindowResize() {
 
       // Add Distance Label on the top
       // Set the position of the sprite to be above the mesh
-      const text = distance.toFixed(2) + " mm";
-      const sprite = this.makeTextSprite(text,{ fontsize: 60 });
+      const text = distance.toFixed(2) + ' mm';
+      const sprite = this.makeTextSprite(text, { fontsize: 60 });
       sprite.position.copy(middlePoint);
       // Add the sprite to the scene
       this.scene.add(sprite);
@@ -779,18 +857,15 @@ onWindowResize() {
       this.measure_groups.push([cylinder, sprite]);
       this.Measurement([cylinder, sprite]);
       this.measure_counter = [];
-    }
-    else {
-
+    } else {
     }
   }
   Measurement(measuregroup: any, undo?: boolean) {
     // console.log(measuregroup[0]);
-    if(undo === true){
+    if (undo === true) {
       measuregroup[0].material.visible = false;
       measuregroup[1].material.visible = false;
-    }
-    else{
+    } else {
       measuregroup[0].material.visible = true;
       measuregroup[1].material.visible = true;
     }
@@ -802,65 +877,70 @@ onWindowResize() {
   }
 
   Annotation(text: string, intersect: any, undo?: boolean) {
-    if(undo === true){
-      intersect[0].object.children.forEach (function (child) {
-        if(child.name === text){
+    if (undo === true) {
+      intersect[0].object.children.forEach(function(child) {
+        if (child.name === text) {
           child.material.dispose();
           intersect[0].object.remove(child);
         }
       });
       return;
     }
-    var text_plane =  new THREE.CanvasTexture(function () {
-      
-      var plane = document.createElement('canvas');
+    var text_plane = new THREE.CanvasTexture(
+      (function() {
+        var plane = document.createElement('canvas');
 
-      var context = plane.getContext('2d');
-      var planeLength = 160, textHeight = 80; // Increase textHeight to 80
-      plane.width = 512;
-      var words = text.split(' ');
-      var line = '';
-      var lineCount = 0;
-      var lines = [];
-      for (var n = 0; n < words.length; n++) {
-        var testLine = line + words[n] + ' ';
-        var testWidth = context.measureText(testLine).width;
-        if (testWidth > planeLength) {
-          lines.push(line);
-          line = words[n] + ' ';
-          lineCount++;
-        } else {
-          line = testLine;
+        var context = plane.getContext('2d');
+        var planeLength = 160,
+          textHeight = 80; // Increase textHeight to 80
+        plane.width = 512;
+        var words = text.split(' ');
+        var line = '';
+        var lineCount = 0;
+        var lines = [];
+        for (var n = 0; n < words.length; n++) {
+          var testLine = line + words[n] + ' ';
+          var testWidth = context.measureText(testLine).width;
+          if (testWidth > planeLength) {
+            lines.push(line);
+            line = words[n] + ' ';
+            lineCount++;
+          } else {
+            line = testLine;
+          }
         }
-      }
-      lineCount++;
-      lines.push(line);
-      plane.height = textHeight + lineCount * textHeight;
-      context.fillStyle = 'white';
-      context.fillRect(0, 0, 512, textHeight + (lineCount * textHeight));
-      context.font = '40px Arial'; // Decrease font size to 40px
-      context.fillStyle = 'black';
-      context.textAlign = 'left';
-      context.textBaseline = 'middle';
-      context.imageSmoothingEnabled = true;
-      context.arc(32,32,30,0,Math.PI*2);
-      for (var i = 0; i < lineCount; i++) {
-        context.fillText(lines[i], 0, textHeight + (i * textHeight), 512);
-      }
-      return plane;
-    }());
+        lineCount++;
+        lines.push(line);
+        plane.height = textHeight + lineCount * textHeight;
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, 512, textHeight + lineCount * textHeight);
+        context.font = '40px Arial'; // Decrease font size to 40px
+        context.fillStyle = 'black';
+        context.textAlign = 'left';
+        context.textBaseline = 'middle';
+        context.imageSmoothingEnabled = true;
+        context.arc(32, 32, 30, 0, Math.PI * 2);
+        for (var i = 0; i < lineCount; i++) {
+          context.fillText(lines[i], 0, textHeight + i * textHeight, 512);
+        }
+        return plane;
+      })()
+    );
     text_plane.needsUpdate = true;
-    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-      color: 0xffffff,
-      alphaTest: 0.5,
-      transparent: true,
-      depthTest: false,
-      depthWrite: false}));
+    var sprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        color: 0xffffff,
+        alphaTest: 0.5,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false
+      })
+    );
     sprite.name = text;
 
-    const scaler= this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
-    const scale_value = scaler/2;
-    sprite.scale.set(scale_value/5, scale_value/5, 1);
+    const scaler = this.camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+    const scale_value = scaler / 2;
+    sprite.scale.set(scale_value / 5, scale_value / 5, 1);
     sprite.position.copy(intersect[0].point.sub(intersect[0].object.position));
     sprite.material.map = text_plane;
     sprite.material.opacity = 0.5;
@@ -873,7 +953,7 @@ onWindowResize() {
       inter: intersect
     });
     this.mode = modes.Cammode;
-    this.ModeText_add = "";
+    this.ModeText_add = '';
   }
 
   // Annotation(text: string, intersect: any, undo?: boolean) {
@@ -887,7 +967,7 @@ onWindowResize() {
   //     return;
   //   }
   //   var text_plane =  new THREE.CanvasTexture(function () {
-      
+
   //     var plane = document.createElement('canvas');
 
   //     var context = plane.getContext('2d');
@@ -961,25 +1041,33 @@ onWindowResize() {
       lightRotationTemp.applyQuaternion(this.camera.quaternion);
 
       this.directionalLight.position.set(lightDir.x, lightDir.y, lightDir.z);
-      this.directionalLight.position.add(new THREE.Vector3(lightRotationTemp.x, lightRotationTemp.y, lightRotationTemp.z));
+      this.directionalLight.position.add(
+        new THREE.Vector3(
+          lightRotationTemp.x,
+          lightRotationTemp.y,
+          lightRotationTemp.z
+        )
+      );
       this.directionalLight.position.normalize();
     }
-    updateModeDisplay(this.ModeText[this.mode],this.ModeText_add);
+    updateModeDisplay(this.ModeText[this.mode], this.ModeText_add);
     this.controls.update();
     // Update annotation positions
-    this.scene.traverse((object) => {
+    this.scene.traverse(object => {
       if (object.userData.annotations) {
-        object.userData.annotations.forEach((annotation) => {
-          var annotationPosition = annotation.position.clone().project(this.camera);
-          annotation.element.style.left = ((annotationPosition.x + 1) / 2 * window.innerWidth) + 'px';
-          annotation.element.style.top = (-(annotationPosition.y - 1) / 2 * window.innerHeight) + 'px';
+        object.userData.annotations.forEach(annotation => {
+          var annotationPosition = annotation.position
+            .clone()
+            .project(this.camera);
+          annotation.element.style.left =
+            ((annotationPosition.x + 1) / 2) * window.innerWidth + 'px';
+          annotation.element.style.top =
+            (-(annotationPosition.y - 1) / 2) * window.innerHeight + 'px';
         });
       }
     });
     this.composer.render();
-
-    
-  }
+  };
 
   render() {
     // this.renderer.render(this.scene, this.camera);
@@ -989,18 +1077,17 @@ onWindowResize() {
     return this.renderer.render(this.scene, this.camera);
   }
 
-  onShowObjectsChange = (visible) => {
-
+  onShowObjectsChange = visible => {
     this.eventdispatcher.dispatchEvent({
       type: 'objectsVisibilityChanged',
       change: visible
     });
-  }
+  };
 
-  showObjectsToggled = (checkBox) => {
+  showObjectsToggled = checkBox => {
     this.toggleObjects(checkBox.currentTarget.checked);
     this.onShowObjectsChange(checkBox.currentTarget.checked);
-  }
+  };
 
   toggleObjects(visible) {
     this.objects.visible = visible;
@@ -1017,13 +1104,13 @@ onWindowResize() {
         type: 'cameraStart',
         orientation
       });
-      let cc_1 = new THREE.Vector3(0,0,700);
-      let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(0,-1,1);
-  
-      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
+      let cc_1 = new THREE.Vector3(0, 0, 700);
+      let cc_2 = new THREE.Vector3(0, 0, 0);
+      let cc_3 = new THREE.Vector3(0, -1, 1);
+
+      this.controls.changeCamera(cc_1, cc_2, cc_3, this.initial_zoom, 1000);
       position = cc_1.toArray();
-      target =  cc_2.toArray();
+      target = cc_2.toArray();
       up = cc_3.toArray();
       zoom = this.initial_zoom;
       orientation = { position, target, up, zoom };
@@ -1044,13 +1131,13 @@ onWindowResize() {
         type: 'cameraStart',
         orientation
       });
-      let cc_1 = new THREE.Vector3(0,0,-700);
-      let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(0,1,0);
-  
-      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,1000);
+      let cc_1 = new THREE.Vector3(0, 0, -700);
+      let cc_2 = new THREE.Vector3(0, 0, 0);
+      let cc_3 = new THREE.Vector3(0, 1, 0);
+
+      this.controls.changeCamera(cc_1, cc_2, cc_3, this.initial_zoom, 1000);
       position = cc_1.toArray();
-      target =  cc_2.toArray();
+      target = cc_2.toArray();
       up = cc_3.toArray();
       orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
@@ -1070,14 +1157,13 @@ onWindowResize() {
         type: 'cameraStart',
         orientation
       });
-      let cc_1 = new THREE.Vector3(700,0,0);
-      let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(-1,0,1);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
-  
-      
+      let cc_1 = new THREE.Vector3(700, 0, 0);
+      let cc_2 = new THREE.Vector3(0, 0, 0);
+      let cc_3 = new THREE.Vector3(-1, 0, 1);
+      this.controls.changeCamera(cc_1, cc_2, cc_3, this.initial_zoom, 500);
+
       position = cc_1.toArray();
-      target =  cc_2.toArray();
+      target = cc_2.toArray();
       up = cc_3.toArray();
       orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
@@ -1092,18 +1178,18 @@ onWindowResize() {
       let target = this.controls.target.toArray();
       let up = this.controls.camera.up.toArray();
       let zoom = this.controls.camera.zoom;
-      let orientation = { position, target, up, zoom };      
+      let orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
         type: 'cameraStart',
-        orientation,
+        orientation
       });
-      let cc_1 = new THREE.Vector3(-700,0,0);
-      let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(1,0,1);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
-  
+      let cc_1 = new THREE.Vector3(-700, 0, 0);
+      let cc_2 = new THREE.Vector3(0, 0, 0);
+      let cc_3 = new THREE.Vector3(1, 0, 1);
+      this.controls.changeCamera(cc_1, cc_2, cc_3, this.initial_zoom, 500);
+
       position = cc_1.toArray();
-      target =  cc_2.toArray();
+      target = cc_2.toArray();
       up = cc_3.toArray();
       orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
@@ -1112,25 +1198,24 @@ onWindowResize() {
       });
       this.viewpoint_action = modes.Idle;
     },
-    click_front: () => 
-    {
+    click_front: () => {
       this.viewpoint_action = modes.Front;
       let position = this.controls.camera.position.toArray();
       let target = this.controls.target.toArray();
       let up = this.controls.camera.up.toArray();
       let zoom = this.controls.camera.zoom;
-      let orientation = { position, target, up, zoom };      
+      let orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
         type: 'cameraStart',
         orientation
       });
-      let cc_1 = new THREE.Vector3(0,700,0);
-      let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(0,1,1);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
-  
+      let cc_1 = new THREE.Vector3(0, 700, 0);
+      let cc_2 = new THREE.Vector3(0, 0, 0);
+      let cc_3 = new THREE.Vector3(0, 1, 1);
+      this.controls.changeCamera(cc_1, cc_2, cc_3, this.initial_zoom, 500);
+
       position = cc_1.toArray();
-      target =  cc_2.toArray();
+      target = cc_2.toArray();
       up = cc_3.toArray();
       orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
@@ -1139,25 +1224,24 @@ onWindowResize() {
       });
       this.viewpoint_action = modes.Idle;
     },
-    click_back: () =>
-    {
+    click_back: () => {
       this.viewpoint_action = modes.Back;
       let position = this.controls.camera.position.toArray();
       let target = this.controls.target.toArray();
       let up = this.controls.camera.up.toArray();
       let zoom = this.controls.camera.zoom;
-      let orientation = { position, target, up, zoom };      
+      let orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
         type: 'cameraStart',
         orientation
       });
-      let cc_1 = new THREE.Vector3(0,-700,0);
-      let cc_2 = new THREE.Vector3(0,0,0);
-      let cc_3 = new THREE.Vector3(0,1,1);
-      this.controls.changeCamera(cc_1,cc_2,cc_3,this.initial_zoom,500);
-  
+      let cc_1 = new THREE.Vector3(0, -700, 0);
+      let cc_2 = new THREE.Vector3(0, 0, 0);
+      let cc_3 = new THREE.Vector3(0, 1, 1);
+      this.controls.changeCamera(cc_1, cc_2, cc_3, this.initial_zoom, 500);
+
       position = cc_1.toArray();
-      target =  cc_2.toArray();
+      target = cc_2.toArray();
       up = cc_3.toArray();
       orientation = { position, target, up, zoom };
       this.eventdispatcher.dispatchEvent({
@@ -1167,472 +1251,581 @@ onWindowResize() {
       this.viewpoint_action = modes.Idle;
     },
     toggleAllSprites: () => {
-        this.spriteMap.forEach((value, key) => {
-          value.visible = !value.visible;
-          // value.sprite.visible = value.visible;
+      this.spriteMap.forEach((value, key) => {
+        value.visible = !value.visible;
+        // value.sprite.visible = value.visible;
+      });
+    }
+  };
+
+  load_stl_models = async alpha => {
+    // Load STL models
+    let fragment_folder;
+    let uis = this.ui;
+    if (this.firstload) {
+      fragment_folder = uis.addFolder('Fragments');
+      const labelsettings = { toggleAllSprites: true };
+      fragment_folder
+        .add(labelsettings, 'toggleAllSprites')
+        .name('Toggle Labels')
+        .onChange(value => {
+          if (value) {
+            this.spriteMap.forEach(spriteObject => {
+              spriteObject.sprite.visible = true;
+              spriteObject.line.visible = true;
+            });
+          } else {
+            this.spriteMap.forEach(spriteObject => {
+              spriteObject.sprite.visible = false;
+              spriteObject.line.visible = false;
+            });
+          }
         });
-      }
-  }
+    } else fragment_folder = uis.__folders['Fragments'];
+    const objectSettings = {
+      renderOrder: this._randerorder,
+      hidden: false
+    };
+    for (var file of alpha) {
+      let name = 'f' + this.number_of_stl.toString();
+      const color = this.selectColor(this.number_of_stl);
+      let material = new THREE.MeshLambertMaterial({
+        color: color,
+        transparent: true,
+        depthTest: true,
+        flatShading: true
+      });
+      material.polygonOffset = true;
+      material.polygonOffsetFactor = 1;
+      material.polygonOffsetUnits = 1;
+      // const SM = new SimplifyModifier();
+      const geometry = (await this.loadSTL(
+        file.result
+      )) as THREE.BufferGeometry;
+      let mesh = new THREE.Mesh(geometry, material);
+      // const SMG = await SM.modify(geometry, 0.2);
+      // mesh.geometry = SMG;
+      let centroid = new THREE.Vector3();
+      mesh.geometry.computeBoundingBox();
+      mesh.renderOrder = this._randerorder;
+      this._randerorder++;
+      centroid.x =
+        (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
+      centroid.y =
+        (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
+      centroid.z =
+        (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
+      mesh.name = name.toString();
 
-  load_stl_models = async(alpha) => {
-        // Load STL models
-        let fragment_folder
-        let uis = this.ui;
-        if(this.firstload){
-          fragment_folder = uis.addFolder('Fragments');
-          const labelsettings = { toggleAllSprites: true };
-          fragment_folder.add(labelsettings, "toggleAllSprites").name("Toggle Labels")
-          .onChange((value) => {
-            if (value) {
-              this.spriteMap.forEach((spriteObject) => {
-                spriteObject.sprite.visible = true;
-                spriteObject.line.visible = true;
-              });
-            }
-            else
-            {
-              this.spriteMap.forEach((spriteObject) => {
-                spriteObject.sprite.visible = false;
-                spriteObject.line.visible = false;
-              });
-            }
-          });
-        }
-        else
-          fragment_folder = uis.__folders['Fragments'];
-        const objectSettings = {
-          renderOrder: this._randerorder,
-          hidden: false,
-        };
-        for(var file of alpha)
-        {
-          let name = 'f' + this.number_of_stl.toString();
-          const color = this.selectColor(this.number_of_stl);
-          let material = new THREE.MeshLambertMaterial({ color: color, transparent: true,  depthTest: true, flatShading: true});
-          material.polygonOffset = true;
-          material.polygonOffsetFactor = 1;
-          material.polygonOffsetUnits = 1;
-          // const SM = new SimplifyModifier();
-          const geometry = await this.loadSTL(file.result) as THREE.BufferGeometry;
-          let mesh = new THREE.Mesh(geometry , material);
-          // const SMG = await SM.modify(geometry, 0.2);
-          // mesh.geometry = SMG;
-          let centroid = new THREE.Vector3();
-          mesh.geometry.computeBoundingBox();
-          mesh.renderOrder = this._randerorder;
-          this._randerorder++;
-          centroid.x = (geometry.boundingBox.max.x + geometry.boundingBox.min.x) / 2;
-          centroid.y = (geometry.boundingBox.max.y + geometry.boundingBox.min.y) / 2;
-          centroid.z = (geometry.boundingBox.max.z + geometry.boundingBox.min.z) / 2;
-          mesh.name = name.toString();
+      geometry.center();
 
-          geometry.center();
+      mesh.position.copy(centroid);
+      mesh.rotation.set(0, 0, 0);
+      const sprite = this.makeTextSprite(name, {});
+      sprite.position.set(0, 30, 0);
+      // Create the line geometry
+      const geometry_line = new THREE.BufferGeometry();
+      const vertices = new Float32Array([
+        0,
+        0,
+        0,
+        sprite.position.x,
+        sprite.position.y,
+        sprite.position.z
+      ]);
+      geometry_line.setAttribute(
+        'position',
+        new THREE.BufferAttribute(vertices, 3)
+      );
+      // create a red line material
+      const material_line = new THREE.LineBasicMaterial({ color: 0x5b5c73 });
 
-          mesh.position.copy(centroid);
-          mesh.rotation.set(0,0,0);
-          const sprite = this.makeTextSprite(name, {});
-          sprite.position.set(0, 30, 0);
-          // Create the line geometry
-          const geometry_line = new THREE.BufferGeometry();
-          const vertices = new Float32Array([
-              0,0,0,
-              sprite.position.x, sprite.position.y, sprite.position.z
-          ]);
-          geometry_line.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-          // create a red line material
-          const material_line = new THREE.LineBasicMaterial({ color: 0x5B5C73 });
+      // create the line
+      const line = new THREE.Line(geometry_line, material_line);
 
-          // create the line
-          const line = new THREE.Line(geometry_line, material_line);
+      // add the line to the mesh
+      mesh.add(line);
+      this.spriteMap.set(name, { sprite: sprite, line: line });
+      mesh.add(sprite);
+      this.objects.add(mesh); // Add this line to update this.objects
 
-          // add the line to the mesh
-          mesh.add(line);
-          this.spriteMap.set(name, { sprite: sprite, line: line});
-          mesh.add(sprite);
-          this.objects.add(mesh); // Add this line to update this.objects
-
-        const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
-        const replaceInArray = (arr, oldVal, newVal) => {
-          for(let i = 0; i < arr.length; i++) {
-            if(typeof arr[i] === "string") {
-              arr[i] = arr[i].replace(new RegExp(oldVal, 'g'), newVal);
-            }
+      const meshSettings = { name: mesh.name, hidden: true, opacity: 1 };
+      const replaceInArray = (arr, oldVal, newVal) => {
+        for (let i = 0; i < arr.length; i++) {
+          if (typeof arr[i] === 'string') {
+            arr[i] = arr[i].replace(new RegExp(oldVal, 'g'), newVal);
           }
         }
-        const applyNameChange = (mesh, oldName, newName) => {
-          const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
-          arrayFromObj.forEach((node) => {
-            const groupArray = node.metadata.O_group.split(",");
-            for (let i = 0; i < groupArray.length; i++) {
-              if (groupArray[i] === oldName) {
-                groupArray[i] = newName;
-                break; // Assuming you only want to replace the first occurrence
+      };
+      const applyNameChange = (mesh, oldName, newName) => {
+        const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(
+          key => this.service.graph.getNodes()[key]
+        );
+        arrayFromObj.forEach(node => {
+          const groupArray = node.metadata.O_group.split(',');
+          for (let i = 0; i < groupArray.length; i++) {
+            if (groupArray[i] === oldName) {
+              groupArray[i] = newName;
+              break; // Assuming you only want to replace the first occurrence
+            }
+          }
+          if (node.label == 'SelectObject' && 'action' in node) {
+            replaceInArray(node.action.doArguments[0], oldName, newName);
+            replaceInArray(node.action.undoArguments[0], oldName, newName);
+          }
+          node.metadata.O_group = groupArray.join(',');
+        });
+        const get_sprite = this.spriteMap.get(oldName);
+        mesh.name = newName;
+        const newSprite = this.makeTextSprite(newName, {});
+        newSprite.position.set(0, 30, 0);
+        mesh.remove(get_sprite.sprite);
+        mesh.add(newSprite);
+        this.spriteMap.delete(oldName);
+        this.spriteMap.set(newName, {
+          sprite: newSprite,
+          visible: mesh.children[1]
+        });
+      };
+      const n_s = this.number_of_stl - 1;
+      fragment_folder
+        .add(meshSettings, 'name')
+        .name('Name')
+        .onChange(value => {
+          (window as any).istyping = true;
+        })
+        .onFinishChange(value => {
+          const oldName = mesh.name;
+          applyNameChange(mesh, oldName, value);
+          this.objstat = this.Extractobjinfo(this.objects);
+          this.fragmentoptionsrecorder();
+          this.service.graph.emitNodeChangedEvent(this.service.graph.current);
+          (window as any).istyping = false;
+        });
+
+      fragment_folder
+        .add(meshSettings, 'hidden')
+        .name('Visibility')
+        .onChange(value => {
+          if (!this.hidden_refresh) {
+            mesh.visible = value;
+            const spriteObject = this.spriteMap.get(meshSettings.name);
+            if (spriteObject) spriteObject.visible = value;
+            this.objstat = this.Extractobjinfo(this.objects);
+            this.fragmentoptionsrecorder();
+          }
+          this.hidden_refresh = false;
+        });
+
+      fragment_folder
+        .add(material, 'opacity', 0, 1)
+        .name('Opacity')
+        .onChange(value => {
+          material.opacity = value;
+          this.objstat = this.Extractobjinfo(this.objects);
+          this.fragmentoptionsrecorder();
+        });
+      fragment_folder.open();
+      this.number_of_stl++;
+    }
+    if (this.firstload) {
+      this.firstload = false;
+      this.model_centering();
+    }
+    this.objstat = this.Extractobjinfo(this.objects);
+
+    this.service.graph.current.artifacts = JSON.parse(
+      JSON.stringify(this.objstat)
+    );
+  };
+  model_centering = () => {
+    //positioning all loaded meshes to the center of the scene.
+    // compute average position of child meshes
+    const center = new THREE.Vector3();
+    this.objects.children.forEach(child => {
+      center.add(child.position);
+    });
+    center.divideScalar(this.objects.children.length);
+    const origin = new THREE.Vector3(0, 0, 0);
+    const direction = center
+      .clone()
+      .sub(origin)
+      .normalize();
+    const distance = origin.distanceTo(center);
+    const newVector = origin.clone().add(direction.multiplyScalar(distance));
+    // subtract the average position from each child mesh's position
+    this.objects.children.forEach(child => {
+      child.position.sub(newVector);
+    });
+
+    // set the parent object's position to the negative of the average position
+    this.objects.position.set(0, 0, 0);
+
+    // Calculate the bounding box that contains all objects
+    var bbox = new THREE.Box3().setFromObject(this.objects);
+
+    // Calculate the center of the bounding box
+    var center_bbox = new THREE.Vector3();
+    bbox.getCenter(center);
+
+    // Calculate the radius of the bounding box
+    const width = bbox.max.x - bbox.min.x;
+    const height = bbox.max.y - bbox.min.y;
+    const depth = bbox.max.z - bbox.min.z;
+    const maxDim = Math.max(width, height, depth);
+
+    // //type 1
+    // if(maxDim > 200)
+    //   this.initial_zoom = maxDim / 200;
+    // else
+    //   this.initial_zoom = maxDim;
+
+    //type 2
+    const w_size = this.width / width;
+    const h_size = this.height / height;
+
+    const min_size = Math.min(w_size, h_size);
+
+    this.initial_zoom = min_size / 4;
+
+    // Set the camera position and target to view all objects
+    this.camera.lookAt(center_bbox);
+    this.camera.zoom = this.initial_zoom;
+    this.camera.updateProjectionMatrix();
+  };
+  load_demo = async () => {
+    if (this.firstload) this.firstload = false;
+    else return;
+
+    // Load STL models
+    let fragment_folder;
+    let uis = this.ui;
+    const alpha = [
+      'assets/SP_1_reduced.stl',
+      'assets/SP_2_reduced.stl',
+      'assets/SP_3_reduced.stl',
+      'assets/Clavicle Mid Shaft Bone Plate_2.stl'
+    ];
+    fragment_folder = uis.addFolder('Fragments');
+    const labelsettings = { toggleAllSprites: true };
+    fragment_folder
+      .add(labelsettings, 'toggleAllSprites')
+      .name('Toggle Labels')
+      .onChange(value => {
+        if (value) {
+          this.spriteMap.forEach(spriteObject => {
+            spriteObject.sprite.visible = true;
+            spriteObject.line.visible = true;
+          });
+        } else {
+          this.spriteMap.forEach(spriteObject => {
+            spriteObject.sprite.visible = false;
+            spriteObject.line.visible = false;
+          });
+        }
+      });
+
+    for (let file of alpha) {
+      await new Promise<void>(resolve => {
+        let name = 'f' + this.number_of_stl.toString();
+        const color = this.selectColor(this.number_of_stl);
+        let loaderSTL = new STLLoader();
+
+        let material = new THREE.MeshLambertMaterial({
+          color: color,
+          transparent: true,
+          flatShading: false
+        });
+        material.polygonOffset = true;
+        material.polygonOffsetFactor = 1;
+        material.polygonOffsetUnits = 1;
+
+        loaderSTL.load(
+          file,
+          function(geometry) {
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.renderOrder = this._randerorder;
+            this._randerorder++;
+
+            const bbox = new THREE.Box3().setFromObject(mesh);
+            const centroid = new THREE.Vector3();
+            bbox.getCenter(centroid);
+
+            mesh.name = name.toString();
+            geometry.center();
+            mesh.position.copy(centroid);
+            mesh.position.sub(new THREE.Vector3(57.5, 29.2, 86.5));
+
+            mesh.rotation.set(0, 0, 0);
+
+            const sprite = this.makeTextSprite(name, {});
+            sprite.position.set(0, 30, 0);
+            mesh.add(sprite);
+
+            // Create the line geometry
+            const geometry_line = new THREE.BufferGeometry();
+            const vertices = new Float32Array([
+              0,
+              0,
+              0,
+              sprite.position.x,
+              sprite.position.y,
+              sprite.position.z
+            ]);
+            geometry_line.setAttribute(
+              'position',
+              new THREE.BufferAttribute(vertices, 3)
+            );
+            // create a red line material
+            const material_line = new THREE.LineBasicMaterial({
+              color: 0x5b5c73
+            });
+
+            // create the line
+            const line = new THREE.Line(geometry_line, material_line);
+
+            // add the line to the mesh
+            mesh.add(line);
+            this.spriteMap.set(name, { sprite: sprite, line: line });
+
+            this.objects.add(mesh);
+
+            const meshSettings = { name: mesh.name, hidden: true, opacity: 1 };
+
+            const replaceInArray = (arr, oldVal, newVal) => {
+              for (let i = 0; i < arr.length; i++) {
+                if (typeof arr[i] === 'string') {
+                  arr[i] = arr[i].replace(new RegExp(oldVal, 'g'), newVal);
+                }
               }
-            }
-            if(node.label == 'SelectObject' && 'action' in node){
-              replaceInArray(node.action.doArguments[0], oldName, newName);
-              replaceInArray(node.action.undoArguments[0], oldName, newName);
-            }
-            node.metadata.O_group = groupArray.join(",");                    });
-            const get_sprite = this.spriteMap.get(oldName);
-            mesh.name = newName;
-            const newSprite = this.makeTextSprite(newName, {});
-            newSprite.position.set(0, 30, 0);
-            mesh.remove(get_sprite.sprite);
-            mesh.add(newSprite);
-            this.spriteMap.delete(oldName);
-            this.spriteMap.set(newName, { sprite: newSprite, visible: mesh.children[1]});
-        };
-        const n_s = this.number_of_stl - 1;
-        fragment_folder
-            .add(meshSettings, 'name')
-            .name('Name')
-            .onChange((value) => { (window as any).istyping = true; })
-            .onFinishChange((value) => {
+            };
+
+            const applyNameChange = (mesh, oldName, newName) => {
+              const arrayFromObj = Object.keys(
+                this.service.graph.getNodes()
+              ).map(key => this.service.graph.getNodes()[key]);
+              arrayFromObj.forEach(node => {
+                const groupArray = node.metadata.O_group.split(',');
+                for (let i = 0; i < groupArray.length; i++) {
+                  if (groupArray[i] === oldName) {
+                    groupArray[i] = newName;
+                    break; // Assuming you only want to replace the first occurrence
+                  }
+                }
+                if (node.label == 'SelectObject') {
+                  replaceInArray(node.action.doArguments[0], oldName, newName);
+                  replaceInArray(
+                    node.action.undoArguments[0],
+                    oldName,
+                    newName
+                  );
+                }
+                node.metadata.O_group = groupArray.join(',');
+              });
+              const get_sprite = this.spriteMap.get(oldName);
+              mesh.name = newName;
+              const newSprite = this.makeTextSprite(newName, {});
+              newSprite.position.set(0, 30, 0);
+              mesh.remove(get_sprite.sprite);
+              mesh.add(newSprite);
+              this.spriteMap.delete(oldName);
+              this.spriteMap.set(newName, {
+                sprite: newSprite,
+                visible: mesh.children[1]
+              });
+            };
+            const n_s = this.number_of_stl - 1;
+            fragment_folder
+              .add(meshSettings, 'name')
+              .name('Name')
+              .onChange(value => {
+                (window as any).istyping = true;
+              })
+              .onFinishChange(value => {
                 const oldName = mesh.name;
                 applyNameChange(mesh, oldName, value);
                 this.objstat = this.Extractobjinfo(this.objects);
                 this.fragmentoptionsrecorder();
-                this.service.graph.emitNodeChangedEvent(this.service.graph.current);
+                this.service.graph.emitNodeChangedEvent(
+                  this.service.graph.current
+                );
                 (window as any).istyping = false;
-            });
+              });
 
-        fragment_folder
-            .add(meshSettings, 'hidden')
-            .name('Visibility')
-            .onChange((value) => {
-              if(!this.hidden_refresh){
-                mesh.visible = value;
-                const spriteObject = this.spriteMap.get(meshSettings.name);
-                if (spriteObject) spriteObject.visible = value;
-                this.objstat = this.Extractobjinfo(this.objects);
-                this.fragmentoptionsrecorder();
-              }
+            fragment_folder
+              .add(meshSettings, 'hidden')
+              .name('Visibility')
+              .onChange(value => {
+                if (!this.hidden_refresh) {
+                  mesh.visible = value;
+                  const spriteObject = this.spriteMap.get(meshSettings.name);
+                  if (spriteObject) spriteObject.visible = value;
+                  this.objstat = this.Extractobjinfo(this.objects);
+                  this.fragmentoptionsrecorder();
+                }
                 this.hidden_refresh = false;
-            });
+              });
 
-        fragment_folder.add(material, 'opacity', 0, 1).name('Opacity')
-            .onChange((value) => {
+            fragment_folder
+              .add(material, 'opacity', 0, 1)
+              .name('Opacity')
+              .onChange(value => {
                 material.opacity = value;
                 this.objstat = this.Extractobjinfo(this.objects);
                 this.fragmentoptionsrecorder();
-            });
-        fragment_folder.open();
-        this.number_of_stl++;
-        }
-        if(this.firstload){
-          this.firstload = false;
-          this.model_centering();
-        }
-        this.objstat = this.Extractobjinfo(this.objects);
-
-        this.service.graph.current.artifacts = JSON.parse(JSON.stringify(this.objstat));
-  }
-  model_centering = () => {
-        //positioning all loaded meshes to the center of the scene. 
-        // compute average position of child meshes
-        const center = new THREE.Vector3();
-        this.objects.children.forEach((child) => {
-          center.add(child.position);
-        });
-        center.divideScalar(this.objects.children.length);
-        const origin = new THREE.Vector3(0, 0, 0);
-        const direction = center.clone().sub(origin).normalize();
-        const distance = origin.distanceTo(center);
-        const newVector = origin.clone().add(direction.multiplyScalar(distance));
-        // subtract the average position from each child mesh's position
-        this.objects.children.forEach((child) => {
-          child.position.sub(newVector);
-        });
-
-        // set the parent object's position to the negative of the average position
-        this.objects.position.set(0,0,0);
-
-        // Calculate the bounding box that contains all objects
-        var bbox = new THREE.Box3().setFromObject(this.objects);
-
-        // Calculate the center of the bounding box
-        var center_bbox = new THREE.Vector3();
-        bbox.getCenter(center);
-
-        // Calculate the radius of the bounding box
-        const width = bbox.max.x - bbox.min.x;
-        const height = bbox.max.y - bbox.min.y;
-        const depth = bbox.max.z - bbox.min.z;  
-        const maxDim = Math.max(width, height, depth);
-
-        // //type 1
-        // if(maxDim > 200)
-        //   this.initial_zoom = maxDim / 200;
-        // else
-        //   this.initial_zoom = maxDim;
-
-        //type 2
-        const w_size =this.width/width;
-        const h_size =this.height/height;
-
-        const min_size = Math.min(w_size,h_size);
-
-        this.initial_zoom = min_size / 4;
-
-
-        // Set the camera position and target to view all objects
-        this.camera.lookAt(center_bbox);
-        this.camera.zoom = this.initial_zoom;
-        this.camera.updateProjectionMatrix();
-  }
-  load_demo = async () => {
-    if (this.firstload)
-        this.firstload = false;
-    else
-        return;
-    
-    // Load STL models  
-    let fragment_folder;
-    let uis = this.ui;
-    const alpha = ['assets/SP_1_reduced.stl', 'assets/SP_2_reduced.stl', 'assets/SP_3_reduced.stl', 'assets/Clavicle Mid Shaft Bone Plate_2.stl'];
-    fragment_folder = uis.addFolder('Fragments');
-    const labelsettings = { toggleAllSprites: true };
-    fragment_folder.add(labelsettings, "toggleAllSprites").name("Toggle Labels")
-    .onChange((value) => {
-      if (value) {
-        this.spriteMap.forEach((spriteObject) => {
-          spriteObject.sprite.visible = true;
-          spriteObject.line.visible = true;
-        });
-      }
-      else
-      {
-        this.spriteMap.forEach((spriteObject) => {
-          spriteObject.sprite.visible = false;
-          spriteObject.line.visible = false;
-        });
-      }
-    });
-
-    for(let file of alpha) {
-        await new Promise<void>((resolve) => {
-            let name = 'f' + this.number_of_stl.toString();
-            const color = this.selectColor(this.number_of_stl);
-            let loaderSTL = new STLLoader();
-
-            let material = new THREE.MeshLambertMaterial({ color: color, transparent: true, flatShading: false });
-            material.polygonOffset = true;
-            material.polygonOffsetFactor = 1;
-            material.polygonOffsetUnits = 1;
-            
-            loaderSTL.load(file, function (geometry) {
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.renderOrder = this._randerorder;
-                this._randerorder++;
-                
-                const bbox = new THREE.Box3().setFromObject(mesh);
-                const centroid = new THREE.Vector3();
-                bbox.getCenter(centroid);
-
-                mesh.name = name.toString();
-                geometry.center();
-                mesh.position.copy(centroid);
-                mesh.position.sub(new THREE.Vector3(57.5, 29.2, 86.5));
-
-
-                mesh.rotation.set(0, 0, 0);
-
-                const sprite = this.makeTextSprite(name, {});
-                sprite.position.set(0, 30, 0);
-                mesh.add(sprite);
-
-                // Create the line geometry
-                const geometry_line = new THREE.BufferGeometry();
-                const vertices = new Float32Array([
-                    0,0,0,
-                    sprite.position.x, sprite.position.y, sprite.position.z
-                ]);
-                geometry_line.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                // create a red line material
-                const material_line = new THREE.LineBasicMaterial({ color: 0x5B5C73 });
-
-                // create the line
-                const line = new THREE.Line(geometry_line, material_line);
-
-                // add the line to the mesh
-                mesh.add(line);
-                this.spriteMap.set(name, { sprite: sprite, line: line});
-
-                this.objects.add(mesh);
-
-                const meshSettings = {name: mesh.name, hidden: true, opacity: 1};
-
-                const replaceInArray = (arr, oldVal, newVal) => {
-                  for(let i = 0; i < arr.length; i++) {
-                    if(typeof arr[i] === "string") {
-                      arr[i] = arr[i].replace(new RegExp(oldVal, 'g'), newVal);
-                    }
-                  }
-                }
-                
-                const applyNameChange = (mesh, oldName, newName) => {
-                  const arrayFromObj = Object.keys(this.service.graph.getNodes()).map(key => this.service.graph.getNodes()[key]);
-                  arrayFromObj.forEach((node) => {
-                    const groupArray = node.metadata.O_group.split(",");
-                    for (let i = 0; i < groupArray.length; i++) {
-                      if (groupArray[i] === oldName) {
-                        groupArray[i] = newName;
-                        break; // Assuming you only want to replace the first occurrence
-                      }
-                    }
-                    if(node.label == 'SelectObject'){
-                      replaceInArray(node.action.doArguments[0], oldName, newName);
-                      replaceInArray(node.action.undoArguments[0], oldName, newName);
-                    }
-                    node.metadata.O_group = groupArray.join(",");                    });
-                    const get_sprite = this.spriteMap.get(oldName);
-                    mesh.name = newName;
-                    const newSprite = this.makeTextSprite(newName, {});
-                    newSprite.position.set(0, 30, 0);
-                    mesh.remove(get_sprite.sprite);
-                    mesh.add(newSprite);
-                    this.spriteMap.delete(oldName);
-                    this.spriteMap.set(newName, { sprite: newSprite, visible: mesh.children[1]});
-                };
-                const n_s = this.number_of_stl - 1;
-                fragment_folder
-                    .add(meshSettings, 'name')
-                    .name('Name')
-                    .onChange((value) => { (window as any).istyping = true; })
-                    .onFinishChange((value) => {
-                        const oldName = mesh.name;
-                        applyNameChange(mesh, oldName, value);
-                        this.objstat = this.Extractobjinfo(this.objects);
-                        this.fragmentoptionsrecorder();
-                        this.service.graph.emitNodeChangedEvent(this.service.graph.current);
-                        (window as any).istyping = false;
-                    });
-
-                fragment_folder
-                    .add(meshSettings, 'hidden')
-                    .name('Visibility')
-                    .onChange((value) => {
-                      if(!this.hidden_refresh){
-                        mesh.visible = value;
-                        const spriteObject = this.spriteMap.get(meshSettings.name);
-                        if (spriteObject) spriteObject.visible = value;
-                        this.objstat = this.Extractobjinfo(this.objects);
-                        this.fragmentoptionsrecorder();
-                      }
-                        this.hidden_refresh = false;
-                    });
-
-                fragment_folder.add(material, 'opacity', 0, 1).name('Opacity')
-                    .onChange((value) => {
-                        material.opacity = value;
-                        this.objstat = this.Extractobjinfo(this.objects);
-                        this.fragmentoptionsrecorder();
-                    });
-                fragment_folder.open();
-                this.number_of_stl++;
-                resolve();
-            }.bind(this));
-        });
+              });
+            fragment_folder.open();
+            this.number_of_stl++;
+            resolve();
+          }.bind(this)
+        );
+      });
     }
     this.initial_zoom = 3.5;
     this.camera.zoom = this.initial_zoom;
     this.objstat = this.Extractobjinfo(this.objects);
-    this.service.graph.current.artifacts = JSON.parse(JSON.stringify(this.objstat));
-};
-  async fragmentoptionsrecorder () {
-    this.service.graph.current.artifacts = JSON.parse(JSON.stringify(this.objstat));
+    this.service.graph.current.artifacts = JSON.parse(
+      JSON.stringify(this.objstat)
+    );
+  };
+  async fragmentoptionsrecorder() {
+    this.service.graph.current.artifacts = JSON.parse(
+      JSON.stringify(this.objstat)
+    );
     await this.render();
     this.service.graph.current.metadata.screenshot = await this.ScreenShot();
-
   }
-  generateHeight( width, height ) {
-
-    const size = width * height, data = new Uint8Array( size ),
+  generateHeight(width, height) {
+    const size = width * height,
+      data = new Uint8Array(size),
       perlin = Math.random() * 100;
 
     let quality = 1;
 
-    for ( let j = 0; j < 4; j ++ ) {
-
-      for ( let i = 0; i < size; i ++ ) {
-
-        const x = i % width, y = ~ ~ ( i / width );
-        data[ i ] += Math.abs( quality * 1.75 );
-
+    for (let j = 0; j < 4; j++) {
+      for (let i = 0; i < size; i++) {
+        const x = i % width,
+          y = ~~(i / width);
+        data[i] += Math.abs(quality * 1.75);
       }
 
       quality *= 5;
-
     }
 
     return data;
-
   }
-  selectColor(number) { // color generator based on visible spectrum
+  selectColor(number) {
+    // color generator based on visible spectrum
     const hue = number * 137.508; // use golden angle approximation
     return `hsl(${hue},50%,75%)`;
   }
 
-  createDragControls(annotations: THREE.Object3D[], camera: THREE.Camera, domElement: HTMLElement) {
+  createDragControls(
+    annotations: THREE.Object3D[],
+    camera: THREE.Camera,
+    domElement: HTMLElement
+  ) {
     this.dragControls = new DragControls(annotations, camera, domElement);
-  
+
     this.dragControls.addEventListener('dragstart', () => {
       this.controls.enabled = false; // Disable camera controls while dragging
     });
-  
+
     this.dragControls.addEventListener('dragend', () => {
       this.controls.enabled = true; // Re-enable camera controls after dragging
     });
   }
   makeTextSprite = (message, parameters) => {
     if (parameters === undefined) parameters = {};
-    var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Courier New";
-    var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 50;
-    var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
-    var borderColor = parameters.hasOwnProperty("borderColor") ? parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
-    var backgroundColor = parameters.hasOwnProperty("backgroundColor") ? parameters["backgroundColor"] : { r:0, g:0, b:0, a:1.0 };
-    var textColor = parameters.hasOwnProperty("textColor") ? parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
-  
+    var fontface = parameters.hasOwnProperty('fontface')
+      ? parameters['fontface']
+      : 'Courier New';
+    var fontsize = parameters.hasOwnProperty('fontsize')
+      ? parameters['fontsize']
+      : 50;
+    var borderThickness = parameters.hasOwnProperty('borderThickness')
+      ? parameters['borderThickness']
+      : 4;
+    var borderColor = parameters.hasOwnProperty('borderColor')
+      ? parameters['borderColor']
+      : { r: 0, g: 0, b: 0, a: 1.0 };
+    var backgroundColor = parameters.hasOwnProperty('backgroundColor')
+      ? parameters['backgroundColor']
+      : { r: 0, g: 0, b: 0, a: 1.0 };
+    var textColor = parameters.hasOwnProperty('textColor')
+      ? parameters['textColor']
+      : { r: 0, g: 0, b: 0, a: 1.0 };
+
     var canvas = document.createElement('canvas');
     var context = canvas.getContext('2d');
-    context.font = "Bold " + fontsize + "px " + fontface;
+    context.font = 'Bold ' + fontsize + 'px ' + fontface;
     var metrics = context.measureText(message);
     var textWidth = metrics.width;
-  
-    context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
-    context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
-    context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
+
+    context.fillStyle =
+      'rgba(' +
+      backgroundColor.r +
+      ',' +
+      backgroundColor.g +
+      ',' +
+      backgroundColor.b +
+      ',' +
+      backgroundColor.a +
+      ')';
+    context.strokeStyle =
+      'rgba(' +
+      borderColor.r +
+      ',' +
+      borderColor.g +
+      ',' +
+      borderColor.b +
+      ',' +
+      borderColor.a +
+      ')';
+    context.fillStyle =
+      'rgba(' +
+      textColor.r +
+      ', ' +
+      textColor.g +
+      ', ' +
+      textColor.b +
+      ', 1.0)';
     context.fillText(
-      message, 
-      canvas.width / 2 - textWidth / 2, 
+      message,
+      canvas.width / 2 - textWidth / 2,
       canvas.height / 2 + fontsize / 2
-  );
-  
-    var texture = new THREE.Texture(canvas) 
+    );
+
+    var texture = new THREE.Texture(canvas);
     texture.needsUpdate = true;
-    var spriteMaterial = new THREE.SpriteMaterial( { map: texture, depthWrite: false, depthTest: false } );
-    var sprite = new THREE.Sprite( spriteMaterial );
+    var spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      depthWrite: false,
+      depthTest: false
+    });
+    var sprite = new THREE.Sprite(spriteMaterial);
     sprite.renderOrder = 999;
     sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
-    return sprite;  
-  }
+    return sprite;
+  };
 
   loadSTL(url) {
     return new Promise((resolve, reject) => {
       const loader = new STLLoader();
-      try{resolve(loader.parse(url))}
-      catch(e){reject(e)}
+      try {
+        resolve(loader.parse(url));
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   Extractobjinfo(obj: THREE.Object3D) {
-    if(obj == null)
-      obj = this.objects;
+    if (obj == null) obj = this.objects;
     let opacity = [];
     let name = [];
     let hide_val = [];
-    obj.traverse((child) => {
+    obj.traverse(child => {
       if (child instanceof THREE.Mesh) {
         opacity.push(child.material.opacity);
         name.push(child.name);
@@ -1647,29 +1840,27 @@ onWindowResize() {
     let opacity = objinfo.opacity;
     let hide_val = objinfo.hide_val;
     let i = 0;
-    this.objects.children.forEach((child) => {
+    this.objects.children.forEach(child => {
       if (child instanceof THREE.Mesh) {
-        child.material.opacity = opacity[i];  
+        child.material.opacity = opacity[i];
         child.visible = hide_val[i];
         i++;
       }
     });
-    i= 0;
-    try{
-      if(this.ui.__folders['Fragments'] != undefined){
-        this.ui.__folders['Fragments'].__controllers.forEach((controller) => {
-
-          if(controller.property == 'hidden'){
+    i = 0;
+    try {
+      if (this.ui.__folders['Fragments'] != undefined) {
+        this.ui.__folders['Fragments'].__controllers.forEach(controller => {
+          if (controller.property == 'hidden') {
             this.hidden_refresh = true;
-            controller.setValue(hide_val[i]); 
-            i++
+            controller.setValue(hide_val[i]);
+            i++;
           }
         });
       }
-
-     } catch(e){
-        confirm("Please refresh the page or load the STL file first.");
-      }
+    } catch (e) {
+      confirm('Please refresh the page or load the STL file first.');
+    }
     this.ui.updateDisplay();
   }
 
@@ -1679,7 +1870,7 @@ onWindowResize() {
     const axes_temp = this.AxesHelper.visible;
     this.gridHelper.visible = false;
     this.AxesHelper.visible = false;
-    this.renderer.autoClear = false;  // Prevent automatic clearing of the renderer
+    this.renderer.autoClear = false; // Prevent automatic clearing of the renderer
 
     // Render the scene normally
     this.renderer.clear();
@@ -1689,17 +1880,44 @@ onWindowResize() {
     // Render the composer which includes the OutlinePass
     this.composer.render();
 
-
     // Capture the screenshot
     dataURL = this.renderer.domElement.toDataURL('image/png');
-    
-    this.renderer.autoClear = true;  // Restore automatic clearing
+
+    this.renderer.autoClear = true; // Restore automatic clearing
     this.outlinePass.edgeStrength = 1.0;
     this.outlinePass.edgeThickness = 1.0;
     this.gridHelper.visible = grid_temp;
     this.AxesHelper.visible = axes_temp;
     return dataURL;
-}
-}
+  };
 
+  async generateNodeThumbnail(node: StateNode): Promise<string> {
+    // Move to the node's state
+    await this.service.traverser.toStateNode(node.id);
 
+    // Optionally wait for UI to update
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // Capture the canvas
+    const screenshot = await this.ScreenShot();
+
+    // Save it back into the node
+    node.metadata.screenshot = screenshot;
+
+    return screenshot;
+  }
+
+  async generateAllThumbnails() {
+    const nodes = Object.values(this.service.graph.getNodes());
+
+    for (const node of nodes) {
+      if (!node.metadata?.screenshot) {
+        try {
+          await this.generateNodeThumbnail(node as StateNode);
+        } catch (e) {
+          console.warn(`Failed to generate thumbnail for node ${node.id}`, e);
+        }
+      }
+    }
+  }
+}
